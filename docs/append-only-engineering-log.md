@@ -384,3 +384,134 @@
     - `docs/tang_nano_20k_guide.md`
     - `docs/tang_nano_9k_guide.md`
 - Added Mermaid diagrams in new/rewritten docs for flow clarity.
+
+## 2026-03-11T22:45:00Z - Refresh Pass Validation (Blinky/WS2812 + CPU Mermaid)
+- Refreshed hardware examples for practical visibility:
+  - `examples/hardware/tang_nano_20k_blinker.ts` updated to deterministic phase cycling.
+  - `examples/hardware/tang_nano_20k_ws2812b.ts` updated to timing-controlled serial driver with heartbeat LED.
+- Resolved parser subset regression in refreshed WS2812 example:
+  - removed unsupported ternary operator (`? :`) and replaced with explicit `if/else` logic.
+- Added behavior checks for refreshed examples:
+  - `packages/core/src/facades/hardware-examples-behavior.test.ts`
+  - assertions aligned with emitted SV literals (`1'b1`/`1'b0`).
+- Converted CPU architecture docs away from ASCII-only diagrams:
+  - `cpu/README_ASSEMBLY.md` now includes Mermaid architecture and instruction-flow diagrams.
+- Added production gate checklist/runbook:
+  - `docs/guides/production-reality-check.md`
+- Validation commands completed successfully:
+  - `bun test packages/core/src/facades/hardware-examples-compile.test.ts`
+  - `bun test packages/core/src/facades/hardware-examples-behavior.test.ts`
+  - `bun test packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.test.ts`
+- Real WS2812 compile + flash proof (Tang Nano 20K) succeeded with persistent external flash flags:
+  - command: `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k --flash`
+  - observed lines:
+    - `[profile=board-autodetect] ... openFPGALoader --external-flash --write-flash --verify -b tangnano20k ...`
+    - `write to flash`
+    - `DONE`
+    - `Verifying write (May take time)`
+
+## 2026-03-11T22:55:00Z - Full Production Gate Re-check
+- Initial `bun run quality` run failed due lint findings in newly added behavior test (`noNonNullAssertion` + formatting).
+- Applied fix in `packages/core/src/facades/hardware-examples-behavior.test.ts`:
+  - replaced non-null assertion with explicit guard.
+  - aligned formatting to Biome output.
+- Re-ran full gate successfully:
+  - `TURBO_UI=false bun run quality`
+  - typecheck, lint, test, and build all completed successfully.
+
+## 2026-03-11T23:10:00Z - Tang Nano 20K WS2812 Pin Mapping Correction + Board Docs Rewrite
+- User requested schematic-backed correction for onboard WS2812 mapping (`PIN79_WS2812`).
+- Updated board mapping to pin 79:
+  - `boards/tang_nano_20k.board.json` (`ws2812.pin` from `73` -> `79`)
+  - `constraints/tang_nano_20k.cst` (`IO_LOC "ws2812" 79`)
+- Added explicit source comment in hardware example:
+  - `examples/hardware/tang_nano_20k_ws2812b.ts` now notes mapping comes from board JSON and expected schematic net is `PIN79_WS2812`.
+- Reworked board-definition documentation for clarity and practical use:
+  - `docs/guides/board-definition-authoring.md` rewritten with schematic-to-JSON workflow, Tang Nano 20K mapping table, naming rules, and validation steps.
+- Updated operational docs to remove ambiguity around WS2812 wiring:
+  - `README.md`
+  - `docs/quickstart.md`
+  - `docs/guides/tang_nano_20k_programming.md`
+  - `docs/guides/debugging-and-troubleshooting.md`
+- Validation:
+  - `bun test packages/core/src/facades/hardware-examples-compile.test.ts` passed.
+  - Recompiled WS2812 example and verified generated constraints include:
+    - `IO_LOC "ws2812" 79;`
+
+## 2026-03-11T23:25:00Z - Real Flash Proof Refresh + Production Scenarios + Dependabot
+- Executed fresh real hardware flash runs in this session:
+  - WS2812 demo:
+    - `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812-e2e --flash`
+  - Blinky demo:
+    - `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/blinky-e2e --flash`
+- Observed WS2812 proof lines:
+  - probe visible: `0x0403:0x6010 FTDI2232 SIPEED`
+  - programmer command includes `openFPGALoader --external-flash --write-flash --verify -b tangnano20k`
+  - `write to flash`
+  - `DONE`
+  - `Detected: Winbond W25Q64 128 sectors size: 64Mb`
+  - `Verifying write (May take time)`
+  - final `Done`
+- Observed blinky proof lines:
+  - same persistent flash flags present,
+  - `write to flash`, `DONE`, `Detected: Winbond W25Q64`, `Verifying write (May take time)`, final `Done`.
+- Documentation improvements requested by user:
+  - `docs/quickstart.md` rewritten to a short WS2812-first end-to-end flow with explicit wiring and pass/fail checks.
+  - `docs/guides/production-reality-check.md` expanded with concrete production scenarios (bring-up, feature demo delivery, release candidate gate).
+- Added automated dependency update config:
+  - `.github/dependabot.yml` covering root workspace, `apps/cli`, and all `packages/*` manifests.
+
+## 2026-03-11T23:40:00Z - Post-Restart No-Behavior Debug And Fix
+- User reported: after restart and after reflash, no visible behavior.
+- Applied flash-path hardening for immediate reload after programming:
+  - `packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.ts`
+  - flash command now includes `-r` together with `--external-flash --write-flash --verify`.
+- Added regression assertion:
+  - `packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.test.ts`
+  - verifies `-r` is present in emitted programmer command.
+- Increased WS2812 demo color intensity for clear visibility in ambient light:
+  - `examples/hardware/tang_nano_20k_ws2812b.ts`
+  - color frames moved from low-intensity values to high-intensity values.
+- Revalidated with real flash run:
+  - `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812-visible --flash`
+  - observed lines include:
+    - `openFPGALoader --external-flash --write-flash --verify -r -b tangnano20k ...`
+    - probe row `0x0403:0x6010 FTDI2232 SIPEED`
+    - `write to flash`
+    - `DONE`
+    - `Verifying write (May take time)`
+    - final `Done`
+
+## 2026-03-11T23:55:00Z - Board Property Definitions + WS2812 Protocol Clarifications
+- User reported confusion about schematic naming (`IOT27B/GCLKC_0` Bank 0) versus board JSON pin mapping and property semantics (`std`, `drive`, `pull`).
+- Updated `docs/guides/board-definition-authoring.md` with:
+  - explicit pin naming domains and mapping rule:
+    - package pin number is used in board JSON (`pin: "79"`),
+    - schematic alias examples (`IOT27B/GCLKC_0`, bank info) are descriptive labels for the same IO site.
+  - full property reference for `pin`, `std`, `drive`, `pull`, and `freq`.
+- Added new guide:
+  - `docs/guides/ws2812-protocol-and-brightness.md`
+  - clarifies that WS2812 has no separate brightness command channel; brightness is encoded in GRB channel values.
+  - includes practical 3.3V->5V level-shifter guidance for strips that do not accept 3.3V logic reliably.
+- Updated user-facing docs:
+  - `docs/quickstart.md` now includes level-shifter warning and direct link to WS2812 protocol guide.
+  - `docs/guides/debugging-and-troubleshooting.md` now includes level-threshold troubleshooting and WS2812 protocol reference link.
+- Validation:
+  - `TURBO_UI=false bun run quality` passed.
+
+## 2026-03-12T00:10:00Z - No-Blink Incident Isolation With Clockless LED Probe
+- User reported persistent "flashed but nothing blinks" behavior.
+- Added dedicated board-definition property reference:
+  - `docs/guides/board-definition-properties-reference.md`
+  - includes full `std`/`drive`/`pull` semantics and vendor mapping output.
+- Added clockless hardware probe example to isolate clock-path issues:
+  - `examples/hardware/tang_nano_20k_sys_led_button_probe.ts`
+  - behavior: button released -> all SYS LEDs off, button pressed -> all SYS LEDs on.
+- Compile mapping check confirms expected pins:
+  - `btn` -> `87`
+  - `led[0]` -> `15`
+  - `led[5]` -> `20`
+- Flash run evidence:
+  - programmer command includes `openFPGALoader --external-flash --write-flash --verify -r -b tangnano20k`
+  - probe row includes `0x0403:0x6010 FTDI2232 SIPEED`
+  - `write to flash`, `DONE`, `Verifying write (May take time)`, final `Done`.

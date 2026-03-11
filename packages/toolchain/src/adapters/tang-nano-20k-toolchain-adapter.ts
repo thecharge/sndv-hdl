@@ -76,6 +76,7 @@ export class TangNano20kToolchainAdapter implements ToolchainAdapter {
         '--external-flash',
         '--write-flash',
         '--verify',
+        '-r',
         '-b',
         'tangnano20k',
         bitstreamPath,

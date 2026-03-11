@@ -4,30 +4,33 @@ A 4-core, 4-bit CPU with UART, SPI Flash, and LED peripherals.
 
 ## Architecture Overview
 
+```mermaid
+flowchart TD
+    FLASH[SPI Flash Firmware] --> BOOT[Flash Controller / Boot Loader]
+    BOOT --> CORE0[Core 0 / 4-bit]
+    BOOT --> CORE1[Core 1 / 4-bit]
+    BOOT --> CORE2[Core 2 / 4-bit]
+    BOOT --> CORE3[Core 3 / 4-bit]
+    CORE0 --> ARB[Round-Robin Bus Arbiter]
+    CORE1 --> ARB
+    CORE2 --> ARB
+    CORE3 --> ARB
+    ARB --> MEM[Shared Memory + Peripherals]
+    MEM --> RAM[RAM 0x00-0xEF]
+    MEM --> UART[UART Registers]
+    MEM --> LED[LED Register]
+    MEM --> MUTEX[Mutex Register]
 ```
-                    +------------------+
-                    |   SPI Flash      |
-                    |   (firmware)     |
-                    +--------+---------+
-                             |
-                    +--------v---------+
-                    |  Flash Controller |
-                    |  (boot loader)    |
-                    +--------+---------+
-                             |
-    +-------+  +-------+  +-v-----+  +-------+
-    |Core 0 |  |Core 1 |  |Core 2 |  |Core 3 |
-    | 4-bit |  | 4-bit |  | 4-bit |  | 4-bit |
-    +---+---+  +---+---+  +---+---+  +---+---+
-        |          |          |          |
-    +---v----------v----------v----------v---+
-    |       Round-Robin Bus Arbiter          |
-    +---+------------------------------------+
-        |
-    +---v------------------------------------+
-    |           Shared Memory                |
-    | RAM (240 nib) | UART | LED | Mutex     |
-    +------------------------------------+---+
+
+## Instruction Execution Flow
+
+```mermaid
+flowchart LR
+    F[Fetch opcode at PC] --> D[Decode opcode and operands]
+    D --> E[Execute ALU / load-store / branch]
+    E --> U[Update flags and destination register]
+    U --> P[Advance or replace PC]
+    P --> F
 ```
 
 ## Register Set

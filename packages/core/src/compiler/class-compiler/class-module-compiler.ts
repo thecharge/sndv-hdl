@@ -955,6 +955,9 @@ export class ClassModuleEmitter {
   private emitModule(mod: ClassModuleAST, global_enums: EnumAST[]): void {
     const all_enums = [...global_enums, ...mod.enums];
     const has_sequential = mod.methods.some(m => m.type === 'sequential');
+    const has_declared_reset = mod.properties.some(
+      (p) => p.direction === 'input' && p.name === mod.config.reset_signal,
+    );
 
     // Build property width lookup for context-aware bit-width emission
     const pw = new Map<string, number>();
@@ -970,7 +973,7 @@ export class ClassModuleEmitter {
       if (!mod.properties.find(p => p.name === clk)) {
         ports.push(`input  wire logic ${sanitize(clk)}`);
       }
-      if (!mod.properties.find(p => p.name === mod.config.reset_signal)) {
+      if (has_declared_reset && !mod.properties.find(p => p.name === mod.config.reset_signal)) {
         ports.push(`input  wire logic ${sanitize(mod.config.reset_signal)}`);
       }
     }
@@ -1099,10 +1102,13 @@ export class ClassModuleEmitter {
   private emitSequential(method: MethodAST, mod: ClassModuleAST, enums: EnumAST[], pw: Map<string, number>): void {
     const clk = sanitize(method.clock);
     const rst = sanitize(mod.config.reset_signal);
+    const has_declared_reset = mod.properties.some(
+      (p) => p.direction === 'input' && p.name === mod.config.reset_signal,
+    );
     const is_async = mod.config.reset_type === 'async';
     const is_active_low = mod.config.reset_polarity === 'active_low';
 
-    const sens = is_async
+    const sens = is_async && has_declared_reset
       ? `posedge ${clk} or ${is_active_low ? 'negedge' : 'posedge'} ${rst}`
       : `posedge ${clk}`;
 
@@ -1111,7 +1117,7 @@ export class ClassModuleEmitter {
 
     // Reset block — with context-aware bit-width sizing
     const reset_props = mod.properties.filter(p => p.initial_value !== null && p.direction !== 'input');
-    if (reset_props.length > 0) {
+    if (has_declared_reset && reset_props.length > 0) {
       const rst_cond = is_active_low ? `!${rst}` : rst;
       this.line(`        if (${rst_cond}) begin`);
       for (const p of reset_props) {

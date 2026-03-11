@@ -186,7 +186,7 @@ describe('ClassModuleCompiler', () => {
       assert.ok(result.systemverilog.includes('output      logic [8:0] sum'));
     });
 
-    it('auto-injects clk and rst_n for sequential modules', () => {
+    it('auto-injects clk but does not force implicit reset input', () => {
       const result = compileClassModule(`
         class X extends Module {
           @Output q: Logic<1> = 0;
@@ -196,7 +196,8 @@ describe('ClassModuleCompiler', () => {
       `);
       assert.ok(result.success);
       assert.ok(result.systemverilog.includes('input  wire logic clk'));
-      assert.ok(result.systemverilog.includes('input  wire logic rst_n'));
+      assert.ok(!result.systemverilog.includes('input  wire logic rst_n'));
+      assert.ok(result.systemverilog.includes('always_ff @(posedge clk)'));
     });
 
     it('supports UintN and UIntN widths above 64 bits', () => {

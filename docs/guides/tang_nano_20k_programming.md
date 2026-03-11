@@ -66,6 +66,7 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts
 
 WS2812-specific notes:
 - strip must be physically connected,
+- Tang Nano 20K `ws2812` output in this workspace is mapped to pin `79` (`PIN79_WS2812`),
 - shared ground is mandatory,
 - wrong pin mapping gives successful flash but no visible strip output.
 

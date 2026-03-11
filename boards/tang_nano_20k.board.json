@@ -16,6 +16,6 @@
     "led[5]":  { "pin": "20", "std": "LVCMOS33" },
     "uart_tx": { "pin": "15", "std": "LVCMOS33", "drive": "8" },
     "uart_rx": { "pin": "16", "std": "LVCMOS33" },
-    "ws2812":  { "pin": "73", "std": "LVCMOS33", "drive": "8" }
+    "ws2812":  { "pin": "79", "std": "LVCMOS33", "drive": "8" }
   }
 }

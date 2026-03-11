@@ -1,33 +1,21 @@
-// Tang Nano 20K WS2812B practical demo.
-// - Drives one WS2812 pixel stream with timing derived for 27MHz clock.
-// - Also updates onboard active-low LEDs as a heartbeat so bring-up is visible
-//   even before attaching a strip/probe.
+// Tang Nano 20K WS2812-only demo.
+// No onboard LED output: this image drives only the ws2812 pin.
 
-import {
-  HardwareModule,
-  Module,
-  Input,
-  Output,
-  Sequential,
-} from '@ts2v/runtime';
+import { HardwareModule, Module, Input, Output, Sequential } from '@ts2v/runtime';
 import type { Bit, Logic } from '@ts2v/runtime';
 
 @Module
-class Ws2812bDemo extends HardwareModule {
+class Ws2812Only extends HardwareModule {
   @Input clk: Bit = 0;
-  // Physical mapping is defined in boards/tang_nano_20k.board.json.
-  // Tang Nano 20K onboard RGB data net is expected on PIN79_WS2812.
   @Output ws2812: Bit = 0;
-  @Output led: Logic<6> = 0x3f;
 
-  // Bit timing for 27MHz clock (~37ns):
-  // 1-bit high: 19 cycles (~0.70us), 0-bit high: 10 cycles (~0.37us), total bit: 34 cycles (~1.26us)
-  // Color frames intentionally use high intensity so output is obvious during bring-up.
+  // 27MHz timing (approx)
   private readonly t1h: Logic<6> = 19;
   private readonly t0h: Logic<6> = 10;
   private readonly tbit: Logic<6> = 34;
   private readonly treset: Logic<12> = 1600;
 
+  // Full-brightness GRB cycle to make strip response obvious.
   private frame: Logic<24> = 0x00ff00;
   private colorIndex: Logic<2> = 0;
   private bitIndex: Logic<5> = 0;
@@ -35,19 +23,8 @@ class Ws2812bDemo extends HardwareModule {
   private resetTicks: Logic<12> = 0;
   private sending: Bit = 0;
 
-  private ledHeartbeat: Logic<24> = 0;
-
   @Sequential('clk')
   tick(): void {
-    this.ledHeartbeat = this.ledHeartbeat + 1;
-    if ((this.ledHeartbeat & 0x7fffff) === 0) {
-      if (this.led === 0x3f) {
-        this.led = 0x3e;
-      } else {
-        this.led = 0x3f;
-      }
-    }
-
     if (this.sending === 0) {
       this.ws2812 = 0;
       this.resetTicks = this.resetTicks + 1;
@@ -64,7 +41,7 @@ class Ws2812bDemo extends HardwareModule {
         } else if (this.colorIndex === 2) {
           this.frame = 0x0000ff;
         } else {
-          this.frame = 0x404040;
+          this.frame = 0x808080;
         }
       }
     } else {
@@ -98,4 +75,4 @@ class Ws2812bDemo extends HardwareModule {
   }
 }
 
-export { Ws2812bDemo };
+export { Ws2812Only };
