@@ -22,12 +22,13 @@ class Ws2812bDemo extends HardwareModule {
 
   // Bit timing for 27MHz clock (~37ns):
   // 1-bit high: 19 cycles (~0.70us), 0-bit high: 10 cycles (~0.37us), total bit: 34 cycles (~1.26us)
+  // Color frames intentionally use high intensity so output is obvious during bring-up.
   private readonly t1h: Logic<6> = 19;
   private readonly t0h: Logic<6> = 10;
   private readonly tbit: Logic<6> = 34;
   private readonly treset: Logic<12> = 1600;
 
-  private frame: Logic<24> = 0x001000;
+  private frame: Logic<24> = 0x00ff00;
   private colorIndex: Logic<2> = 0;
   private bitIndex: Logic<5> = 0;
   private tickInBit: Logic<6> = 0;
@@ -57,13 +58,13 @@ class Ws2812bDemo extends HardwareModule {
         this.tickInBit = 0;
 
         if (this.colorIndex === 0) {
-          this.frame = 0x001000;
+          this.frame = 0x00ff00;
         } else if (this.colorIndex === 1) {
-          this.frame = 0x100000;
+          this.frame = 0xff0000;
         } else if (this.colorIndex === 2) {
-          this.frame = 0x000010;
+          this.frame = 0x0000ff;
         } else {
-          this.frame = 0x080808;
+          this.frame = 0x404040;
         }
       }
     } else {

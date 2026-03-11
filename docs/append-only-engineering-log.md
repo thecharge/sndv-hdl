@@ -460,3 +460,24 @@
   - `docs/guides/production-reality-check.md` expanded with concrete production scenarios (bring-up, feature demo delivery, release candidate gate).
 - Added automated dependency update config:
   - `.github/dependabot.yml` covering root workspace, `apps/cli`, and all `packages/*` manifests.
+
+## 2026-03-11T23:40:00Z - Post-Restart No-Behavior Debug And Fix
+- User reported: after restart and after reflash, no visible behavior.
+- Applied flash-path hardening for immediate reload after programming:
+  - `packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.ts`
+  - flash command now includes `-r` together with `--external-flash --write-flash --verify`.
+- Added regression assertion:
+  - `packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.test.ts`
+  - verifies `-r` is present in emitted programmer command.
+- Increased WS2812 demo color intensity for clear visibility in ambient light:
+  - `examples/hardware/tang_nano_20k_ws2812b.ts`
+  - color frames moved from low-intensity values to high-intensity values.
+- Revalidated with real flash run:
+  - `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812-visible --flash`
+  - observed lines include:
+    - `openFPGALoader --external-flash --write-flash --verify -r -b tangnano20k ...`
+    - probe row `0x0403:0x6010 FTDI2232 SIPEED`
+    - `write to flash`
+    - `DONE`
+    - `Verifying write (May take time)`
+    - final `Done`

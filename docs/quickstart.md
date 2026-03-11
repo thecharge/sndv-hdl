@@ -40,7 +40,7 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts
 ```
 
 Pass markers in logs:
-- `openFPGALoader --external-flash --write-flash --verify`
+- `openFPGALoader --external-flash --write-flash --verify -r`
 - `write to flash`
 - `Detected: Winbond W25Q64`
 - `Verifying write (May take time)`

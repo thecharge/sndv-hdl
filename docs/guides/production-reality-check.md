@@ -5,7 +5,7 @@ Use this guide to validate real operational readiness, not only compile success.
 ## Hard Pass Criteria
 All must pass:
 - `TURBO_UI=false bun run quality` passes,
-- persistent flash path is used (`--external-flash --write-flash --verify`),
+- persistent flash path is used (`--external-flash --write-flash --verify -r`),
 - blinky behavior is visible,
 - WS2812 behavior is visible,
 - behavior remains after power cycle,
@@ -49,7 +49,7 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts
 ```
 
 Pass:
-- flash output includes `--external-flash --write-flash --verify`,
+- flash output includes `--external-flash --write-flash --verify -r`,
 - output includes `Detected: Winbond W25Q64`,
 - output includes `Verifying write (May take time)` and final `Done`,
 - heartbeat LED toggles,
@@ -89,6 +89,6 @@ Use this exact shape in `docs/append-only-engineering-log.md`:
 ## Fail-Fast Rules
 Stop and fix before continuing if:
 - probe scan is empty,
-- command does not include `--external-flash --write-flash --verify`,
+- command does not include `--external-flash --write-flash --verify -r`,
 - constraints do not map WS2812 to expected board pin,
 - power-cycle loses behavior.
