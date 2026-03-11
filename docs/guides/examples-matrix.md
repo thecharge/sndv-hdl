@@ -13,19 +13,23 @@ flowchart LR
 
 ## Recommended Tang Nano 20K Order
 1. `examples/hardware/tang_nano_20k_led0_solid_on.ts`
-2. `examples/hardware/tang_nano_20k_blinker.ts`
-3. `examples/hardware/usb_jtag_probe_blinker.ts`
-4. `examples/hardware/tang_nano_20k_reset_debug.ts`
-5. `examples/hardware/tang_nano_20k_uart_debug.ts`
-6. `examples/hardware/tang_nano_20k_ws2812b.ts`
+2. `examples/hardware/tang_nano_20k_led_solid_on.ts`
+3. `examples/hardware/tang_nano_20k_blinker.ts`
+4. `examples/hardware/usb_jtag_probe_blinker.ts`
+5. `examples/hardware/tang_nano_20k_reset_debug.ts`
+6. `examples/hardware/tang_nano_20k_uart_debug.ts`
+7. `examples/hardware/tang_nano_20k_ws2812b.ts`
 
 ## Example Intent And Expected Result
 - `examples/hardware/tang_nano_20k_led0_solid_on.ts`
 	- intent: eliminate reset/clock complexity and prove raw output path.
 	- expected: LED0 forced on (active-low board behavior).
+- `examples/hardware/tang_nano_20k_led_solid_on.ts`
+	- intent: drive full LED bus for immediate visual bring-up.
+	- expected: all six active-low LEDs remain on.
 - `examples/hardware/tang_nano_20k_blinker.ts`
-	- intent: prove sequential logic + clock path.
-	- expected: visible periodic LED activity.
+	- intent: refreshed deterministic clock-only blinky (no reset/button dependency).
+	- expected: repeating visible LED phase pattern.
 - `examples/hardware/usb_jtag_probe_blinker.ts`
 	- intent: verify flash/profile loop in parallel with simple LED behavior.
 	- expected: same as blinky with explicit probe-focused workflow.
@@ -36,7 +40,7 @@ flowchart LR
 	- intent: verify serial framing and timing.
 	- expected: stable TX activity suitable for logic analyzer.
 - `examples/hardware/tang_nano_20k_ws2812b.ts`
-	- intent: verify peripheral-style single-wire output.
+	- intent: refreshed timing-based single-pixel WS2812 driver with onboard LED heartbeat.
 	- expected: valid WS2812 waveform on mapped pin and visible strip response when connected.
 
 ## Validation Status

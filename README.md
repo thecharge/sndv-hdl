@@ -85,6 +85,7 @@ If the board flashes successfully but no LED strip effect appears:
 - `docs/guides/board-definition-authoring.md`: complete board definition guide.
 - `docs/guides/tang_nano_20k_programming.md`: Tang Nano 20K flashing runbook.
 - `docs/guides/debugging-and-troubleshooting.md`: end-to-end debug flow and failure signatures.
+- `docs/guides/production-reality-check.md`: production acceptance workflow with proof commands.
 - `docs/guides/programmer-profiles-and-usb-permissions.md`: profile and permission model.
 - `docs/guides/user-usb-debugger-onboarding.md`: practical USB probe onboarding.
 - `docs/guides/examples-matrix.md`: examples, intent, and expected hardware behavior.
@@ -97,6 +98,7 @@ If the board flashes successfully but no LED strip effect appears:
 - `docs/package-inventory.md`: package boundaries and responsibilities.
 - `docs/security-compliance.md`: repository compliance and security posture.
 - `docs/append-only-engineering-log.md`: append-only operational log.
+- `cpu/README_ASSEMBLY.md`: nibble4 CPU architecture and assembly guide.
 
 ## Repository Layout
 - `apps/cli`: CLI argument parsing and command handlers.

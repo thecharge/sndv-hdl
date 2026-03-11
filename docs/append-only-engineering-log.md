@@ -384,3 +384,37 @@
     - `docs/tang_nano_20k_guide.md`
     - `docs/tang_nano_9k_guide.md`
 - Added Mermaid diagrams in new/rewritten docs for flow clarity.
+
+## 2026-03-11T22:45:00Z - Refresh Pass Validation (Blinky/WS2812 + CPU Mermaid)
+- Refreshed hardware examples for practical visibility:
+  - `examples/hardware/tang_nano_20k_blinker.ts` updated to deterministic phase cycling.
+  - `examples/hardware/tang_nano_20k_ws2812b.ts` updated to timing-controlled serial driver with heartbeat LED.
+- Resolved parser subset regression in refreshed WS2812 example:
+  - removed unsupported ternary operator (`? :`) and replaced with explicit `if/else` logic.
+- Added behavior checks for refreshed examples:
+  - `packages/core/src/facades/hardware-examples-behavior.test.ts`
+  - assertions aligned with emitted SV literals (`1'b1`/`1'b0`).
+- Converted CPU architecture docs away from ASCII-only diagrams:
+  - `cpu/README_ASSEMBLY.md` now includes Mermaid architecture and instruction-flow diagrams.
+- Added production gate checklist/runbook:
+  - `docs/guides/production-reality-check.md`
+- Validation commands completed successfully:
+  - `bun test packages/core/src/facades/hardware-examples-compile.test.ts`
+  - `bun test packages/core/src/facades/hardware-examples-behavior.test.ts`
+  - `bun test packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.test.ts`
+- Real WS2812 compile + flash proof (Tang Nano 20K) succeeded with persistent external flash flags:
+  - command: `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k --flash`
+  - observed lines:
+    - `[profile=board-autodetect] ... openFPGALoader --external-flash --write-flash --verify -b tangnano20k ...`
+    - `write to flash`
+    - `DONE`
+    - `Verifying write (May take time)`
+
+## 2026-03-11T22:55:00Z - Full Production Gate Re-check
+- Initial `bun run quality` run failed due lint findings in newly added behavior test (`noNonNullAssertion` + formatting).
+- Applied fix in `packages/core/src/facades/hardware-examples-behavior.test.ts`:
+  - replaced non-null assertion with explicit guard.
+  - aligned formatting to Biome output.
+- Re-ran full gate successfully:
+  - `TURBO_UI=false bun run quality`
+  - typecheck, lint, test, and build all completed successfully.
