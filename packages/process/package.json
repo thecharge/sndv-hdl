@@ -15,6 +15,6 @@
     "@ts2v/types": "workspace:*"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4"
+    "@biomejs/biome": "^2.4.6"
   }
 }
