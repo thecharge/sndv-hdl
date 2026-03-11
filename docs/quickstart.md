@@ -23,6 +23,7 @@ Use this exact mapping for this workspace:
 - power: strip VCC from a valid supply
 
 If ground is not shared, data is invalid even when flash succeeds.
+If strip is powered at 5V and still dark, use a 3.3V->5V logic level shifter on data.
 
 ## 3. Confirm Programmer Visibility
 ```bash
@@ -58,10 +59,12 @@ Run this checklist only:
 2. Confirm strip data wire is on that board pin net.
 3. Confirm common GND between board and strip.
 4. Confirm strip power/current are sufficient.
-5. Reflash once and check for `--external-flash --write-flash --verify` in output.
+5. Reflash once and check for `--external-flash --write-flash --verify -r` in output.
+6. Check `docs/guides/ws2812-protocol-and-brightness.md` for brightness/protocol details.
 
 ## Next Docs
 - `docs/guides/tang_nano_20k_programming.md`
 - `docs/guides/board-definition-authoring.md`
+- `docs/guides/ws2812-protocol-and-brightness.md`
 - `docs/guides/production-reality-check.md`
 - `docs/guides/debugging-and-troubleshooting.md`

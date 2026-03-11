@@ -481,3 +481,20 @@
     - `DONE`
     - `Verifying write (May take time)`
     - final `Done`
+
+## 2026-03-11T23:55:00Z - Board Property Definitions + WS2812 Protocol Clarifications
+- User reported confusion about schematic naming (`IOT27B/GCLKC_0` Bank 0) versus board JSON pin mapping and property semantics (`std`, `drive`, `pull`).
+- Updated `docs/guides/board-definition-authoring.md` with:
+  - explicit pin naming domains and mapping rule:
+    - package pin number is used in board JSON (`pin: "79"`),
+    - schematic alias examples (`IOT27B/GCLKC_0`, bank info) are descriptive labels for the same IO site.
+  - full property reference for `pin`, `std`, `drive`, `pull`, and `freq`.
+- Added new guide:
+  - `docs/guides/ws2812-protocol-and-brightness.md`
+  - clarifies that WS2812 has no separate brightness command channel; brightness is encoded in GRB channel values.
+  - includes practical 3.3V->5V level-shifter guidance for strips that do not accept 3.3V logic reliably.
+- Updated user-facing docs:
+  - `docs/quickstart.md` now includes level-shifter warning and direct link to WS2812 protocol guide.
+  - `docs/guides/debugging-and-troubleshooting.md` now includes level-threshold troubleshooting and WS2812 protocol reference link.
+- Validation:
+  - `TURBO_UI=false bun run quality` passed.

@@ -59,6 +59,70 @@ Example workflow:
 5. Regenerate and inspect constraints.
 6. Run hardware bring-up with a minimal test design.
 
+## Pin Naming Domains (Important)
+Schematic and datasheet often show multiple names for the same IO:
+- package pin number (example: `79`),
+- Gowin IO tile/function name (example: `IOT27B/GCLKC_0`),
+- bank number (example: Bank 0),
+- board net label (example: `PIN79_WS2812`).
+
+In this workspace board JSON, `pin` means the package pin number string.
+
+Example:
+- schematic shows `IOT27B/GCLKC_0` in Bank 0,
+- board net is `PIN79_WS2812`,
+- board JSON entry is `"ws2812": { "pin": "79", ... }`.
+
+This is expected and correct: we map by package pin number, not by the `IOTxx` alias.
+
+## Property Reference (What Each Field Means)
+
+### `pin`
+- Type: string
+- Meaning: physical package pin number
+- Example: `"79"`
+
+### `std`
+- Type: string
+- Meaning: IO electrical standard used in constraints
+- Common Tang Nano 20K value: `LVCMOS33`
+- Why it matters: voltage thresholds, output behavior, and compatibility with attached devices.
+
+### `drive`
+- Type: string (numeric value encoded as text)
+- Meaning: output drive strength for supported vendor constraints
+- Typical values (vendor-dependent): `2`, `4`, `8`, `12`, `16`, `24`
+- Practical guidance:
+  - start with `8` for short traces and typical digital outputs,
+  - increase only if signal edges are too weak,
+  - avoid over-driving long/noisy wiring because ringing can worsen.
+
+### `pull`
+- Type: string
+- Meaning: internal pull resistor behavior
+- Common values: `UP`, `DOWN`, `NONE`
+- Practical guidance:
+  - use `UP` for active-low buttons/reset lines,
+  - avoid setting pull on outputs unless there is a clear reason.
+
+### `freq` (clock entries only)
+- Type: string
+- Meaning: documentation and timing context for clock source
+- Example: `"27MHz"`
+
+## Concrete Example With Definitions
+```json
+{
+  "clocks": {
+    "clk": { "pin": "4", "freq": "27MHz", "std": "LVCMOS33" }
+  },
+  "io": {
+    "rst_n": { "pin": "88", "std": "LVCMOS33", "pull": "UP" },
+    "ws2812": { "pin": "79", "std": "LVCMOS33", "drive": "8" }
+  }
+}
+```
+
 ## Tang Nano 20K Reference Mapping (Current Workspace)
 Based on workspace board definition and schematic-backed updates:
 

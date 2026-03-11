@@ -107,8 +107,12 @@ If bitstream is flashed but strip stays dark:
 - for Tang Nano 20K in this repo, verify `ws2812` is pin `79` (`PIN79_WS2812`),
 - check shared ground,
 - check strip power rail,
+- if strip uses 5V logic threshold, add a 3.3V->5V level shifter on data,
 - check signal timing with logic analyzer,
 - validate first LED is not damaged.
+
+For protocol and brightness behavior details, see:
+- `docs/guides/ws2812-protocol-and-brightness.md`
 
 ## Resource Links
 - openFPGALoader: https://github.com/trabucayre/openFPGALoader
