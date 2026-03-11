@@ -2,7 +2,7 @@
 // Tests the FULL pipeline: valid TypeScript → class-module-compiler → SystemVerilog
 // Run: node --require ts-node/register/transpile-only tests/v1-production.test.ts
 
-import { compileClassModule, ClassModuleParser } from '../src/class-compiler/class-module-compiler';
+import { compileClassModule, ClassModuleParser } from '../packages/core/src/compiler/class-compiler/class-module-compiler';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -480,7 +480,7 @@ test('counter.ts compiles from valid TypeScript', () => {
 console.log('\n9. Board Constraint Generation');
 
 test('tang_nano_20k.board.json generates valid Gowin .cst', () => {
-  const { generateConstraints } = require('../src/constraints/board-constraint-gen');
+  const { generateConstraints } = require('../packages/core/src/compiler/constraints/board-constraint-gen');
   const boardJson = fs.readFileSync(
     path.join(__dirname, '..', 'boards', 'tang_nano_20k.board.json'),
     'utf-8',

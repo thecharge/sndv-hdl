@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { compileClassModule, ClassModuleParser } from '../src/class-compiler/class-module-compiler';
+import { compileClassModule, ClassModuleParser } from '../packages/core/src/compiler/class-compiler/class-module-compiler';
 
 describe('v1.0.0: Regex-Free Assignment Parsing', () => {
 

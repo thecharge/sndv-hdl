@@ -1,7 +1,7 @@
 // Integration tests: full pipeline from TypeScript source to Verilog output.
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { CompilerPipeline } from '../src/pipeline/compiler-pipeline';
+import { CompilerPipeline } from '../packages/core/src/compiler/pipeline/compiler-pipeline';
 
 const pipeline = new CompilerPipeline();
 

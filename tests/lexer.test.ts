@@ -1,9 +1,9 @@
 // Unit tests for the Lexer stage.
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { Lexer } from '../src/lexer/lexer';
-import { TokenKind } from '../src/lexer/token';
-import { CompilerError } from '../src/errors/compiler-error';
+import { Lexer } from '../packages/core/src/compiler/lexer/lexer';
+import { TokenKind } from '../packages/core/src/compiler/lexer/token';
+import { CompilerError } from '../packages/core/src/compiler/errors/compiler-error';
 
 // Helper: tokenize and return kinds (excluding EOF).
 function tokenKinds(source: string): TokenKind[] {

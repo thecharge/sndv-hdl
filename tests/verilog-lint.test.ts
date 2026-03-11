@@ -3,8 +3,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CompilerPipeline } from '../src/pipeline/compiler-pipeline';
-import { lintVerilog, LintDiagnostic } from '../src/lint/verilog-linter';
+import { CompilerPipeline } from '../packages/core/src/compiler/pipeline/compiler-pipeline';
+import { lintVerilog, LintDiagnostic } from '../packages/core/src/compiler/lint/verilog-linter';
 
 const EXAMPLES_DIR = path.join(__dirname, '..', 'examples');
 const pipeline = new CompilerPipeline();

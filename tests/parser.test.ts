@@ -1,13 +1,13 @@
 // Unit tests for the Parser stage.
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { Lexer } from '../src/lexer/lexer';
-import { Parser } from '../src/parser/parser';
+import { Lexer } from '../packages/core/src/compiler/lexer/lexer';
+import { Parser } from '../packages/core/src/compiler/parser/parser';
 import {
   AstNodeKind, TypeName, ProgramNode, FunctionDeclarationNode,
   BinaryExpressionNode, IdentifierNode, NumberLiteralNode,
-} from '../src/parser/ast';
-import { CompilerError } from '../src/errors/compiler-error';
+} from '../packages/core/src/compiler/parser/ast';
+import { CompilerError } from '../packages/core/src/compiler/errors/compiler-error';
 
 // Helper: parse source into a ProgramNode.
 function parseSource(source: string): ProgramNode {

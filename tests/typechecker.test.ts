@@ -1,11 +1,11 @@
 // Unit tests for the TypeChecker stage.
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { Lexer } from '../src/lexer/lexer';
-import { Parser } from '../src/parser/parser';
-import { TypeChecker, CheckedFunction } from '../src/typechecker/typechecker';
-import { DEFAULT_BIT_WIDTH, BOOLEAN_BIT_WIDTH } from '../src/constants/defaults';
-import { CompilerError } from '../src/errors/compiler-error';
+import { Lexer } from '../packages/core/src/compiler/lexer/lexer';
+import { Parser } from '../packages/core/src/compiler/parser/parser';
+import { TypeChecker, CheckedFunction } from '../packages/core/src/compiler/typechecker/typechecker';
+import { DEFAULT_BIT_WIDTH, BOOLEAN_BIT_WIDTH } from '../packages/core/src/compiler/constants/defaults';
+import { CompilerError } from '../packages/core/src/compiler/errors/compiler-error';
 
 // Helper: type-check source and return checked functions.
 function checkSource(source: string): CheckedFunction[] {

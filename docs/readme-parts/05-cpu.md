@@ -56,8 +56,8 @@ A complete 4-bit dual-core SoC written in TypeScript and compiled through ts2v. 
 
 ```bash
 # Compile the CPU
-npx ts-node src/cli.ts compile cpu/ts/nibble4_core.ts -o cpu/build/nibble4_core.sv
-npx ts-node src/cli.ts compile cpu/ts/nibble4_soc.ts  -o cpu/build/nibble4_soc.sv
+bun run apps/cli/src/index.ts compile cpu/ts/nibble4_core.ts --out cpu/build --board configs/tang_nano_9k.board.json
+bun run apps/cli/src/index.ts compile cpu/ts/nibble4_soc.ts --out cpu/build --board configs/tang_nano_9k.board.json
 
 # Run testbench (requires iverilog)
 iverilog -g2012 -o cpu/build/sim \

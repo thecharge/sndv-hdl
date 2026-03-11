@@ -1,7 +1,7 @@
 // Unit tests for compiler configuration.
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { BASE_CONFIG, mergeConfig, parseConfigOverlay } from '../src/config/compiler-config';
+import { BASE_CONFIG, mergeConfig, parseConfigOverlay } from '../packages/core/src/compiler/config/compiler-config';
 
 describe('CompilerConfig', () => {
   describe('BASE_CONFIG defaults', () => {

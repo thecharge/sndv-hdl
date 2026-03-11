@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { compileClassModule, ClassModuleParser, ClassModuleEmitter } from '../src/class-compiler/class-module-compiler';
-import { generateConstraints, BoardDefinition } from '../src/constraints/board-constraint-gen';
+import { compileClassModule, ClassModuleParser, ClassModuleEmitter } from '../packages/core/src/compiler/class-compiler/class-module-compiler';
+import { generateConstraints, BoardDefinition } from '../packages/core/src/compiler/constraints/board-constraint-gen';
 
 describe('ClassModuleCompiler', () => {
 

@@ -3,9 +3,9 @@
 The compiler generates vendor-specific constraint files from `board.json`.
 
 ```bash
-npx ts-node src/cli.ts build src/ --out build/ --board configs/tang_nano_9k.board.json  # → .cst
-npx ts-node src/cli.ts build src/ --out build/ --board configs/arty_a7.board.json       # → .xdc
-npx ts-node src/cli.ts build src/ --out build/ --board configs/de10_nano.board.json     # → .qsf
+bun run apps/cli/src/index.ts compile examples/blinker.ts --out build --board configs/tang_nano_9k.board.json  # → .cst
+bun run apps/cli/src/index.ts compile examples/blinker.ts --out build --board configs/arty_a7.board.json       # → .xdc
+bun run apps/cli/src/index.ts compile examples/blinker.ts --out build --board configs/de10_nano.board.json     # → .qsf
 ```
 
 ### Supported Vendors

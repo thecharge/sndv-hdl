@@ -3,16 +3,16 @@
 
 ```bash
 # Install
-npm install
+bun install
 
 # Run all 370 tests
-npm test
+bun run test
 
 # Compile a TypeScript hardware module to SystemVerilog
-npx ts-node src/cli.ts compile cpu/ts/nibble4_core.ts -o cpu/build/nibble4_core.sv
+bun run apps/cli/src/index.ts compile cpu/ts/nibble4_core.ts --out cpu/build --board configs/tang_nano_9k.board.json
 
 # Generate board constraints from board.json
-npx ts-node src/cli.ts constraints boards/tang_nano_9k.board.json -o constraints/
+bun run apps/cli/src/index.ts compile cpu/ts/nibble4_core.ts --out cpu/build --board configs/tang_nano_9k.board.json
 
 # Run hardware testbenches (requires iverilog)
 bash scripts/run-testbenches.sh

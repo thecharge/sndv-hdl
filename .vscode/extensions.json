@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "oven.bun-vscode",
+    "ms-vscode.makefile-tools",
+    "tamasfe.even-better-toml"
+  ]
+}

@@ -39,7 +39,16 @@
     }
   },
   "files": {
-    "include": ["src/**/*.ts", "tests/**/*.ts", "examples/**/*.ts"],
-    "ignore": ["node_modules", "dist", "build", "cpu"]
+    "include": [
+      "apps/**/*.ts",
+      "packages/**/*.ts",
+      "scripts/**/*.ts",
+      "src/**/*.ts",
+      "tests/**/*.ts",
+      "examples/**/*.ts",
+      "*.json",
+      "*.md"
+    ],
+    "ignore": ["node_modules", "dist", "build", "cpu", ".artifacts", ".turbo"]
   }
 }

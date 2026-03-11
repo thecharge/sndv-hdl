@@ -2,9 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
+    "moduleResolution": "node",
     "lib": ["ES2022"],
-    "outDir": "dist",
-    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -15,11 +14,14 @@
     "emitDecoratorMetadata": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "baseUrl": ".",
     "paths": {
-      "ts2v/runtime": ["src/runtime/index"]
-    },
-    "baseUrl": "."
+      "@ts2v/types": ["packages/types/src/index.ts"],
+      "@ts2v/config": ["packages/config/src/index.ts"],
+      "@ts2v/process": ["packages/process/src/index.ts"],
+      "@ts2v/core": ["packages/core/src/index.ts"],
+      "@ts2v/toolchain": ["packages/toolchain/src/index.ts"]
+    }
   },
-  "include": ["src/**/*", "tests/**/*", "examples/hardware/**/*"],
-  "exclude": ["node_modules", "dist", "build", "cpu"]
+  "exclude": ["node_modules", "dist", "build", ".turbo"]
 }

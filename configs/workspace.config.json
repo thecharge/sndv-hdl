@@ -1,0 +1,62 @@
+{
+  "defaultBoardId": "tang_nano_20k",
+  "artifactsDirectoryPath": ".artifacts",
+  "container": {
+    "image": "ts2v-gowin-oss:latest",
+    "workDirectory": "/workspace",
+    "runtimePriority": ["podman", "docker"],
+    "usbDevicePaths": ["/dev/bus/usb"],
+    "binaries": {
+      "yosys": "yosys",
+      "nextpnr": "nextpnr-himbaechel",
+      "gowinPack": "gowin_pack",
+      "programmer": "openFPGALoader"
+    }
+  },
+  "boards": [
+    {
+      "id": "tang_nano_20k",
+      "vendor": "gowin",
+      "family": "GW2A",
+      "part": "GW2AR-LV18QN88C8/I7",
+      "package": "QN88",
+      "programmer": "openFPGALoader",
+      "pnrDevice": "GW2A-18C",
+      "constraintFileExtension": ".cst",
+      "programmerProfiles": [
+        {
+          "name": "board-autodetect",
+          "extraArgs": []
+        },
+        {
+          "name": "usi-cmsisdap",
+          "cable": "cmsisdap",
+          "vid": "0x10ab",
+          "pid": "0x9309"
+        },
+        {
+          "name": "goodix-cmsisdap-candidate",
+          "cable": "cmsisdap",
+          "vid": "0x27c6",
+          "pid": "0x6594"
+        },
+        {
+          "name": "ftdi-ch552-jtag",
+          "cable": "ch552_jtag",
+          "vid": "0x0403",
+          "pid": "0x6010"
+        }
+      ]
+    },
+    {
+      "id": "tang_nano_9k",
+      "vendor": "gowin",
+      "family": "GW1NR",
+      "part": "GW1NR-LV9QN88PC6/I5",
+      "package": "QN88",
+      "programmer": "openFPGALoader",
+      "pnrDevice": "GW1N-9C",
+      "constraintFileExtension": ".cst"
+    }
+  ]
+}

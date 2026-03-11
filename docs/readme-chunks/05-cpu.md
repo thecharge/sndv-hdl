@@ -44,7 +44,7 @@ A 4-bit dual-core CPU written in TypeScript, compiled through ts2v to synthesiza
 ### Compile
 
 ```bash
-npx ts-node src/cli.ts build cpu/ts/ --out cpu/build/ --board configs/tang_nano_9k.board.json
+bun run apps/cli/src/index.ts compile cpu/ts/ --out cpu/build --board configs/tang_nano_9k.board.json
 ```
 
 ### Simulate (iverilog)

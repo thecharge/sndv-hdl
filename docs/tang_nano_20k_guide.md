@@ -14,7 +14,7 @@ it running on real silicon — specifically the Tang Nano 20K.
 
 ```bash
 git clone <repo> && cd ts2v
-npm install
+bun install
 ```
 
 ### Write Hardware
@@ -38,7 +38,7 @@ class Counter extends Module {
 ### Compile
 
 ```bash
-npx ts-node src/cli.ts compile my_counter.ts -o build/counter.sv
+bun run apps/cli/src/index.ts compile my_counter.ts --out build --board boards/tang_nano_20k.board.json
 ```
 
 Output:
@@ -238,7 +238,7 @@ assert (val < 200);
 Run:
 
 ```bash
-npx ts-node src/cli.ts constrain boards/tang_nano_20k.board.json
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --out .artifacts/tang20k --board boards/tang_nano_20k.board.json
 ```
 
 Produces `constraints/tang_nano_20k.cst`:
@@ -480,7 +480,7 @@ openFPGALoader -b tangnano20k build/blinker.fs
 1. Create `boards/my_board.board.json` following the schema above
 2. Set `vendor` to `gowin`, `xilinx`, `intel`, or `lattice`
 3. Map your clock, reset, and I/O pins
-4. Run: `npx ts-node src/cli.ts constrain boards/my_board.board.json`
+4. Run: `bun run apps/cli/src/index.ts compile <input.ts> --out <dir> --board boards/my_board.board.json`
 5. The constraint generator outputs the correct format (.cst, .xdc, .qsf, or .lpf)
 
 ---
@@ -489,7 +489,7 @@ openFPGALoader -b tangnano20k build/blinker.fs
 
 ```bash
 # Run all 383 tests
-npm test
+bun run test
 
 # Run only v1.0.0 feature tests
 node --require ./node_modules/ts-node/register/transpile-only \

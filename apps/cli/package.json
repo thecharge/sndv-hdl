@@ -1,0 +1,26 @@
+{
+  "name": "@ts2v/cli",
+  "version": "2.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "ts2v": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "dev": "bun run src/index.ts compile examples/blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k",
+    "lint": "bunx biome check src",
+    "test": "rm -rf dist && bun test src --pass-with-no-tests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@ts2v/core": "workspace:*",
+    "@ts2v/toolchain": "workspace:*",
+    "@ts2v/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4"
+  }
+}

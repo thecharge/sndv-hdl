@@ -4,7 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { CompilerPipeline } from '../src/pipeline/compiler-pipeline';
+import { CompilerPipeline } from '../packages/core/src/compiler/pipeline/compiler-pipeline';
 
 const EXAMPLES_DIR = path.join(__dirname, '..', 'examples');
 const BUILD_DIR = path.join(__dirname, '..', 'build');

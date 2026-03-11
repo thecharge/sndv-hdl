@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert/strict';
 import * as fs from 'fs';
-import { compileClassModule } from '../src/class-compiler/class-module-compiler';
+import { compileClassModule } from '../packages/core/src/compiler/class-compiler/class-module-compiler';
 
 describe('CPU TypeScript -> SystemVerilog', () => {
   describe('nibble4_core.ts compilation', () => {

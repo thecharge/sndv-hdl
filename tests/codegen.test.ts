@@ -1,7 +1,7 @@
 // Unit tests for the VerilogEmitter (code generation) stage.
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { CompilerPipeline } from '../src/pipeline/compiler-pipeline';
+import { CompilerPipeline } from '../packages/core/src/compiler/pipeline/compiler-pipeline';
 
 // Helper: compile source and return Verilog output.
 function compileToVerilog(source: string): string {
