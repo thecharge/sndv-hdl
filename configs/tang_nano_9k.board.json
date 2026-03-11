@@ -1,0 +1,42 @@
+{
+  "project": {
+    "name": "tang_nano_9k_project"
+  },
+  "hardware": {
+    "default_bit_width": 32,
+    "timescale": "1ns / 1ps"
+  },
+  "board": {
+    "vendor": "gowin",
+    "family": "GW1NR",
+    "part": "GW1NR-LV9QN88PC6/I5",
+    "package": "QFN88",
+    "clock_frequency_in_mhz": 27,
+    "toolchain": "gowin_eda",
+    "constraint_format": "cst",
+    "pins": {
+      "sys_clk": "52",
+      "sys_rst_n": "4",
+      "led_0": "10",
+      "led_1": "11",
+      "led_2": "13",
+      "led_3": "14",
+      "led_4": "15",
+      "led_5": "16",
+      "button_s1": "3",
+      "button_s2": "4",
+      "uart_tx": "17",
+      "uart_rx": "18",
+      "flash_sclk": "59",
+      "flash_cs": "60",
+      "flash_mosi": "61",
+      "flash_miso": "62",
+      "lcd_clk": "35",
+      "lcd_de": "33",
+      "lcd_hsync": "34",
+      "lcd_vsync": "40"
+    },
+    "io_standard": "LVCMOS33",
+    "notes": "Tang Nano 9K uses Gowin GW1NR-9C FPGA. 27MHz onboard oscillator. 6 user LEDs active-low. Program via openFPGALoader or Gowin Programmer."
+  }
+}

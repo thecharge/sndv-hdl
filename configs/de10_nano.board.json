@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "de10_nano_project"
+  },
+  "hardware": {
+    "default_bit_width": 32,
+    "timescale": "1ns / 1ps"
+  },
+  "board": {
+    "vendor": "intel",
+    "family": "cyclone_v",
+    "part": "5CSEBA6U23I7",
+    "clock_frequency_in_mhz": 50,
+    "pins": {
+      "sys_clk": "V11",
+      "led_0": "W15",
+      "led_1": "AA24",
+      "led_2": "V16",
+      "led_3": "V15",
+      "switch_0": "AB12",
+      "switch_1": "AC12",
+      "key_0": "AH17",
+      "key_1": "AH16"
+    }
+  }
+}

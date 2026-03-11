@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "arty_a7_project"
+  },
+  "hardware": {
+    "default_bit_width": 32,
+    "timescale": "1ns / 1ps"
+  },
+  "board": {
+    "vendor": "xilinx",
+    "family": "artix7",
+    "part": "xc7a35ticsg324-1L",
+    "clock_frequency_in_mhz": 100,
+    "pins": {
+      "sys_clk": "E3",
+      "led_0": "H5",
+      "led_1": "J5",
+      "led_2": "T9",
+      "led_3": "T10",
+      "button_0": "D9",
+      "button_1": "C9",
+      "uart_rx": "A9",
+      "uart_tx": "D10"
+    }
+  }
+}

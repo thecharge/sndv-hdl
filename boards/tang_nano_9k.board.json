@@ -1,0 +1,16 @@
+{
+  "vendor": "gowin",
+  "family": "GW1NR-9C",
+  "part": "GW1NR-LV9QN88PC6/I5",
+  "clocks": {
+    "clk": { "pin": "52", "freq": "27MHz", "std": "LVCMOS33" }
+  },
+  "io": {
+    "rst_n":  { "pin": "4",  "std": "LVCMOS33", "pull": "UP" },
+    "uart_tx": { "pin": "17", "std": "LVCMOS33", "drive": "8" },
+    "led[0]": { "pin": "10", "std": "LVCMOS33" },
+    "led[1]": { "pin": "11", "std": "LVCMOS33" },
+    "led[2]": { "pin": "13", "std": "LVCMOS33" },
+    "led[3]": { "pin": "14", "std": "LVCMOS33" }
+  }
+}

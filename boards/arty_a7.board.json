@@ -1,0 +1,16 @@
+{
+  "vendor": "xilinx",
+  "family": "artix7",
+  "part": "xc7a35ticsg324-1L",
+  "clocks": {
+    "clk": { "pin": "E3", "freq": "100MHz", "std": "LVCMOS33" }
+  },
+  "io": {
+    "rst_n":  { "pin": "C2",  "std": "LVCMOS33" },
+    "uart_tx": { "pin": "D10", "std": "LVCMOS33" },
+    "led[0]": { "pin": "H5",  "std": "LVCMOS33" },
+    "led[1]": { "pin": "J5",  "std": "LVCMOS33" },
+    "led[2]": { "pin": "T9",  "std": "LVCMOS33" },
+    "led[3]": { "pin": "T10", "std": "LVCMOS33" }
+  }
+}
