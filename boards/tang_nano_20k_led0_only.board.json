@@ -1,0 +1,11 @@
+{
+  "vendor": "gowin",
+  "family": "GW2A-18C",
+  "part": "GW2AR-LV18QN88C8/I7",
+  "clocks": {
+    "clk": { "pin": "4", "freq": "27MHz", "std": "LVCMOS33" }
+  },
+  "io": {
+    "led": { "pin": "15", "std": "LVCMOS33" }
+  }
+}

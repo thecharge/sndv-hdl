@@ -1,115 +1,73 @@
 # Hardware Toolchain Guide
 
-## Scope
-This repository uses a reproducible open-source flow for Tang Nano boards:
-1. `yosys` synthesis with `synth_gowin`
-2. `nextpnr-himbaechel` place-and-route
-3. `gowin_pack` bitstream generation
-4. `openFPGALoader` device programming
+This document describes the production hardware pipeline used by this repository.
 
-## Target Boards
-- Tang Nano 20K: `GW2AR-LV18QN88C8/I7`
-- Tang Nano 9K: `GW1NR-LV9QN88PC6/I5`
+## Toolchain Stages
+```mermaid
+sequenceDiagram
+  participant CLI as ts2v CLI
+  participant CORE as Compiler Core
+  participant CFG as Board Definition
+  participant SYN as Synthesis Container
+  participant PRG as Programmer
+  CLI->>CORE: compile input TypeScript
+  CORE->>CFG: resolve board definition
+  CORE-->>CLI: emit .sv + constraints + manifest
+  CLI->>SYN: run yosys + nextpnr-himbaechel + gowin_pack
+  SYN-->>CLI: emit .fs bitstream
+  CLI->>PRG: openFPGALoader external flash write+verify
+  PRG-->>CLI: programming result
+```
 
-## Container Strategy
-- Primary runtime: `podman`
-- Fallback runtime: `docker`
-- Config source: `configs/workspace.config.json`
-- Image tag used by default: `ts2v-gowin-oss:latest`
+## Core Components
+- `yosys`: synthesis (`synth_gowin`)
+- `nextpnr-himbaechel`: place-and-route
+- `gowin_pack`: bitstream generation
+- `openFPGALoader`: board programming
 
-This repo no longer depends on `ghcr.io/yosyshq/oss-cad-suite` pull behavior.
+## Runtime Model
+- Preferred runtime: Podman
+- Fallback runtime: Docker
+- Runtime/image settings source: `configs/workspace.config.json`
 
-## Build the Toolchain Image
+## Build Toolchain Image
 ```bash
 bun run toolchain:image:build
 ```
 
-Runtime-specific:
+## Compile + Flash (Tang Nano 20K)
 ```bash
-bun run toolchain:image:build:podman
-bun run toolchain:image:build:docker
-```
-
-Dockerfile source: `toolchain/Dockerfile`
-
-## End-to-End Compile + Flash
-```bash
-bun run apps/cli/src/index.ts compile examples/blinker.ts \
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts \
   --board boards/tang_nano_20k.board.json \
   --out .artifacts/tang20k \
   --flash
 ```
 
-Generated artifacts are in `.artifacts/tang20k`.
+## Expected Programmer Mode
+Default path for Tang Nano 20K is explicit persistent mode:
+- `--external-flash --write-flash --verify`
 
-## Tang Nano 20K Programming Sequence
-Use the board's S2/program mode workflow first, then validate probe visibility before flashing.
-
+## USB Probe Validation
+Always run before concluding flash is broken:
 ```bash
 lsusb
 podman run --rm --device /dev/bus/usb ts2v-gowin-oss:latest openFPGALoader --scan-usb
 ```
 
-When a probe is visible, flash with:
+## Failure Boundaries
+- Compile failures: source/parser/type issues.
+- Synthesis/place failures: top module / constraints / device mismatch.
+- Flash failures: permissions, probe profile, cable, board mode.
+- No visible behavior after successful flash: pin mapping, polarity, board variant mismatch.
 
-```bash
-podman run --rm -v "$PWD:/workspace" -w /workspace --device /dev/bus/usb \
-  ts2v-gowin-oss:latest openFPGALoader -b tangnano20k .artifacts/tang20k/tang_nano_20k_blinker.fs
-```
-
-If `openFPGALoader --scan-usb` returns an empty table, do not attempt flash yet. Re-enter board programming mode and re-check.
-
-## Programmer Profile Automation
-Flash now supports profile-based retries configured in `configs/workspace.config.json` per board.
-
-Example board config snippet:
-```json
-"programmerProfiles": [
-  {
-    "name": "board-autodetect",
-    "extraArgs": []
-  },
-  {
-    "name": "usi-cmsisdap",
-    "cable": "cmsisdap",
-    "vid": "0x10ab",
-    "pid": "0x9309"
-  }
-]
-```
-
-Behavior:
-1. Tries board autodetect
-2. Tries each configured profile
-3. Logs each profile command and scan output
-
-See full field mapping and workflow in:
+## Deep Dive Guides
+- `docs/guides/board-definition-authoring.md`
+- `docs/guides/tang_nano_20k_programming.md`
+- `docs/guides/debugging-and-troubleshooting.md`
 - `docs/guides/programmer-profiles-and-usb-permissions.md`
-- `docs/guides/user-usb-debugger-onboarding.md`
 
-## USB Access Notes
-The container command maps `/dev/bus/usb` by default via `usbDevicePaths` in `configs/workspace.config.json`.
-
-Important:
-- Host `lsusb` visibility does not imply container probe visibility.
-- Container and host permission models differ.
-- If `--scan-usb` is empty in container, fix host permissions/rules first, then retry profile attempts.
-
-If programmer access still fails:
-- Verify probe visibility: `lsusb`
-- Verify openFPGALoader USB scan: `openFPGALoader --scan-usb`
-- Ensure user permissions for USB device nodes
-- Retry with elevated runtime permissions only if required by host policy
-
-## Verified External Resources
-- Lushay Labs Tang Nano setup: https://learn.lushaylabs.com/getting-setup-with-the-tang-nano-9k/
+## Reference Links
 - Yosys: https://yosyshq.net/yosys/
 - nextpnr: https://github.com/YosysHQ/nextpnr
 - Apicula/gowin_pack: https://github.com/YosysHQ/apicula
 - openFPGALoader: https://github.com/trabucayre/openFPGALoader
-- Podman docs: https://podman.io/docs
-- Docker docs: https://docs.docker.com/
-
-## Explicitly Avoided
-- `hdl.github.io/containers` (abandoned)
-- Non-existent or access-denied prebuilt images as the only dependency path

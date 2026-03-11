@@ -391,13 +391,14 @@ export class ClassModuleParser {
     let width = 32;
     let is_array = false;
     let array_size = 0;
-    const type_name = this.advance().value;
+    const type_token = this.advance();
+    const type_name = type_token.value;
 
     if (type_name === 'Logic' || type_name === 'Int') {
       // Logic<N>
       if (this.check(TokenKind.LessThan)) {
         this.advance();
-        width = parseInt(this.advance().value, 10);
+        width = this.parsePositiveInteger(this.advance(), 'bit width');
         this.expect(TokenKind.GreaterThan);
       }
     } else if (type_name === 'boolean' || type_name === 'Bit' || type_name === 'Uint1') {
@@ -417,6 +418,11 @@ export class ClassModuleParser {
     } else if (type_name === 'PwmCore' || type_name === 'HardwareModule') {
       // Submodule type or base class — default width, submodule handled elsewhere
       width = 1;
+    } else {
+      const uint_match = /^(?:Uint|UInt)(\d+)$/.exec(type_name);
+      if (uint_match) {
+        width = this.parsePositiveIntegerLiteral(uint_match[1], type_token, 'bit width');
+      }
     }
 
     // Check for array: []
@@ -426,12 +432,24 @@ export class ClassModuleParser {
       if (this.check(TokenKind.RightBracket)) {
         this.advance();
       } else {
-        array_size = parseInt(this.advance().value, 10);
+        array_size = this.parsePositiveInteger(this.advance(), 'array size');
         this.expect(TokenKind.RightBracket);
       }
     }
 
     return { width, is_array, array_size };
+  }
+
+  private parsePositiveInteger(token: Token, field_name: string): number {
+    return this.parsePositiveIntegerLiteral(token.value, token, field_name);
+  }
+
+  private parsePositiveIntegerLiteral(value: string, token: Token, field_name: string): number {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new Error(`Expected positive integer ${field_name} but got "${value}" at line ${token.line}, col ${token.column}`);
+    }
+    return parsed;
   }
 
   private parseMethod(decorator: DecoratorAST | null): MethodAST {
@@ -549,21 +567,29 @@ export class ClassModuleParser {
     this.expect(TokenKind.LeftParen);
     const condition = this.collectBalanced(TokenKind.LeftParen, TokenKind.RightParen);
     this.expect(TokenKind.RightParen);
-    this.expect(TokenKind.LeftBrace);
-    const then_body = this.parseStatements();
-    this.expect(TokenKind.RightBrace);
+    const then_body = this.parseStatementBlockOrSingle();
     let else_body: StatementAST[] | null = null;
     if (this.check(TokenKind.Else)) {
       this.advance();
       if (this.check(TokenKind.If)) {
         else_body = [this.parseIf()];
       } else {
-        this.expect(TokenKind.LeftBrace);
-        else_body = this.parseStatements();
-        this.expect(TokenKind.RightBrace);
+        else_body = this.parseStatementBlockOrSingle();
       }
     }
     return { kind: 'if', condition, then_body, else_body };
+  }
+
+  private parseStatementBlockOrSingle(): StatementAST[] {
+    if (this.check(TokenKind.LeftBrace)) {
+      this.advance();
+      const body = this.parseStatements();
+      this.expect(TokenKind.RightBrace);
+      return body;
+    }
+
+    const statement = this.parseStatement();
+    return statement ? [statement] : [];
   }
 
   private parseSwitch(): SwitchAST {

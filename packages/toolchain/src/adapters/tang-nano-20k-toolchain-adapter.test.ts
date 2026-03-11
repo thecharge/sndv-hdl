@@ -27,7 +27,7 @@ class RecordingRunner implements ProcessRunner {
 }
 
 describe('TangNano20kToolchainAdapter', () => {
-  test('flash uses explicit write-flash and verify flags', async () => {
+  test('flash uses explicit external-flash write and verify flags', async () => {
     const processRunner = new RecordingRunner();
     const workspaceConfiguration: WorkspaceConfiguration = {
       defaultBoardId: SupportedBoardId.TangNano20k,
@@ -79,6 +79,7 @@ describe('TangNano20kToolchainAdapter', () => {
     const flashCommand = processRunner.commands[0];
     const shellCommand = flashCommand.args[flashCommand.args.length - 1] ?? '';
 
+    expect(shellCommand.includes('--external-flash')).toBe(true);
     expect(shellCommand.includes('--write-flash')).toBe(true);
     expect(shellCommand.includes('--verify')).toBe(true);
     expect(shellCommand.includes('-b tangnano20k')).toBe(true);

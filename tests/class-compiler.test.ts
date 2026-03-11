@@ -112,6 +112,27 @@ describe('ClassModuleCompiler', () => {
       assert.ok(result.systemverilog.includes('y = a'));
       assert.ok(result.systemverilog.includes('y = b'));
     });
+
+    it('parses single-statement if/else without braces', () => {
+      const result = compileClassModule(`
+        class NoBraceIf extends Module {
+          @Input sel: Logic<1>;
+          @Input a: Logic<8>;
+          @Input b: Logic<8>;
+          @Output y: Logic<8> = 0;
+          @Combinational
+          route() {
+            if (this.sel) this.y = this.a;
+            else this.y = this.b;
+          }
+        }
+      `);
+      assert.ok(result.success, result.errors.join(', '));
+      assert.ok(result.systemverilog.includes('always_comb'));
+      assert.ok(result.systemverilog.includes('if (sel)'));
+      assert.ok(result.systemverilog.includes('y = a'));
+      assert.ok(result.systemverilog.includes('y = b'));
+    });
   });
 
   describe('switch/case', () => {
@@ -176,6 +197,22 @@ describe('ClassModuleCompiler', () => {
       assert.ok(result.success);
       assert.ok(result.systemverilog.includes('input  wire logic clk'));
       assert.ok(result.systemverilog.includes('input  wire logic rst_n'));
+    });
+
+    it('supports UintN and UIntN widths above 64 bits', () => {
+      const result = compileClassModule(`
+        class WideBus extends Module {
+          @Input lhs: Uint128;
+          @Input rhs: UInt256;
+          @Output out: Logic<256> = 0;
+          @Combinational
+          sum() { this.out = this.rhs + this.lhs; }
+        }
+      `);
+      assert.ok(result.success, result.errors.join(', '));
+      assert.ok(result.systemverilog.includes('input  wire logic [127:0] lhs'));
+      assert.ok(result.systemverilog.includes('input  wire logic [255:0] rhs'));
+      assert.ok(result.systemverilog.includes('output      logic [255:0] out'));
     });
   });
 

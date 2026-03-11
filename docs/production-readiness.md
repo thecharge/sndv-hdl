@@ -1,23 +1,39 @@
-# Production Readiness Review
+# Production Readiness
 
-## Strengths
-- Bun-based monorepo with Turbo orchestration.
-- Centralized types and configuration packages.
-- Pattern-based architecture enforced in new packages.
-- Quality gate command available and passing.
+This document defines what "production-ready" means for this repository.
 
-## Gaps
-- Full hardware programming proof is blocked by unavailable public container image pull in current environment.
-- USB probe visibility for board programming is not yet confirmed from host.
-- Legacy monolith internals still exist and are currently wrapped by adapter, not fully rewritten.
+## Definition
+Production-ready means:
+- compiler and toolchain pass quality gates,
+- board programming flow is reproducible,
+- behavior is validated on real hardware,
+- runbooks exist for common failure modes.
 
-## Roast Report
-- The old codebase had a 1296-line class compiler file, violating maintainability constraints.
-- Prior scripts depended on ts-node/Node and lacked clear package boundaries.
-- Documentation overstated environment assumptions without command-level evidence.
+## Readiness Gates
+1. `bun run quality` passes.
+2. compile command generates all expected artifacts.
+3. flash command uses persistent external write + verify.
+4. power-cycle behavior is confirmed for validated examples.
+5. docs/runbooks are up to date and operational.
 
-## Exit Criteria For Production Signoff
-1. Publicly accessible and reproducible OSS container image path is finalized.
-2. Host USB/JTAG permissions and probe detection are validated.
-3. Tang Nano 20K is flashed with generated bitstream and observable behavior validated.
-4. Legacy class compiler is split into bounded modules under the same pattern rules.
+## Compiler Policy
+- No hard cap on source line count.
+- No hard cap on bit width (`Logic<N>`, `UintN`, `UIntN` use positive integer widths).
+- No hard cap on explicit array size (positive integer required).
+- Real upper bounds are tool capacity, timing closure, and target silicon resources.
+
+## Toolchain Policy
+- Required pipeline: Yosys -> nextpnr-himbaechel -> gowin_pack -> openFPGALoader.
+- Programming mode for Tang Nano 20K must be explicit external flash write + verify.
+
+## Hardware Validation Policy
+- Do not claim production if only simulation passed.
+- Do not claim persistence if power-cycle was not tested.
+- Keep append-only command evidence in `docs/append-only-engineering-log.md`.
+
+## Required Operations Documentation
+- quickstart from zero,
+- board definition authoring,
+- programming runbook,
+- troubleshooting runbook,
+- external resource links.

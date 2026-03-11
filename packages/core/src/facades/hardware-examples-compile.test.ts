@@ -12,6 +12,7 @@ describe('Hardware examples compile', () => {
     'examples/hardware/usb_jtag_probe_blinker.ts',
     'examples/hardware/tang_nano_20k_reset_debug.ts',
     'examples/hardware/tang_nano_20k_uart_debug.ts',
+    'examples/hardware/tang_nano_20k_ws2812b.ts',
   ];
 
   for (const examplePath of examples) {

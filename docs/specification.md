@@ -130,5 +130,5 @@ Each layer merges on top of the previous using shallow section merge.
 - Generated Verilog is syntactically valid
 - Test suite covers all supported constructs
 - No hardcoded values in source (extracted to constants)
-- Max 200 lines per source file
+- No compiler-imposed hard cap on source file length, bit width, or fixed array size
 - Explicit naming with units where applicable

@@ -1,6 +1,8 @@
 export type {
   Logic,
   Bit,
+  Uint,
+  UInt,
   Uint1,
   Uint2,
   Uint4,

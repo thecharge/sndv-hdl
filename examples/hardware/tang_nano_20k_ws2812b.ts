@@ -49,12 +49,19 @@ class Ws2812bDemo extends HardwareModule {
       this.ws2812 = 0;
     }
 
-    if (this.phase === 0) this.led = 0x3e;
-    else if (this.phase === 1) this.led = 0x3d;
-    else if (this.phase === 2) this.led = 0x3b;
-    else if (this.phase === 3) this.led = 0x37;
-    else if (this.phase === 4) this.led = 0x2f;
-    else this.led = 0x1f;
+    if (this.phase === 0) {
+      this.led = 0x3e;
+    } else if (this.phase === 1) {
+      this.led = 0x3d;
+    } else if (this.phase === 2) {
+      this.led = 0x3b;
+    } else if (this.phase === 3) {
+      this.led = 0x37;
+    } else if (this.phase === 4) {
+      this.led = 0x2f;
+    } else {
+      this.led = 0x1f;
+    }
   }
 }
 

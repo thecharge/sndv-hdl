@@ -3,6 +3,9 @@ export type Logic<_N extends number = 32> = number;
 
 export type Bit = Logic<1>;
 
+export type Uint<N extends number = 32> = Logic<N>;
+export type UInt<N extends number = 32> = Logic<N>;
+
 export type Uint1 = Logic<1>;
 export type Uint2 = Logic<2>;
 export type Uint4 = Logic<4>;

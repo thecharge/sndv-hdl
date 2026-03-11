@@ -1,80 +1,115 @@
 # ts2v Production Workspace
 
-Production-oriented TypeScript-to-SystemVerilog toolchain with Bun, Turborepo, and open-source FPGA flow adapters.
+Production-grade TypeScript-to-SystemVerilog compiler and FPGA flow for Tang Nano boards.
 
 Author: Radoslav Sandov
 
-## Current Status
-- Bun/Turbo monorepo migration is complete.
-- Quality gates pass: typecheck, lint, test, build.
-- End-to-end compile path works: TypeScript -> SystemVerilog + constraints + manifest.
-- Toolchain uses a repository-owned container image build (`toolchain/Dockerfile`) with Podman/Docker fallback.
+## What This Repository Delivers
+- TypeScript class-style hardware source (`@Module`, `@Sequential`, `@Combinational`) compiled into SystemVerilog.
+- Board constraint generation from JSON board definitions.
+- Containerized synthesis, place-and-route, and bitstream packaging.
+- Persistent FPGA programming using `openFPGALoader --external-flash --write-flash --verify`.
 
-## Quickstart
+## Quickstart From Zero To Blinky
+Use this exact sequence on Linux.
+
+### 1. Install Prerequisites
+- Bun 1.3+
+- Podman or Docker
+- Git
+- USB access to your board programmer
+
+### 2. Install Dependencies
 ```bash
 bun install
-bun run toolchain:image:build
-bun run quality
-bun run compile:example
 ```
 
-## Repository Layout
-- `apps/cli`: Bun CLI entrypoint and argument handling.
-- `packages/types`: canonical shared types.
-- `packages/config`: workspace and board configuration services.
-- `packages/core`: compiler facade, command, adapter, repository.
-- `packages/runtime`: decorators and runtime signal types for hardware modules.
-- `packages/process`: process runner and runtime detection.
-- `packages/toolchain`: synthesis/programming adapters and container command factory.
-- `configs/workspace.config.json`: board and toolchain defaults.
-- `toolchain/Dockerfile`: custom OSS Gowin toolchain image source.
+### 3. Build Toolchain Image
+```bash
+bun run toolchain:image:build
+```
 
-## Commands
+### 4. Validate Workspace Quality
+```bash
+bun run quality
+```
+
+### 5. Put Board Into Programming Mode
+Use the Tang Nano 20K board workflow (buttons/switches per board manual), then verify USB probe visibility.
+
+```bash
+lsusb
+podman run --rm --device /dev/bus/usb ts2v-gowin-oss:latest openFPGALoader --scan-usb
+```
+
+### 6. Compile And Flash Blinky (Persistent)
+```bash
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts \
+	--board boards/tang_nano_20k.board.json \
+	--out .artifacts/tang20k \
+	--flash
+```
+
+Expected output includes:
+- `openFPGALoader --external-flash --write-flash --verify`
+- `write to flash`
+- `Verifying write (May take time)`
+- `DONE`
+
+### 7. Power Cycle And Recheck
+Power off/on the board. Behavior should persist because image was written to external flash.
+
+## Quickstart From Zero To WS2812 Demo
+Important: this demo needs WS2812 hardware connected to the configured `ws2812` pin.
+
+```bash
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts \
+	--board boards/tang_nano_20k.board.json \
+	--out .artifacts/ws2812 \
+	--flash
+```
+
+If the board flashes successfully but no LED strip effect appears:
+- verify strip wiring and ground reference,
+- verify data pin matches board definition,
+- verify strip voltage/current budget.
+
+## Core Commands
 - `bun run quality`: typecheck + lint + test + build.
-- `bun run format`: apply Biome formatting.
-- `bun run format:check`: verify formatting without writing changes.
-- `bun run toolchain:image:build`: build local toolchain image for synth/flash.
-- `bun run compile:example`: compiles `examples/blinker.ts` to artifacts.
-- `bun run flash:tang20k <bitstream.fs>`: programs Tang Nano 20K (requires toolchain/runtime access).
-
-## End-to-End Flow
-1. Write hardware logic in TypeScript.
-2. Run unit tests with Bun.
-3. Compile to SystemVerilog and board constraints.
-4. Synthesize and route with open-source tools (Yosys + nextpnr-himbaechel + gowin_pack).
-5. Program board with openFPGALoader.
+- `bun run toolchain:image:build`: build local synth/flash image.
+- `bun run compile:example`: compile default example.
+- `bun run flash:tang20k <bitstream.fs>`: direct flash helper entrypoint.
 
 ## Documentation Index
-- `docs/development.md`
-- `docs/guides/examples-matrix.md`
-- `docs/guides/programmer-profiles-and-usb-permissions.md`
-- `docs/guides/user-usb-debugger-onboarding.md`
-- `docs/style-guide.md`
-- `docs/hardware-toolchain.md`
-- `docs/guides/hardware-design-guidelines.md`
-- `docs/guides/sdlc-workflow.md`
-- `docs/guides/tang_nano_20k_programming.md`
-- `docs/qa-testing.md`
-- `docs/security-compliance.md`
-- `docs/production-readiness.md`
-- `docs/package-inventory.md`
-- `docs/append-only-engineering-log.md`
+- `docs/quickstart.md`: full beginner path from empty machine to flashed board.
+- `docs/guides/board-definition-authoring.md`: complete board definition guide.
+- `docs/guides/tang_nano_20k_programming.md`: Tang Nano 20K flashing runbook.
+- `docs/guides/debugging-and-troubleshooting.md`: end-to-end debug flow and failure signatures.
+- `docs/guides/programmer-profiles-and-usb-permissions.md`: profile and permission model.
+- `docs/guides/user-usb-debugger-onboarding.md`: practical USB probe onboarding.
+- `docs/guides/examples-matrix.md`: examples, intent, and expected hardware behavior.
+- `docs/development.md`: contributor/developer workflow.
+- `docs/hardware-toolchain.md`: synth/programming architecture and command flow.
+- `docs/architecture.md`: system architecture with Mermaid diagrams.
+- `docs/specification.md`: language and generation spec.
+- `docs/compliance.md`: standards and subset compliance.
+- `docs/qa-testing.md`: test strategy and quality gates.
+- `docs/package-inventory.md`: package boundaries and responsibilities.
+- `docs/security-compliance.md`: repository compliance and security posture.
+- `docs/append-only-engineering-log.md`: append-only operational log.
 
-## Upstream References
-- Bun docs: https://bun.sh/docs
-- Turborepo docs: https://turborepo.com/docs
-- Yosys: https://yosyshq.net/yosys/
-- nextpnr: https://github.com/YosysHQ/nextpnr
-- Apicula (Gowin): https://github.com/YosysHQ/apicula
-- openFPGALoader: https://github.com/trabucayre/openFPGALoader
-- Tang Nano setup reference: https://learn.lushaylabs.com/getting-setup-with-the-tang-nano-9k/
-- Podman docs: https://podman.io/docs
-- Docker docs: https://docs.docker.com/
-- Biome: https://biomejs.dev
+## Repository Layout
+- `apps/cli`: CLI argument parsing and command handlers.
+- `packages/core`: compiler facade and legacy adapter wrapper.
+- `packages/runtime`: decorators and TS-side hardware types.
+- `packages/toolchain`: synthesis and flashing adapters.
+- `packages/config`: workspace and board config services.
+- `packages/process`: process runtime abstraction.
+- `packages/types`: shared interfaces/contracts.
+- `boards`: board definitions used by compile/flash flow.
 
 ## License
-This project is licensed under the MIT License.
-See `LICENSE`.
+MIT. See `LICENSE`.
 
 ## Authors
 See `AUTHORS.md`.

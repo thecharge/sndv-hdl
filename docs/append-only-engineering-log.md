@@ -314,3 +314,73 @@
     - `Detected: Winbond W25Q64`
     - `Verifying write (May take time)`
     - `DONE`
+
+## 2026-03-11T21:00:00Z - Compiler Limit Lift + WS2812 Reflash Validation
+- Lifted class-compiler width caps to production-friendly behavior:
+  - removed stale numeric cap constants in `packages/core/src/compiler/constants/defaults.ts`
+  - class parser now accepts arbitrary positive widths via `UintN`/`UIntN`
+  - `Logic<N>` width parsing remains generic and now enforces positive integers only (no max cap)
+- Lifted parser usability restriction:
+  - `if/else` in class modules now supports single-statement branches without braces
+- Added runtime type aliases for wide buses:
+  - `Uint<N>` and `UInt<N>` exported from `@ts2v/runtime`
+- Added/updated tests:
+  - `tests/class-compiler.test.ts`
+    - `supports UintN and UIntN widths above 64 bits`
+    - `parses single-statement if/else without braces`
+  - `packages/core/src/facades/hardware-examples-compile.test.ts`
+    - now includes `examples/hardware/tang_nano_20k_ws2812b.ts`
+- WS2812 example compile blocker resolved:
+  - fixed non-braced `if/else` chain in `examples/hardware/tang_nano_20k_ws2812b.ts`
+- Quality validation passed after changes:
+  - `TURBO_UI=false bun run quality`
+  - all typecheck/lint/test/build tasks successful
+- Real WS2812 compile+flash execution (Tang Nano 20K) completed with write/verify evidence:
+  - command: `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812 --flash`
+  - observed lines:
+    - `[profile=board-autodetect] ... openFPGALoader --write-flash --verify -b tangnano20k ...`
+    - `write to flash`
+    - `Done`
+    - `DONE`
+    - `Verifying write (May take time)`
+
+## 2026-03-11T21:20:00Z - Power-Cycle Persistence Remediation (External Flash Explicit)
+- User reported: after power cycle, programmed design was not observable.
+- Verified probe visibility still healthy:
+  - `openFPGALoader --scan-usb` showed `0x0403:0x6010 FTDI2232 SIPEED USB Debugger`.
+- Ran explicit external-flash write/verify/reset against known-visible blinker image:
+  - command: `openFPGALoader --external-flash --write-flash --verify -r -b tangnano20k .artifacts/tang20k/tang_nano_20k_blinker.fs`
+  - evidence lines:
+    - `write to flash`
+    - `Detected: Winbond W25Q64`
+    - `Verifying write (May take time)`
+    - `DONE`
+- Production hardening applied:
+  - toolchain adapter now always includes `--external-flash` for Tang Nano 20K flash path.
+  - updated test coverage in `packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.test.ts`.
+  - updated docs in:
+    - `docs/development.md`
+    - `docs/guides/tang_nano_20k_programming.md`
+    - `docs/guides/examples-matrix.md`
+
+## 2026-03-11T22:10:00Z - Production Documentation Overhaul
+- User request: end-to-end practical docs with clear board-definition authoring, debugging, quickstart, and reduced ambiguity.
+- Added new documentation:
+  - `docs/quickstart.md` (zero-to-blinky and zero-to-WS2812 path)
+  - `docs/guides/board-definition-authoring.md` (required fields, naming rules, bring-up checklist)
+  - `docs/guides/debugging-and-troubleshooting.md` (layered failure isolation runbook)
+- Rewrote and hardened existing docs:
+  - `README.md` (from-zero quickstart, production docs index, blinky + WS2812 flow)
+  - `docs/development.md`
+  - `docs/hardware-toolchain.md`
+  - `docs/guides/tang_nano_20k_programming.md`
+  - `docs/production-readiness.md`
+  - `docs/guides/examples-matrix.md`
+- Documentation cleanup:
+  - removed obsolete fragmented docs:
+    - `docs/readme-chunks/`
+    - `docs/readme-parts/`
+  - removed legacy board guides to reduce conflicting guidance:
+    - `docs/tang_nano_20k_guide.md`
+    - `docs/tang_nano_9k_guide.md`
+- Added Mermaid diagrams in new/rewritten docs for flow clarity.
