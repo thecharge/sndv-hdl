@@ -67,12 +67,12 @@ console.log('1. TypeScript Compliance');
 test('tsc --strict accepts runtime/types.ts', () => {
   // If we got here, the import worked. The real check is tsc --noEmit
   // which runs in CI. Here we verify the types are usable.
-  const types = require('../src/runtime/types');
+  const types = require('../packages/runtime/src/types');
   assert(types !== undefined, 'runtime/types module should load');
 });
 
 test('tsc --strict accepts runtime/decorators.ts', () => {
-  const decs = require('../src/runtime/decorators');
+  const decs = require('../packages/runtime/src/decorators');
   assert(typeof decs.Module === 'function', 'Module should be a function');
   assert(typeof decs.Input === 'function', 'Input should be a function');
   assert(typeof decs.Output === 'function', 'Output should be a function');
@@ -83,7 +83,7 @@ test('tsc --strict accepts runtime/decorators.ts', () => {
 });
 
 test('decorators are no-ops at runtime', () => {
-  const { Module, Input, Sequential, Assert } = require('../src/runtime/decorators');
+  const { Module, Input, Sequential, Assert } = require('../packages/runtime/src/decorators');
   // Class decorator returns target unchanged
   class Dummy {}
   assert(Module(Dummy) === Dummy, 'Module should return target');
@@ -104,8 +104,8 @@ console.log('\n2. Import/Export Handling');
 
 test('parser skips import { } from statements', () => {
   const sv = compile(`
-    import { HardwareModule, Module, Input, Output, Sequential } from '../../src/runtime';
-    import type { Logic, Bit } from '../../src/runtime';
+    import { HardwareModule, Module, Input, Output, Sequential } from '@ts2v/runtime';
+    import type { Logic, Bit } from '@ts2v/runtime';
     @Module
     class X extends HardwareModule {
       @Input clk: Bit = 0;
@@ -120,8 +120,8 @@ test('parser skips import { } from statements', () => {
 
 test('parser skips export { Name } statements', () => {
   const sv = compile(`
-    import { HardwareModule, Module, Input, Output, Sequential } from '../../src/runtime';
-    import type { Logic, Bit } from '../../src/runtime';
+    import { HardwareModule, Module, Input, Output, Sequential } from '@ts2v/runtime';
+    import type { Logic, Bit } from '@ts2v/runtime';
     @Module
     class Y extends HardwareModule {
       @Input clk: Bit = 0;

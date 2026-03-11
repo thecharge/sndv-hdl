@@ -40,8 +40,10 @@ podman run --rm \
   -v "$PWD:/workspace" -w /workspace \
   --device /dev/bus/usb \
   ts2v-gowin-oss:latest \
-  openFPGALoader -b tangnano20k .artifacts/tang20k/tang_nano_20k_blinker.fs
+  openFPGALoader --write-flash --verify -b tangnano20k .artifacts/tang20k/tang_nano_20k_blinker.fs
 ```
+
+Expected output should include flash programming and verify lines. If output only shows SRAM load, treat the run as non-persistent and retry with explicit `--write-flash`.
 
 ## 5. Failure Signatures
 - `unable to open ftdi device: -3 (device not found)`:

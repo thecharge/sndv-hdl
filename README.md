@@ -23,6 +23,7 @@ bun run compile:example
 - `packages/types`: canonical shared types.
 - `packages/config`: workspace and board configuration services.
 - `packages/core`: compiler facade, command, adapter, repository.
+- `packages/runtime`: decorators and runtime signal types for hardware modules.
 - `packages/process`: process runner and runtime detection.
 - `packages/toolchain`: synthesis/programming adapters and container command factory.
 - `configs/workspace.config.json`: board and toolchain defaults.
@@ -45,14 +46,14 @@ bun run compile:example
 
 ## Documentation Index
 - `docs/development.md`
+- `docs/guides/examples-matrix.md`
+- `docs/guides/programmer-profiles-and-usb-permissions.md`
+- `docs/guides/user-usb-debugger-onboarding.md`
 - `docs/style-guide.md`
 - `docs/hardware-toolchain.md`
 - `docs/guides/hardware-design-guidelines.md`
-- `docs/guides/examples-matrix.md`
 - `docs/guides/sdlc-workflow.md`
 - `docs/guides/tang_nano_20k_programming.md`
-- `docs/guides/programmer-profiles-and-usb-permissions.md`
-- `docs/guides/user-usb-debugger-onboarding.md`
 - `docs/qa-testing.md`
 - `docs/security-compliance.md`
 - `docs/production-readiness.md`

@@ -8,8 +8,8 @@ import {
   Input,
   Output,
   Sequential,
-} from '../../src/runtime';
-import type { Logic, Bit } from '../../src/runtime';
+} from '@ts2v/runtime';
+import type { Logic, Bit } from '@ts2v/runtime';
 
 @Module
 class Counter extends HardwareModule {

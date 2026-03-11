@@ -283,3 +283,34 @@
 - Force-updated remote main branch as requested:
   - `git push origin master:main --force`
   - remote update: `ee2e873...3c76e80 master -> main (forced update)`
+
+## 2026-03-11T20:10:00Z - Flash Persistence + Example Reliability Corrections
+- Replaced oversized Tang Nano blinker implementation with a minimal bring-up example:
+  - `examples/hardware/tang_nano_20k_blinker.ts`
+- Corrected active-low LED assumptions across hardware debug examples:
+  - `examples/hardware/usb_jtag_probe_blinker.ts`
+  - `examples/hardware/tang_nano_20k_reset_debug.ts`
+  - `examples/hardware/tang_nano_20k_uart_debug.ts`
+  - `examples/hardware/tang_nano_20k_ws2812b.ts`
+- Changed flash command path from ambiguous short-form to explicit persistent mode:
+  - `openFPGALoader --write-flash --verify -b tangnano20k <bitstream.fs>`
+  - code path: `packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.ts`
+- Added tests for this behavior:
+  - `packages/core/src/facades/hardware-examples-compile.test.ts`
+  - `packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.test.ts`
+
+## 2026-03-11T20:15:00Z - Validation Evidence (Quality + Compile/Flash)
+- Full quality gate passed:
+  - command: `TURBO_UI=false bun run quality`
+  - result: typecheck, lint, test, build all successful.
+- New targeted tests passed:
+  - `bun test packages/core/src/facades/hardware-examples-compile.test.ts`
+  - `bun test packages/toolchain/src/adapters/tang-nano-20k-toolchain-adapter.test.ts`
+- Tang Nano 20K compile+flash succeeded with explicit flash write/verify:
+  - command: `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k --flash`
+  - filtered output evidence:
+    - `[profile=board-autodetect] ... openFPGALoader --write-flash --verify -b tangnano20k ...`
+    - `write to flash`
+    - `Detected: Winbond W25Q64`
+    - `Verifying write (May take time)`
+    - `DONE`

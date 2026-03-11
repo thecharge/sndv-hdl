@@ -12,8 +12,8 @@ import {
   Submodule,
   Sequential,
   Combinational,
-} from '../../src/runtime';
-import type { Logic, Bit } from '../../src/runtime';
+} from '@ts2v/runtime';
+import type { Logic, Bit } from '@ts2v/runtime';
 
 /**
  * 8-bit PWM core. Generates a pulse-width modulated output.

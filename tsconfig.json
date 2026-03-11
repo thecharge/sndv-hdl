@@ -20,7 +20,8 @@
       "@ts2v/config": ["packages/config/src/index.ts"],
       "@ts2v/process": ["packages/process/src/index.ts"],
       "@ts2v/core": ["packages/core/src/index.ts"],
-      "@ts2v/toolchain": ["packages/toolchain/src/index.ts"]
+      "@ts2v/toolchain": ["packages/toolchain/src/index.ts"],
+      "@ts2v/runtime": ["packages/runtime/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", "build", ".turbo"]

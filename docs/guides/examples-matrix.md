@@ -11,18 +11,25 @@
 - `examples/stdlib.ts`
 - `examples/uart_tx.ts`
 - `examples/ws2812.ts`
+- `examples/hardware/tang_nano_20k_reset_debug.ts`
+- `examples/hardware/tang_nano_20k_uart_debug.ts`
+- `examples/hardware/usb_jtag_probe_blinker.ts`
 
 ## Hardware-Oriented Expectations
-- Blinker: baseline bring-up only.
-- PWM / WS2812 / UART TX: peripheral-focused validation targets.
+- Blinker: first board proof with one deterministic LED output.
+- USB probe blinker: confirms cable/profile correctness independent of complex logic.
+- Reset debug: verifies reset and button wiring using dedicated indicators.
+- UART debug: emits stable low-speed framing for scope/logic-analyzer checks.
 - CPU: validate from `cpu/ts/*.ts` through generated bitstream and board program.
 
 ## Current Validation Reality
 - Compile pipeline for examples is working.
-- CLI `--flash` path currently fails when generated source lacks a matching top module.
-- Manual known-good RTL can complete synth + route + pack; board programming currently blocked by USB FTDI visibility in runtime.
+- Hardware examples compile in package test suite.
+- CLI `--flash` path compiles, synthesizes, and programs through profile-aware retries.
+- Flash path uses `openFPGALoader --write-flash --verify` for persistent programming.
+- Tang Nano 20K LEDs are active-low; example outputs account for that.
 
 ## Next Examples To Promote
-- Tang Nano 20K WS2812 demo with verified pin map.
-- Tang Nano 20K UART TX demo with host-side serial capture script.
-- CPU SoC bring-up with deterministic constraints and test procedure.
+- Tang Nano 20K WS2812 timing-accurate driver with measured pulse widths.
+- Tang Nano 20K UART debug with host-side serial capture script.
+- CPU SoC bring-up with deterministic constraints and end-to-end board checklist.

@@ -73,6 +73,8 @@ export class TangNano20kToolchainAdapter implements ToolchainAdapter {
       const flashCommand = this.shellJoin([
         programmerExecutable,
         ...profileArgs,
+        '--write-flash',
+        '--verify',
         '-b',
         'tangnano20k',
         bitstreamPath,

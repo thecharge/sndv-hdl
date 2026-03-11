@@ -1,10 +1,3 @@
-// ts2v runtime — barrel export
-//
-// Import everything from here in your hardware modules:
-//
-//   import { HardwareModule, Module, Input, Output,
-//            Sequential, Combinational, Logic, Bit } from 'ts2v/runtime';
-
 export type {
   Logic,
   Bit,

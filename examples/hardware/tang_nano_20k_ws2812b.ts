@@ -8,15 +8,15 @@ import {
   Output,
   Sequential,
   Combinational,
-} from '../../src/runtime';
-import type { Bit, Logic } from '../../src/runtime';
+} from '@ts2v/runtime';
+import type { Bit, Logic } from '@ts2v/runtime';
 
 @Module
 class Ws2812bDemo extends HardwareModule {
   @Input clk: Bit = 0;
   @Input rst_n: Bit = 0;
   @Output ws2812: Bit = 0;
-  @Output led: Logic<6> = 0;
+  @Output led: Logic<6> = 0x3f;
 
   private counter: Logic<24> = 0;
   private phase: Logic<3> = 0;
@@ -26,6 +26,8 @@ class Ws2812bDemo extends HardwareModule {
     if (this.rst_n === 0) {
       this.counter = 0;
       this.phase = 0;
+      this.ws2812 = 0;
+      this.led = 0x3f;
       return;
     }
 
@@ -47,7 +49,12 @@ class Ws2812bDemo extends HardwareModule {
       this.ws2812 = 0;
     }
 
-    this.led = 1 << this.phase;
+    if (this.phase === 0) this.led = 0x3e;
+    else if (this.phase === 1) this.led = 0x3d;
+    else if (this.phase === 2) this.led = 0x3b;
+    else if (this.phase === 3) this.led = 0x37;
+    else if (this.phase === 4) this.led = 0x2f;
+    else this.led = 0x1f;
   }
 }
 

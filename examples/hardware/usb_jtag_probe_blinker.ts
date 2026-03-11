@@ -1,5 +1,5 @@
-// USB-JTAG proof example for Tang Nano 20K
-// Purpose: provide a clean compile/flash target after migration cleanup.
+// USB-JTAG proof example for Tang Nano 20K.
+// This keeps behavior obvious during probe/flash troubleshooting.
 
 import {
   HardwareModule,
@@ -7,16 +7,15 @@ import {
   Input,
   Output,
   Sequential,
-  Combinational,
-} from '../../src/runtime';
-import type { Bit, Logic } from '../../src/runtime';
+} from '@ts2v/runtime';
+import type { Bit, Logic } from '@ts2v/runtime';
 
 @Module
 class UsbJtagProbeBlinker extends HardwareModule {
   @Input clk: Bit = 0;
   @Input rst_n: Bit = 0;
   @Input btn: Bit = 1;
-  @Output led: Logic<6> = 0;
+  @Output led: Logic<6> = 0x3f;
 
   private counter: Logic<24> = 0;
   private phase: Logic<3> = 0;
@@ -26,6 +25,7 @@ class UsbJtagProbeBlinker extends HardwareModule {
     if (this.rst_n === 0) {
       this.counter = 0;
       this.phase = 0;
+      this.led = 0x3f;
       return;
     }
 
@@ -41,14 +41,31 @@ class UsbJtagProbeBlinker extends HardwareModule {
     if (this.btn === 0) {
       this.phase = 0;
     }
-  }
 
-  @Combinational
-  drive(): void {
     if (this.btn === 0) {
-      this.led = 0;
+      this.led = 0x3f;
     } else {
-      this.led = 1 << this.phase;
+      // Active-low walking LED: clear one bit at a time.
+      switch (this.phase) {
+        case 0:
+          this.led = 0x3e;
+          break;
+        case 1:
+          this.led = 0x3d;
+          break;
+        case 2:
+          this.led = 0x3b;
+          break;
+        case 3:
+          this.led = 0x37;
+          break;
+        case 4:
+          this.led = 0x2f;
+          break;
+        default:
+          this.led = 0x1f;
+          break;
+      }
     }
   }
 }
