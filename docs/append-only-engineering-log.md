@@ -262,3 +262,24 @@
 - Repository transport status at this point:
   - no git remote configured (`git remote -v` empty)
   - cannot push/replace remote branches until remote URL and credentials are configured.
+
+## 2026-03-11T19:20:00Z - Real Hardware Flash Success (Blinker + WS2812 Demo)
+- USB probe visibility recovered in container:
+  - `openFPGALoader --scan-usb` reported `0x0403:0x6010 FTDI2232 SIPEED USB Debugger`.
+- Tang Nano 20K blinker end-to-end flash succeeded:
+  - command: `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k --flash`
+  - programming output contained `DONE` and `Load SRAM ... 100.00%`.
+- Added board-targeted WS2812 demo source:
+  - `examples/hardware/tang_nano_20k_ws2812b.ts`
+- WS2812 demo end-to-end flash succeeded:
+  - command: `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812 --flash`
+  - programming output contained `DONE` and `Load SRAM ... 100.00%`.
+
+## 2026-03-11T19:30:00Z - Remote Branch Replacement Completed
+- Configured git author to requested attribution:
+  - `user.name=Radoslav Sandov`
+- Created commit:
+  - `3c76e80` `Complete monorepo migration, USB programmer profiling, and production docs`
+- Force-updated remote main branch as requested:
+  - `git push origin master:main --force`
+  - remote update: `ee2e873...3c76e80 master -> main (forced update)`
