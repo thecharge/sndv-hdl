@@ -6,7 +6,12 @@ export interface BoardDefinition {
   vendor: 'gowin' | 'xilinx' | 'intel' | 'lattice';
   family: string;
   part: string;
+  // Clock ports keyed by logical top-port name.
+  // `pin`: package pin number as string, `freq`: input frequency, `std`: IO standard.
   clocks: Record<string, { pin: string; freq: string; std: string }>;
+  // Generic IO ports keyed by logical top-port name.
+  // `std` maps to vendor IO standard field.
+  // `drive` and `pull` are optional and only emitted for vendors that support them in this generator.
   io: Record<string, { pin: string; std: string; drive?: string; pull?: string }>;
 }
 

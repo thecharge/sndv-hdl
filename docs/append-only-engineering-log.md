@@ -498,3 +498,20 @@
   - `docs/guides/debugging-and-troubleshooting.md` now includes level-threshold troubleshooting and WS2812 protocol reference link.
 - Validation:
   - `TURBO_UI=false bun run quality` passed.
+
+## 2026-03-12T00:10:00Z - No-Blink Incident Isolation With Clockless LED Probe
+- User reported persistent "flashed but nothing blinks" behavior.
+- Added dedicated board-definition property reference:
+  - `docs/guides/board-definition-properties-reference.md`
+  - includes full `std`/`drive`/`pull` semantics and vendor mapping output.
+- Added clockless hardware probe example to isolate clock-path issues:
+  - `examples/hardware/tang_nano_20k_sys_led_button_probe.ts`
+  - behavior: button released -> all SYS LEDs off, button pressed -> all SYS LEDs on.
+- Compile mapping check confirms expected pins:
+  - `btn` -> `87`
+  - `led[0]` -> `15`
+  - `led[5]` -> `20`
+- Flash run evidence:
+  - programmer command includes `openFPGALoader --external-flash --write-flash --verify -r -b tangnano20k`
+  - probe row includes `0x0403:0x6010 FTDI2232 SIPEED`
+  - `write to flash`, `DONE`, `Verifying write (May take time)`, final `Done`.

@@ -62,6 +62,18 @@ Run this checklist only:
 5. Reflash once and check for `--external-flash --write-flash --verify -r` in output.
 6. Check `docs/guides/ws2812-protocol-and-brightness.md` for brightness/protocol details.
 
+If you suspect board clock issues, run a clockless onboard LED probe:
+```bash
+TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_sys_led_button_probe.ts \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/sysled-btn \
+  --flash
+```
+
+Expected behavior:
+- button released: all SYS LEDs off,
+- button pressed: all SYS LEDs on.
+
 ## Next Docs
 - `docs/guides/tang_nano_20k_programming.md`
 - `docs/guides/board-definition-authoring.md`

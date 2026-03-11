@@ -84,12 +84,14 @@ If the board flashes successfully but no LED strip effect appears:
 ## Documentation Index
 - `docs/quickstart.md`: WS2812-first end-to-end quickstart with explicit pass/fail checks.
 - `docs/guides/board-definition-authoring.md`: complete board definition guide.
+- `docs/guides/board-definition-properties-reference.md`: complete property reference (`std`, `drive`, `pull`, `freq`, vendor mappings).
 - `docs/guides/tang_nano_20k_programming.md`: Tang Nano 20K flashing runbook.
 - `docs/guides/debugging-and-troubleshooting.md`: end-to-end debug flow and failure signatures.
 - `docs/guides/production-reality-check.md`: production acceptance workflow with proof commands.
 - `docs/guides/programmer-profiles-and-usb-permissions.md`: profile and permission model.
 - `docs/guides/user-usb-debugger-onboarding.md`: practical USB probe onboarding.
 - `docs/guides/examples-matrix.md`: examples, intent, and expected hardware behavior.
+- `docs/guides/ws2812-protocol-and-brightness.md`: WS2812 protocol semantics and brightness behavior.
 - `docs/development.md`: contributor/developer workflow.
 - `docs/hardware-toolchain.md`: synth/programming architecture and command flow.
 - `docs/architecture.md`: system architecture with Mermaid diagrams.

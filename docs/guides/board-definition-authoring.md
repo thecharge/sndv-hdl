@@ -188,3 +188,4 @@ If flash succeeds but output is wrong:
 - Yosys: https://yosyshq.net/yosys/
 - nextpnr: https://github.com/YosysHQ/nextpnr
 - Apicula/gowin_pack: https://github.com/YosysHQ/apicula
+- Property reference companion: `docs/guides/board-definition-properties-reference.md`
