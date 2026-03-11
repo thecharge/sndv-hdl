@@ -1,92 +1,37 @@
-# Quickstart: From Zero To Real FPGA Output
+# Quickstart: WS2812 First Light
 
-This guide is written for first-time users and assumes you start from a clean Linux machine.
+This is the shortest end-to-end path to visible WS2812 behavior on Tang Nano 20K.
 
-## Goal
-By the end of this guide you will:
-- install and validate this repository,
-- compile and flash a persistent Tang Nano 20K blinky image,
-- compile and flash a WS2812 demo image,
-- understand how to verify each stage.
+## Target Outcome
+You should see all of these:
+- successful flash logs (`write to flash`, `Verifying write`, `DONE`),
+- onboard heartbeat LED toggling,
+- WS2812 strip color changes.
 
-## End-to-End Flow
-```mermaid
-flowchart TD
-  A[Install prerequisites] --> B[Install repo dependencies]
-  B --> C[Build containerized toolchain]
-  C --> D[Run quality gates]
-  D --> E[Enter board programming mode]
-  E --> F[Verify USB probe detection]
-  F --> G[Compile + flash blinky]
-  G --> H[Power cycle and verify persistence]
-  H --> I[Compile + flash WS2812 demo]
-```
-
-## 1. Prerequisites
-Required:
-- Linux
-- Bun 1.3+
-- Podman or Docker
-- Git
-- Tang Nano 20K board and USB programming connection
-
-Optional but recommended:
-- Logic analyzer (for WS2812 signal inspection)
-- USB current meter (for LED strip power troubleshooting)
-
-## 2. Clone And Install
+## 1. One-Time Setup
 ```bash
 git clone <your-repo-url> ts2v
 cd ts2v
 bun install
-```
-
-## 3. Build Toolchain Image
-This builds an image with Yosys, nextpnr-himbaechel, gowin_pack, and openFPGALoader.
-
-```bash
 bun run toolchain:image:build
 ```
 
-## 4. Run Baseline Quality
-```bash
-bun run quality
-```
+## 2. Wire WS2812 Correctly
+Use this exact mapping for this workspace:
+- data in: Tang Nano 20K `PIN79_WS2812` (`ws2812` in `boards/tang_nano_20k.board.json`)
+- ground: board GND -> strip GND
+- power: strip VCC from a valid supply
 
-If this fails, fix workspace issues before touching hardware.
+If ground is not shared, data is invalid even when flash succeeds.
 
-## 5. Prepare Board Programming State
-Put the board into programming mode (per board hardware workflow), then confirm host USB sees a programmer.
-
-```bash
-lsusb
-```
-
-Then confirm container visibility (this is the one that matters for this repo):
-
+## 3. Confirm Programmer Visibility
 ```bash
 podman run --rm --device /dev/bus/usb ts2v-gowin-oss:latest openFPGALoader --scan-usb
 ```
 
-If scan output is empty, stop and fix USB permissions/profile detection first.
+You should see the FTDI probe row (for example `0x0403:0x6010`).
 
-## 6. Compile And Flash Blinky (Persistent)
-```bash
-bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts \
-  --board boards/tang_nano_20k.board.json \
-  --out .artifacts/tang20k \
-  --flash
-```
-
-Success indicators:
-- compile artifacts appear in `.artifacts/tang20k`
-- programmer command contains `--external-flash --write-flash --verify`
-- programming output includes `write to flash`, `Verifying write`, `DONE`
-
-## 7. Verify Persistence
-Power cycle the board. If behavior disappears, treat this as a board boot/pin issue and use `docs/guides/debugging-and-troubleshooting.md`.
-
-## 8. Compile And Flash WS2812 Demo
+## 4. Flash WS2812 Demo (Persistent External Flash)
 ```bash
 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts \
   --board boards/tang_nano_20k.board.json \
@@ -94,17 +39,29 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts
   --flash
 ```
 
-Important:
-- You need a real WS2812 device connected to the board output pin.
-- The onboard user LEDs are not a replacement for WS2812 behavior verification.
+Pass markers in logs:
+- `openFPGALoader --external-flash --write-flash --verify`
+- `write to flash`
+- `Detected: Winbond W25Q64`
+- `Verifying write (May take time)`
+- `Done` / `DONE`
 
-## 9. What To Check If WS2812 Looks Dead
-- Data pin matches board definition (`ws2812` pin in board JSON).
-- Shared ground between board and strip.
-- Correct supply voltage/current for strip.
-- Flash command used persistent external flash mode.
+## 5. Verify On Real Hardware
+Check in this order:
+1. onboard heartbeat LED toggles,
+2. WS2812 strip changes color,
+3. power-cycle board and confirm behavior persists.
 
-## 10. Next Reads
-- Board definitions: `docs/guides/board-definition-authoring.md`
-- Tang Nano programming: `docs/guides/tang_nano_20k_programming.md`
-- Debugging failures: `docs/guides/debugging-and-troubleshooting.md`
+## 6. If You Still See No WS2812
+Run this checklist only:
+1. Confirm pin is still `79` in `boards/tang_nano_20k.board.json`.
+2. Confirm strip data wire is on that board pin net.
+3. Confirm common GND between board and strip.
+4. Confirm strip power/current are sufficient.
+5. Reflash once and check for `--external-flash --write-flash --verify` in output.
+
+## Next Docs
+- `docs/guides/tang_nano_20k_programming.md`
+- `docs/guides/board-definition-authoring.md`
+- `docs/guides/production-reality-check.md`
+- `docs/guides/debugging-and-troubleshooting.md`

@@ -61,6 +61,7 @@ Power off/on the board. Behavior should persist because image was written to ext
 
 ## Quickstart From Zero To WS2812 Demo
 Important: this demo needs WS2812 hardware connected to the configured `ws2812` pin.
+For Tang Nano 20K in this repo, that pin is `79` (`PIN79_WS2812`).
 
 ```bash
 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts \
@@ -71,7 +72,7 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts
 
 If the board flashes successfully but no LED strip effect appears:
 - verify strip wiring and ground reference,
-- verify data pin matches board definition,
+- verify data pin matches board definition (`ws2812` -> pin `79` for Tang Nano 20K),
 - verify strip voltage/current budget.
 
 ## Core Commands
@@ -81,7 +82,7 @@ If the board flashes successfully but no LED strip effect appears:
 - `bun run flash:tang20k <bitstream.fs>`: direct flash helper entrypoint.
 
 ## Documentation Index
-- `docs/quickstart.md`: full beginner path from empty machine to flashed board.
+- `docs/quickstart.md`: WS2812-first end-to-end quickstart with explicit pass/fail checks.
 - `docs/guides/board-definition-authoring.md`: complete board definition guide.
 - `docs/guides/tang_nano_20k_programming.md`: Tang Nano 20K flashing runbook.
 - `docs/guides/debugging-and-troubleshooting.md`: end-to-end debug flow and failure signatures.

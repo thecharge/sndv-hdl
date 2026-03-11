@@ -1,41 +1,29 @@
 # Board Definition Authoring Guide
 
-This guide explains exactly how board definition JSON files work, what is required, what is optional, and how to safely add new board definitions for production use.
+This guide explains board JSON files in plain operational terms: where each value comes from, how to extract it from schematics, and how to verify that the mapping is actually correct on hardware.
 
-## Why Board Definitions Matter
-A board definition drives three critical things:
-- pin constraints generation,
-- synthesis/place-and-route target device settings,
-- programming profile behavior.
+## What A Board Definition Controls
+`boards/*.board.json` controls:
+- pin-to-port mapping in generated constraints,
+- target FPGA part/family selection for synthesis and PNR,
+- practical hardware behavior after flash.
 
-If the board definition is wrong, compile can succeed but hardware appears dead.
+If this file is wrong, builds can still succeed while hardware appears dead.
 
-## Data Flow
+## Data Path
 ```mermaid
 flowchart LR
-  A[board.json] --> B[Constraint generator]
-  A --> C[Toolchain adapter]
-  B --> D[.cst / .xdc / .qsf / .lpf]
+  A[boards/<name>.board.json] --> B[constraint generation]
+  A --> C[toolchain target selection]
+  B --> D[.cst/.xdc/etc]
   C --> E[yosys + nextpnr + pack]
-  E --> F[.fs bitstream]
-  F --> G[openFPGALoader flash]
+  D --> E
+  E --> F[bitstream]
+  F --> G[programming]
 ```
 
-## File Location
-Put board files under:
-- `boards/*.board.json`
-
-Example:
-- `boards/tang_nano_20k.board.json`
-
-## Minimum Required Fields
-At minimum you need:
-- `vendor`
-- `family`
-- `part`
-- at least one clock or IO pin mapping used by your top module
-
-Minimal working Tang Nano 20K style example:
+## The Exact File Shape
+Minimal structure:
 ```json
 {
   "vendor": "gowin",
@@ -50,97 +38,89 @@ Minimal working Tang Nano 20K style example:
 }
 ```
 
-## Field Reference
+Required keys:
+- `vendor`
+- `family`
+- `part`
+- `clocks` and/or `io` entries that match your module ports
 
-### `vendor`
-Controls constraint format and toolchain assumptions.
+## How To Read A Schematic And Map It Correctly
+Use this 1:1 mapping rule:
+- schematic label on FPGA side -> `pin`
+- signal electrical standard -> `std`
+- external pull requirements -> `pull`
+- drive strength requirements -> `drive`
 
-Typical values:
-- `gowin`
-- `xilinx`
-- `intel`
-- `lattice`
+Example workflow:
+1. Open official board schematic PDF for your board revision.
+2. Find the net label that connects to your intended FPGA signal.
+3. Confirm the physical FPGA pin number, not only connector silk text.
+4. Add or update JSON entry under `clocks` or `io`.
+5. Regenerate and inspect constraints.
+6. Run hardware bring-up with a minimal test design.
 
-### `family`
-Human/flow descriptor used by synthesis path and docs.
+## Tang Nano 20K Reference Mapping (Current Workspace)
+Based on workspace board definition and schematic-backed updates:
 
-### `part`
-Exact FPGA part number passed to place-and-route flow.
+| Logical name | Purpose | Pin | Notes |
+| --- | --- | --- | --- |
+| `clk` | onboard clock | `4` | 27 MHz |
+| `rst_n` | reset button/input | `88` | active low with pull-up |
+| `btn` | user button | `87` | pull-up |
+| `led[0..5]` | user LEDs | `15..20` | active-low behavior in examples |
+| `ws2812` | onboard RGB/WS2812 data | `79` | schematic net `PIN79_WS2812` |
 
-### `clocks`
-Named clock inputs with pin and IO standard.
+If your board revision differs, fork the board JSON by revision and do not silently reuse the wrong mapping.
 
-Example:
-```json
-"clocks": {
-  "clk": { "pin": "4", "freq": "27MHz", "std": "LVCMOS33" }
-}
+## Port Naming Rule (Most Common Failure)
+Board JSON keys must match generated top module ports exactly.
+
+Examples:
+- top port `ws2812` -> board entry must be `"ws2812": { ... }`
+- top bus `led[5:0]` -> board entries must use indexed names (`led[0]`, `led[1]`, ...)
+
+Bad mapping example:
+- top port is scalar `led`
+- board defines only `led[0]`
+
+Result: constraints mismatch and non-obvious hardware failure.
+
+## Known Pin-Reuse Trap
+In this workspace, some sample UART mappings and LED mappings share pins for convenience in limited demos.
+Do not assume those can be used simultaneously in one design unless you intentionally multiplex and validate the hardware wiring.
+
+## Step-By-Step: Add Or Fix A Board Definition
+1. Copy nearest existing board file in `boards/`.
+2. Set `vendor`, `family`, `part` from datasheet/schematic.
+3. Add `clk` first and verify compile.
+4. Add one visible output (`led` or heartbeat output).
+5. Flash and power-cycle check.
+6. Add peripheral pins (`uart`, `ws2812`, etc.) one at a time.
+7. Update docs with exact schematic source and revision.
+
+## Validation Commands
+```bash
+bun run quality
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k --flash
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812 --flash
 ```
 
-### `io`
-Named functional IOs used by your generated module top ports.
+Expected flash proof lines:
+- `--external-flash --write-flash --verify`
+- `write to flash`
+- `DONE`
 
-Example:
-```json
-"io": {
-  "rst_n": { "pin": "88", "std": "LVCMOS33", "pull": "UP" },
-  "led[0]": { "pin": "15", "std": "LVCMOS33" },
-  "ws2812": { "pin": "73", "std": "LVCMOS33", "drive": "8" }
-}
-```
+## Quick Debug Checklist
+If flash succeeds but output is wrong:
+- pin number mismatch vs schematic,
+- wrong port name in JSON,
+- active-low LED polarity confusion,
+- shared-pin conflict,
+- missing shared ground for external peripherals.
 
-## Critical Naming Rule
-Constraint names must match module port names.
-
-Example mismatch that causes dead hardware:
-- module output is `led`
-- board definition maps only `led[0]`
-
-This can compile but fail routing or leave outputs unconstrained.
-
-Use one of these strategies:
-- If module has scalar output: map scalar name (`led`).
-- If module has bus output: map bus bits (`led[0]`, `led[1]`, ...).
-
-## Adding A New Board Definition
-1. Copy an existing board file.
-2. Update `vendor`, `family`, `part`.
-3. Add clock mapping first.
-4. Add only the IO signals you actually need for first bring-up.
-5. Compile a minimal one-output design.
-6. Flash and verify physical behavior.
-7. Expand IO map gradually.
-
-## Recommended Bring-Up Design For New Boards
-Use a minimal scalar LED output first to eliminate bus naming errors.
-
-## Validation Checklist
-- `bun run quality` passes.
-- compile artifacts generated.
-- constraints file contains expected IO names.
-- toolchain logs show correct target part.
-- flash logs show `--external-flash --write-flash --verify` (for Tang Nano 20K flow).
-- post-power-cycle behavior persists.
-
-## Common Failure Modes
-
-### 1. No visible behavior after successful flash
-Likely causes:
-- wrong pin mapping,
-- wrong board family/part,
-- wrong output polarity assumptions (active-low LEDs),
-- wrong module port naming vs board IO naming.
-
-### 2. Unconstrained IO errors
-Typical reason:
-- top module has ports not present in board definition.
-
-### 3. IO conflict across reused pins
-Do not map two logical signals to the same physical pin unless intentionally multiplexed and validated.
-
-## Additional Resources
-- openFPGALoader docs: https://github.com/trabucayre/openFPGALoader
+## References
+- Sipeed Tang Nano 20K schematic directory: https://dl.sipeed.com/shareURL/TANG/Nano_20K/2_Schematic
+- openFPGALoader: https://github.com/trabucayre/openFPGALoader
 - Yosys: https://yosyshq.net/yosys/
 - nextpnr: https://github.com/YosysHQ/nextpnr
 - Apicula/gowin_pack: https://github.com/YosysHQ/apicula
-- Tang Nano 20K LED reference workflow: https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/example/led.html

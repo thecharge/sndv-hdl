@@ -15,6 +15,8 @@ import type { Bit, Logic } from '@ts2v/runtime';
 @Module
 class Ws2812bDemo extends HardwareModule {
   @Input clk: Bit = 0;
+  // Physical mapping is defined in boards/tang_nano_20k.board.json.
+  // Tang Nano 20K onboard RGB data net is expected on PIN79_WS2812.
   @Output ws2812: Bit = 0;
   @Output led: Logic<6> = 0x3f;
 

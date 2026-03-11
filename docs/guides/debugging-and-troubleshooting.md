@@ -104,6 +104,7 @@ Use this order for new or uncertain hardware:
 ## WS2812-Specific Debug
 If bitstream is flashed but strip stays dark:
 - check `ws2812` pin mapping,
+- for Tang Nano 20K in this repo, verify `ws2812` is pin `79` (`PIN79_WS2812`),
 - check shared ground,
 - check strip power rail,
 - check signal timing with logic analyzer,

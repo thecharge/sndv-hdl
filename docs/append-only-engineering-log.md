@@ -418,3 +418,45 @@
 - Re-ran full gate successfully:
   - `TURBO_UI=false bun run quality`
   - typecheck, lint, test, and build all completed successfully.
+
+## 2026-03-11T23:10:00Z - Tang Nano 20K WS2812 Pin Mapping Correction + Board Docs Rewrite
+- User requested schematic-backed correction for onboard WS2812 mapping (`PIN79_WS2812`).
+- Updated board mapping to pin 79:
+  - `boards/tang_nano_20k.board.json` (`ws2812.pin` from `73` -> `79`)
+  - `constraints/tang_nano_20k.cst` (`IO_LOC "ws2812" 79`)
+- Added explicit source comment in hardware example:
+  - `examples/hardware/tang_nano_20k_ws2812b.ts` now notes mapping comes from board JSON and expected schematic net is `PIN79_WS2812`.
+- Reworked board-definition documentation for clarity and practical use:
+  - `docs/guides/board-definition-authoring.md` rewritten with schematic-to-JSON workflow, Tang Nano 20K mapping table, naming rules, and validation steps.
+- Updated operational docs to remove ambiguity around WS2812 wiring:
+  - `README.md`
+  - `docs/quickstart.md`
+  - `docs/guides/tang_nano_20k_programming.md`
+  - `docs/guides/debugging-and-troubleshooting.md`
+- Validation:
+  - `bun test packages/core/src/facades/hardware-examples-compile.test.ts` passed.
+  - Recompiled WS2812 example and verified generated constraints include:
+    - `IO_LOC "ws2812" 79;`
+
+## 2026-03-11T23:25:00Z - Real Flash Proof Refresh + Production Scenarios + Dependabot
+- Executed fresh real hardware flash runs in this session:
+  - WS2812 demo:
+    - `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812-e2e --flash`
+  - Blinky demo:
+    - `TS2V_ALLOW_LOCAL_TOOLCHAIN=1 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/blinky-e2e --flash`
+- Observed WS2812 proof lines:
+  - probe visible: `0x0403:0x6010 FTDI2232 SIPEED`
+  - programmer command includes `openFPGALoader --external-flash --write-flash --verify -b tangnano20k`
+  - `write to flash`
+  - `DONE`
+  - `Detected: Winbond W25Q64 128 sectors size: 64Mb`
+  - `Verifying write (May take time)`
+  - final `Done`
+- Observed blinky proof lines:
+  - same persistent flash flags present,
+  - `write to flash`, `DONE`, `Detected: Winbond W25Q64`, `Verifying write (May take time)`, final `Done`.
+- Documentation improvements requested by user:
+  - `docs/quickstart.md` rewritten to a short WS2812-first end-to-end flow with explicit wiring and pass/fail checks.
+  - `docs/guides/production-reality-check.md` expanded with concrete production scenarios (bring-up, feature demo delivery, release candidate gate).
+- Added automated dependency update config:
+  - `.github/dependabot.yml` covering root workspace, `apps/cli`, and all `packages/*` manifests.
