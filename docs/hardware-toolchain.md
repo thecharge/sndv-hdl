@@ -25,15 +25,16 @@ The constraint generator (`board-constraint-gen.ts`) can generate `.xdc` files f
 
 ## Toolchain Stages
 
-```
-CLI compile command
-  → Compiler Core (TypeScript → SystemVerilog .sv)
-  → Board Constraint Generator (board.json → .cst / .xdc)
-  → Synthesis Container
-      → yosys: synth_gowin → JSON netlist
-      → nextpnr-himbaechel: place-and-route → PnR JSON
-      → gowin_pack: bitstream → .fs file
-  → openFPGALoader: flash to FPGA
+```mermaid
+flowchart TD
+    A["CLI compile command"] --> B["Compiler Core\nTypeScript → SystemVerilog .sv"]
+    A --> C["Board Constraint Generator\nboard.json → .cst / .xdc"]
+    B --> D["Synthesis Container\nts2v-gowin-oss:latest"]
+    C --> D
+    D --> E["yosys synth_gowin\n→ JSON netlist"]
+    E --> F["nextpnr-himbaechel\n→ PnR JSON"]
+    F --> G["gowin_pack\n→ bitstream .fs"]
+    G --> H["openFPGALoader\n→ flash to FPGA"]
 ```
 
 ## Container Runtime

@@ -171,10 +171,17 @@ Local variables declared with `Logic<N>` are promoted to `logic [N-1:0]` module 
 
 ## Pipeline Architecture
 
-```
-TS Source → Lexer → Token Stream → Parser → AST
-         → TypeChecker → Typed Metadata
-         → CodeGenerator → SystemVerilog Source (.sv)
+```mermaid
+flowchart LR
+    A["TypeScript Source"] --> B["Lexer"]
+    B --> C["Token Stream"]
+    C --> D["Parser"]
+    D --> E["AST"]
+    E --> F["TypeChecker"]
+    F --> G["Typed Metadata"]
+    G --> H["CodeGenerator"]
+    H --> I["SystemVerilog Source (.sv)"]
+    H --> J["Constraints (.cst / .xdc)"]
 ```
 
 ## Configuration

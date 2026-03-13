@@ -44,7 +44,7 @@ describe('Hardware examples behavior', () => {
     expect(sv.includes('t0h')).toBe(true);
     expect(sv.includes('tbit')).toBe(true);
     expect(sv.includes('treset')).toBe(true);
-    expect(sv.includes('btnDebounce')).toBe(true);
+    expect(sv.includes('walkTick')).toBe(true);
     expect(sv.includes('ledPhase')).toBe(true);
     expect(sv.includes("ws2812 <= 1'b1")).toBe(true);
     expect(sv.includes("ws2812 <= 1'b0")).toBe(true);

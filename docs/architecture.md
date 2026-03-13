@@ -14,7 +14,7 @@ flowchart LR
     E --> F["Type Checker"]
     F --> G["Typed AST + Metadata"]
     G --> H["Code Generator"]
-    H --> I["Verilog Source"]
+    H --> I["SystemVerilog Source (.sv)"]
 ```
 
 ## Module Structure
@@ -40,17 +40,17 @@ graph TD
     CodeGen --> Errors
 ```
 
-## Translation Flow: TypeScript Function to Verilog Module
+## Translation Flow: TypeScript Function to SystemVerilog Module
 
 ```mermaid
 flowchart TD
-    A["function add(a: number, b: number): number"] --> B["Parameters -> Input Ports"]
-    A --> C["Return Type -> Output Port"]
-    A --> D["Body -> Combinational Logic"]
-    
-    B --> E["input wire [31:0] a"]
-    B --> F["input wire [31:0] b"]
-    C --> G["output wire [31:0] result"]
+    A["function add(a: number, b: number): number"] --> B["Parameters → Input Ports"]
+    A --> C["Return Type → Output Port"]
+    A --> D["Body → Combinational Logic"]
+
+    B --> E["input logic [31:0] a"]
+    B --> F["input logic [31:0] b"]
+    C --> G["output logic [31:0] result"]
     D --> H["assign result = (a + b)"]
 ```
 
@@ -58,10 +58,11 @@ flowchart TD
 
 ```mermaid
 graph LR
-    TS_Number["TypeScript: number"] --> V_Wire32["Verilog: wire [31:0]"]
-    TS_Bool["TypeScript: boolean"] --> V_Wire1["Verilog: wire"]
-    TS_NumArr["TypeScript: number[N]"] --> V_RegArr["Verilog: wire [31:0] arr [0:N-1]"]
-    TS_BoolArr["TypeScript: boolean[N]"] --> V_RegArr1["Verilog: wire arr [0:N-1]"]
+    TS_Number["TypeScript: number"]     --> SV_Logic32["SystemVerilog: logic [31:0]"]
+    TS_Bool["TypeScript: boolean"]       --> SV_Logic1["SystemVerilog: logic"]
+    TS_LogicN["TypeScript: Logic&lt;N&gt;"]   --> SV_LogicN["SystemVerilog: logic [N-1:0]"]
+    TS_NumArr["TypeScript: number[N]"]   --> SV_Arr["SystemVerilog: logic [31:0] arr[0:N-1]"]
+    TS_BoolArr["TypeScript: boolean[N]"] --> SV_Arr1["SystemVerilog: logic arr[0:N-1]"]
 ```
 
 ## Operator Precedence (Parsing)

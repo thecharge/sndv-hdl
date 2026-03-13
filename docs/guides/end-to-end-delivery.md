@@ -16,7 +16,7 @@ Step-by-step workflow from writing TypeScript hardware source to a bitstream run
 ## Step 1 — Set Up the Workspace
 
 ```bash
-git clone https://github.com/yourusername/ts2v.git
+git clone https://github.com/thecharge/sndv-hdl.git ts2v
 cd ts2v
 bun install
 ```
@@ -168,37 +168,38 @@ Power off the board and power it back on. The bitstream is written to external S
 
 ---
 
-## Step 8 — Write the Testbench
+## Step 8 — Write the Testbench Spec (TypeScript only)
 
-Every example must have a co-located `.sv` testbench. Use Icarus Verilog-compatible syntax:
+All testbench source in ts2v is **TypeScript**. Never write raw SystemVerilog testbench files. Use the spec types from `testbenches/tb-spec-types.ts` and place the spec in `testbenches/`:
 
-```systemverilog
-`timescale 1ns/1ps
-`default_nettype none
+```typescript
+// testbenches/my_module.tb-spec.ts
+import type { SeqTestSpec } from './tb-spec-types';
 
-module tb_my_module;
-  logic clk   = 0;
-  logic rst_n = 0;
-  logic [5:0] led;
-
-  MyModule dut (.*);
-
-  always #18 clk = ~clk; // 27 MHz
-
-  integer pass = 0, fail = 0;
-  task check(input string label, input logic [5:0] got, input logic [5:0] exp);
-    if (got === exp) begin $display("PASS %s", label); pass++; end
-    else             begin $display("FAIL %s got=%h exp=%h", label, got, exp); fail++; end
-  endtask
-
-  initial begin
-    #36; rst_n = 1;
-    // ... test vectors ...
-    $display("Result: %0d pass, %0d fail", pass, fail);
-    $finish;
-  end
-endmodule
+export const myModuleSpec: SeqTestSpec = {
+  kind: 'sequential',
+  module: 'MyModule',
+  sourceFile: 'examples/hardware/tang_nano_20k/my_module/my_module.ts',
+  clock: 'clk',
+  clockHalfPeriodNs: 18,  // 27 MHz
+  checks: [
+    {
+      label: 'reset_leds_off',
+      forcedSignals:   { rst_n: "1'b1" },
+      expectedSignals: { led: "6'h3f" },
+    },
+    {
+      label: 'phase0_led0_on',
+      forcedSignals:   { phase: "3'd0" },
+      expectedSignals: { led: "6'h3e" },
+    },
+  ],
+};
 ```
+
+For combinational (function-based) modules use `CombTestSpec`. See `testbenches/adder.tb-spec.ts` for a worked example.
+
+The UVM-style simulation pipeline (`bun run test:uvm`) reads TypeScript specs from `testbenches/uvm/`, generates SV in `.artifacts/uvm/`, and runs them in the container. Generated SV is an artifact, not a source file.
 
 ---
 
@@ -220,15 +221,15 @@ bun run test:uvm
 
 ## Flagship Reference Example
 
-The WS2812 Interactive Demo (`examples/hardware/tang_nano_20k/ws2812_demo/`) is the most complex example in the repository. It demonstrates:
+The WS2812 Interactive Demo (`examples/hardware/tang_nano_20k/ws2812_demo/`) is the flagship hardware example. It demonstrates:
 
-- 4 color modes (rainbow, fire, ocean, forest) each with 4 color steps
-- 6-LED walking pattern running simultaneously
-- Hardware button debounce with anti-repeat (`btnArmed` pattern)
-- WS2812 serial state machine with `T0H`/`T1H`/`treset` timing
-- Method-local registers (`bitValue`, `highTicks`) promoted from `@Sequential`
+- S2 (btn) held → WS2812 strip outputs solid RED; released → off (black)
+- S1 (rst_n) held → 6-LEDs walk one by one; released → all LEDs off and walk resets
+- WS2812 serial state machine with `t0h`/`t1h`/`treset` timing constants
+- Method-local registers (`bitValue`, `highTicks`) promoted from `@Sequential` to module scope
+- No async reset — FPGA registers initialise to declared defaults on power-up
 
-It has been confirmed synthesized and flashed to a physical Tang Nano 20K (Winbond W25Q64). Use it as the reference for non-trivial module design.
+It has been confirmed synthesised and flashed to a physical Tang Nano 20K (Winbond W25Q64). Its TypeScript testbench spec lives in `testbenches/ws2812_demo.tb-spec.ts`.
 
 ```bash
 bun run apps/cli/src/index.ts compile \

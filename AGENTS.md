@@ -51,9 +51,17 @@ No closed-source EDA tools (Quartus, Vivado, Gowin EDA proprietary bits beyond p
 - Document every operational or architectural decision in append-only logs.
 - Generated SystemVerilog must comply with IEEE 1800-2017; use `logic` (not `wire`) for all signal declarations; input ports are `input logic`, not `input wire logic`.
 - After any change to `packages/core/` source, run `bun run build` before compiling examples — stale dist files cause silent failures.
-- Hardware examples live under `examples/hardware/<board>/`. Each example gets its own subfamily folder with both the TypeScript source and a `.sv` testbench. Do not place hardware examples at the root of `examples/`.
-- Simulation examples live under `examples/<name>/` with their `.sv` testbenches co-located. Do not use flat `examples/*.ts` files.
+- Hardware examples live under `examples/hardware/<board>/`. Each example gets its own subfamily folder with the TypeScript source only. Do not place hardware examples at the root of `examples/`.
+- Simulation examples live under `examples/<name>/` with the TypeScript source only. Do not use flat `examples/*.ts` files.
+- **All testbench source must be TypeScript** — use the spec types in `testbenches/tb-spec-types.ts` and place specs in `testbenches/`. Never write raw `.sv` testbench files. Generated SV testbenches are build artifacts (`.artifacts/`) not source files.
+- CPU and SoC TypeScript sources live under `examples/cpu/`. Their imports must use `'@ts2v/runtime'`, not the old `'ts2sv'` alias.
 - The verified flash command for Tang Nano 20K is `bun run apps/cli/src/index.ts compile <file> --board boards/tang_nano_20k.board.json --out <dir> --flash`. No manual docker/podman orchestration required.
+
+## Documentation Rules
+- All flow, architecture, and pipeline diagrams in `docs/` must use Mermaid (` ```mermaid ` block). No ASCII art or plain-text diagrams.
+- When updating a feature or workflow, update the relevant guide and mirror the change in `README.md` docs index.
+- Every new guide added to `docs/guides/` must be referenced in `README.md` under Documentation Index.
+- Append all hardware operational decisions (flash results, programmer profiles, new board support) to `docs/append-only-engineering-log.md`.
 
 ## Debugging Rules
 - Never assume one programmer cable/profile fits all devices.
