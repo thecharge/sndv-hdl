@@ -77,6 +77,8 @@ If the board flashes successfully but no LED strip effect appears:
 
 ## Core Commands
 - `bun run quality`: typecheck + lint + test + build.
+- `bun run test:root`: run focused root regression suite (`tests/class-compiler.test.ts`).
+- `bun run test:uvm`: compile `examples/alu.ts` and `examples/hardware/tang_nano_20k_blinker.ts`, generate UVM-style benches from TypeScript specs, run simulation in Podman/Docker, and emit per-suite reports (`.artifacts/uvm/reports/*.json|*.md`).
 - `bun run toolchain:image:build`: build local synth/flash image.
 - `bun run compile:example`: compile default example.
 - `bun run flash:tang20k <bitstream.fs>`: direct flash helper entrypoint.
@@ -91,6 +93,8 @@ If the board flashes successfully but no LED strip effect appears:
 - `docs/guides/programmer-profiles-and-usb-permissions.md`: profile and permission model.
 - `docs/guides/user-usb-debugger-onboarding.md`: practical USB probe onboarding.
 - `docs/guides/examples-matrix.md`: examples, intent, and expected hardware behavior.
+- `docs/guides/uvm-simulation-with-podman.md`: containerized simple UVM-style simulation flow.
+- `docs/guides/uvm-suite-authoring.md`: how to add future UVM-style verification suites and reports.
 - `docs/guides/ws2812-protocol-and-brightness.md`: WS2812 protocol semantics and brightness behavior.
 - `docs/development.md`: contributor/developer workflow.
 - `docs/hardware-toolchain.md`: synth/programming architecture and command flow.

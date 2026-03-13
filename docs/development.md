@@ -37,7 +37,11 @@ bun run toolchain:image:build
 ```bash
 bun run quality
 ```
-4. Compile and flash known-good example:
+4. Run containerized UVM-style simulation smoke test:
+```bash
+bun run test:uvm
+```
+5. Compile and flash known-good example:
 ```bash
 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts \
   --board boards/tang_nano_20k.board.json \
