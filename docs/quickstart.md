@@ -10,7 +10,7 @@ You should see all of these:
 
 ## 1. One-Time Setup
 ```bash
-git clone <your-repo-url> ts2v
+git clone https://github.com/thecharge/sndv-hdl.git ts2v
 cd ts2v
 bun install
 bun run toolchain:image:build
