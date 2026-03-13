@@ -34,6 +34,7 @@ export enum TokenKind {
   Caret = 'Caret',
   ShiftLeft = 'ShiftLeft',
   ShiftRight = 'ShiftRight',
+  ArithmeticShiftRight = 'ArithmeticShiftRight',
 
   // Operators - comparison
   StrictEqual = 'StrictEqual',

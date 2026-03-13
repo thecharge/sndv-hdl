@@ -144,7 +144,14 @@ export class Lexer extends CharReader {
         }
         return at(TokenKind.Not, '!');
       case '>':
-        if (this.match('>')) return at(TokenKind.ShiftRight, '>>');
+        if (!this.isAtEnd() && this.peek() === '>') {
+          this.advance();
+          if (!this.isAtEnd() && this.peek() === '>') {
+            this.advance();
+            return at(TokenKind.ArithmeticShiftRight, '>>>');
+          }
+          return at(TokenKind.ShiftRight, '>>');
+        }
         if (this.match('=')) return at(TokenKind.GreaterThanOrEqual, '>=');
         return at(TokenKind.GreaterThan, '>');
       case '<':

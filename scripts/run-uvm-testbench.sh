@@ -35,7 +35,7 @@ fi
 
 echo "=== Compile ALU source to SystemVerilog ==="
 cd "${repo_root}"
-bun run apps/cli/src/index.ts compile examples/alu.ts --board boards/tang_nano_9k.board.json --out .artifacts/uvm
+bun run apps/cli/src/index.ts compile examples/alu/alu.ts --board boards/tang_nano_9k.board.json --out .artifacts/uvm
 
 echo "=== Generate ALU UVM-style testbench from TypeScript spec ==="
 bun run scripts/generate-uvm-alu-testbench.ts
@@ -54,7 +54,7 @@ echo "=== Generate ALU machine-readable simulation report ==="
 bun run scripts/generate-uvm-report.ts "${alu_log_path}" "alu"
 
 echo "=== Compile Blinky source to SystemVerilog ==="
-bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/uvm
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/blinker/blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/uvm
 
 echo "=== Generate Blinky UVM-style testbench from TypeScript spec ==="
 bun run scripts/generate-uvm-blinky-testbench.ts

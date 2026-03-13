@@ -4,8 +4,13 @@
   "container": {
     "image": "ts2v-gowin-oss:latest",
     "workDirectory": "/workspace",
-    "runtimePriority": ["podman", "docker"],
-    "usbDevicePaths": ["/dev/bus/usb"],
+    "runtimePriority": [
+      "podman",
+      "docker"
+    ],
+    "usbDevicePaths": [
+      "/dev/bus/usb"
+    ],
     "binaries": {
       "yosys": "yosys",
       "nextpnr": "nextpnr-himbaechel",
@@ -41,8 +46,8 @@
           "pid": "0x6594"
         },
         {
-          "name": "ftdi-ch552-jtag",
-          "cable": "ch552_jtag",
+          "name": "sipeed-ft2232-debugger",
+          "cable": "ft2232",
           "vid": "0x0403",
           "pid": "0x6010"
         }

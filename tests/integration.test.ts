@@ -11,7 +11,7 @@ describe('Integration: full pipeline', () => {
       {
         name: 'adder',
         source: 'function add(a: number, b: number): number { return a + b; }',
-        fragments: ['module add', 'input  wire [31:0] a', 'input  wire [31:0] b', 'output wire [31:0] result', 'assign result = (a + b)', 'endmodule'],
+        fragments: ['module add', 'input  logic [31:0] a', 'input  logic [31:0] b', 'output logic [31:0] result', 'assign result = (a + b)', 'endmodule'],
       },
       {
         name: 'identity',
@@ -26,7 +26,7 @@ describe('Integration: full pipeline', () => {
       {
         name: 'boolean return',
         source: 'function is_equal(a: number, b: number): boolean { return a === b; }',
-        fragments: ['output wire  result', '(a == b)'],
+        fragments: ['output logic  result', '(a == b)'],
       },
     ];
 
@@ -66,8 +66,8 @@ describe('Integration: full pipeline', () => {
       `;
       const result = pipeline.compile(source);
       assert.strictEqual(result.success, true);
-      assert.ok(result.verilog.includes('wire [31:0] sum'));
-      assert.ok(result.verilog.includes('wire [31:0] masked'));
+      assert.ok(result.verilog.includes('logic [31:0] sum'));
+      assert.ok(result.verilog.includes('logic [31:0] masked'));
       assert.ok(result.verilog.includes('assign sum ='));
       assert.ok(result.verilog.includes('assign masked ='));
     });

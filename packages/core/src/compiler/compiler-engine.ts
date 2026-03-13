@@ -60,7 +60,7 @@ export function generateConstraints(boardJsonPath: string, outDir: string): stri
   const lines: string[] = [];
   let extension = '.cst';
 
-  const pins: Record<string, { pin: string; std: string; freq?: string }> = {};
+  const pins: Record<string, { pin: string; std: string; freq?: string; drive?: string; pull?: string }> = {};
   const boardPins = board.pins as Record<string, string> | undefined;
   if (boardPins) {
     const ioStandard = String(board.io_standard ?? 'LVCMOS33');
@@ -82,10 +82,15 @@ export function generateConstraints(boardJsonPath: string, outDir: string): stri
     }
   }
 
-  const boardIo = board.io as Record<string, { pin: string; std?: string }> | null;
+  const boardIo = board.io as Record<string, { pin: string; std?: string; drive?: string; pull?: string }> | null;
   if (boardIo) {
     for (const [name, config] of Object.entries(boardIo)) {
-      pins[name] = { pin: config.pin, std: config.std ?? 'LVCMOS33' };
+      pins[name] = {
+        pin: config.pin,
+        std: config.std ?? 'LVCMOS33',
+        drive: config.drive,
+        pull: config.pull,
+      };
     }
   }
 
@@ -99,7 +104,10 @@ export function generateConstraints(boardJsonPath: string, outDir: string): stri
     lines.push('');
     for (const [name, config] of Object.entries(pins)) {
       lines.push(`IO_LOC "${name}" ${config.pin};`);
-      lines.push(`IO_PORT "${name}" IO_TYPE=${config.std};`);
+      let attrs = `IO_TYPE=${config.std}`;
+      if (config.drive) attrs += ` DRIVE=${config.drive}`;
+      if (config.pull) attrs += ` PULL_MODE=${config.pull}`;
+      lines.push(`IO_PORT "${name}" ${attrs};`);
     }
   } else if (vendor === 'xilinx') {
     extension = '.xdc';

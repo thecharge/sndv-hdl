@@ -8,11 +8,8 @@ describe('Hardware examples compile', () => {
   const facade = new Ts2vCompilationFacade();
 
   const examples = [
-    'examples/hardware/tang_nano_20k_blinker.ts',
-    'examples/hardware/usb_jtag_probe_blinker.ts',
-    'examples/hardware/tang_nano_20k_reset_debug.ts',
-    'examples/hardware/tang_nano_20k_uart_debug.ts',
-    'examples/hardware/tang_nano_20k_ws2812b.ts',
+    'examples/hardware/tang_nano_20k/blinker/blinker.ts',
+    'examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts',
   ];
 
   for (const examplePath of examples) {

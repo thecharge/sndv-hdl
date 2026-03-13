@@ -10,7 +10,7 @@ describe('Ts2vCompilationFacade', () => {
     const facade = new Ts2vCompilationFacade();
 
     const result = await facade.compile({
-      inputPath: resolve(__dirname, '../../../../examples/adder.ts'),
+      inputPath: resolve(__dirname, '../../../../examples/adder/adder.ts'),
       outputDirectoryPath,
     });
 

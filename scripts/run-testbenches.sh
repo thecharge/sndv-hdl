@@ -10,7 +10,7 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 BUILD_DIR="build"
-TB_DIR="testbenches"
+TB_DIR="examples"
 SIM_DIR="build/sim"
 
 mkdir -p "$SIM_DIR"
@@ -61,11 +61,11 @@ run_tb() {
     fi
 }
 
-run_tb "blinker"  "$BUILD_DIR/blinker.v"  "$TB_DIR/tb_blinker.v"
-run_tb "uart_tx"  "$BUILD_DIR/uart_tx.v"  "$TB_DIR/tb_uart_tx.v"
-run_tb "alu"      "$BUILD_DIR/alu.v"      "$TB_DIR/tb_alu.v"
-run_tb "pwm"      "$BUILD_DIR/pwm.v"      "$TB_DIR/tb_pwm.v"
-run_tb "stdlib"   "$BUILD_DIR/stdlib.v"   "$TB_DIR/tb_stdlib.v"
+run_tb "blinker"  "$BUILD_DIR/blinker.v"  "$TB_DIR/blinker/tb_blinker.sv"
+run_tb "uart_tx"  "$BUILD_DIR/uart_tx.v"  "$TB_DIR/uart_tx/tb_uart_tx.sv"
+run_tb "alu"      "$BUILD_DIR/alu.v"      "$TB_DIR/alu/tb_alu.sv"
+run_tb "pwm"      "$BUILD_DIR/pwm.v"      "$TB_DIR/pwm/tb_pwm.sv"
+run_tb "stdlib"   "$BUILD_DIR/stdlib.v"   "$TB_DIR/stdlib/tb_stdlib.sv"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

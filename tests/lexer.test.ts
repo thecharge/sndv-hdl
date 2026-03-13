@@ -84,6 +84,7 @@ describe('Lexer', () => {
       ['|', TokenKind.Pipe],
       ['^', TokenKind.Caret],
       ['>>', TokenKind.ShiftRight],
+      ['>>>', TokenKind.ArithmeticShiftRight],
       ['<<', TokenKind.ShiftLeft],
       ['===', TokenKind.StrictEqual],
       ['!==', TokenKind.StrictNotEqual],

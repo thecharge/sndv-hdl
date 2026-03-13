@@ -196,8 +196,8 @@ describe('ClassModuleCompiler', () => {
         }
       `);
       assert.ok(result.success);
-      assert.ok(result.systemverilog.includes('input  wire logic [7:0] a'));
-      assert.ok(result.systemverilog.includes('input  wire logic [7:0] b'));
+      assert.ok(result.systemverilog.includes('input  logic [7:0] a'));
+      assert.ok(result.systemverilog.includes('input  logic [7:0] b'));
       assert.ok(result.systemverilog.includes('output      logic [8:0] sum'));
     });
 
@@ -210,8 +210,8 @@ describe('ClassModuleCompiler', () => {
         }
       `);
       assert.ok(result.success);
-      assert.ok(result.systemverilog.includes('input  wire logic clk'));
-      assert.ok(!result.systemverilog.includes('input  wire logic rst_n'));
+      assert.ok(result.systemverilog.includes('input  logic clk'));
+      assert.ok(!result.systemverilog.includes('input  logic rst_n'));
       assert.ok(result.systemverilog.includes('always_ff @(posedge clk)'));
     });
 
@@ -226,8 +226,8 @@ describe('ClassModuleCompiler', () => {
         }
       `);
       assert.ok(result.success, result.errors.join(', '));
-      assert.ok(result.systemverilog.includes('input  wire logic [127:0] lhs'));
-      assert.ok(result.systemverilog.includes('input  wire logic [255:0] rhs'));
+      assert.ok(result.systemverilog.includes('input  logic [127:0] lhs'));
+      assert.ok(result.systemverilog.includes('input  logic [255:0] rhs'));
       assert.ok(result.systemverilog.includes('output      logic [255:0] out'));
     });
   });

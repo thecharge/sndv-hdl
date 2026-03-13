@@ -1,1 +1,2 @@
-export { lintVerilog, LintDiagnostic } from './verilog-linter';
+export { lintVerilog } from './verilog-linter';
+export type { LintDiagnostic } from './verilog-linter';

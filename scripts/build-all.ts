@@ -17,10 +17,29 @@ interface BuildResult {
   readonly error_message: string;
 }
 
+/** Recursively collect all .ts files from a directory tree, excluding tb_*.sv files. */
+async function collectTsFiles(dir: string): Promise<string[]> {
+  const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await collectTsFiles(full));
+    } else if (entry.isFile() && entry.name.endsWith('.ts')) {
+      files.push(full);
+    }
+  }
+  return files;
+}
+
 async function buildAll(): Promise<void> {
   await fs.promises.mkdir(BUILD_DIR, { recursive: true });
   const pipeline = new CompilerPipeline();
-  const ts_files = (await fs.promises.readdir(EXAMPLES_DIR)).filter(f => f.endsWith('.ts'));
+  const all_files = await collectTsFiles(EXAMPLES_DIR);
+  // Only build combinational examples (hardware/ examples use the CLI path)
+  const ts_files = all_files
+    .filter(f => !f.includes(`${path.sep}hardware${path.sep}`))
+    .map(f => path.relative(path.join(__dirname, '..', 'examples'), f));
 
   console.log(`ts2v build: ${ts_files.length} source files\n`);
 
@@ -30,7 +49,8 @@ async function buildAll(): Promise<void> {
 
   for (const file of ts_files) {
     const source_path = path.join(EXAMPLES_DIR, file);
-    const output_name = file.replace(/\.ts$/, '.v');
+    const flat_name = file.replace(/[/\\]/g, '_').replace(/\.ts$/, '');
+    const output_name = flat_name + '.v';
     const output_path = path.join(BUILD_DIR, output_name);
 
     const source = await fs.promises.readFile(source_path, 'utf-8');

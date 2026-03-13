@@ -82,7 +82,11 @@ export class ExpressionParser extends TokenReader {
 
   private parseShift(): ExpressionNode {
     let left = this.parseAdditive();
-    while (this.check(TokenKind.ShiftLeft) || this.check(TokenKind.ShiftRight)) {
+    while (
+      this.check(TokenKind.ShiftLeft) ||
+      this.check(TokenKind.ShiftRight) ||
+      this.check(TokenKind.ArithmeticShiftRight)
+    ) {
       const operator = this.advance().value as BinaryOperator;
       left = this.makeBinary(operator, left, this.parseAdditive());
     }
@@ -117,6 +121,11 @@ export class ExpressionParser extends TokenReader {
       const location = this.currentLocation();
       this.advance();
       return { kind: AstNodeKind.UnaryExpression, operator: '-', operand: this.parseUnary(), location };
+    }
+    if (this.check(TokenKind.Not)) {
+      const location = this.currentLocation();
+      this.advance();
+      return { kind: AstNodeKind.UnaryExpression, operator: '!', operand: this.parseUnary(), location };
     }
     return this.parsePrimary();
   }

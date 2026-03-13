@@ -4,10 +4,10 @@ import { CliArgumentsParser } from './cli-arguments-parser';
 describe('CliArgumentsParser', () => {
   test('parses compile command with defaults', () => {
     const parser = new CliArgumentsParser();
-    const result = parser.parse(['bun', 'ts2v', 'compile', 'examples/blinker.ts']);
+    const result = parser.parse(['bun', 'ts2v', 'compile', 'examples/blinker/blinker.ts']);
 
     expect(result.command).toBe('compile');
-    expect(result.inputPath).toBe('examples/blinker.ts');
+    expect(result.inputPath).toBe('examples/blinker/blinker.ts');
     expect(result.outputDirectoryPath).toBe('.artifacts/tang20k');
     expect(result.synthesizeAndFlash).toBe(false);
   });
@@ -18,7 +18,7 @@ describe('CliArgumentsParser', () => {
       'bun',
       'ts2v',
       'compile',
-      'examples/blinker.ts',
+      'examples/blinker/blinker.ts',
       '--out',
       '.artifacts/custom',
       '--board',

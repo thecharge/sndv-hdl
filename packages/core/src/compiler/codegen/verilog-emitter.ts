@@ -65,9 +65,9 @@ export class VerilogEmitter {
   private emitPorts(checked: CheckedFunction): void {
     const port_lines: string[] = [];
     for (const param of checked.parameters) {
-      port_lines.push(`input  wire ${this.formatBitWidth(param.hardware_type)} ${sanitizeIdentifier(param.name)}`);
+      port_lines.push(`input  logic ${this.formatBitWidth(param.hardware_type)} ${sanitizeIdentifier(param.name)}`);
     }
-    port_lines.push(`output wire ${this.formatBitWidth(checked.return_type)} ${sanitizeIdentifier('result')}`);
+    port_lines.push(`output logic ${this.formatBitWidth(checked.return_type)} ${sanitizeIdentifier('result')}`);
     for (let i = 0; i < port_lines.length; i++) {
       this.emitLine(`${port_lines[i]}${i < port_lines.length - 1 ? ',' : ''}`);
     }
@@ -80,9 +80,9 @@ export class VerilogEmitter {
       const width = this.formatBitWidth(local.hardware_type);
       const name = sanitizeIdentifier(local.name);
       if (local.hardware_type.array_size !== undefined && local.hardware_type.array_size > 0) {
-        this.emitLine(`wire ${width} ${name} [0:${local.hardware_type.array_size - 1}];`);
+        this.emitLine(`logic ${width} ${name} [0:${local.hardware_type.array_size - 1}];`);
       } else {
-        this.emitLine(`wire ${width} ${name};`);
+        this.emitLine(`logic ${width} ${name};`);
       }
     }
   }

@@ -43,48 +43,51 @@ podman run --rm --device /dev/bus/usb ts2v-gowin-oss:latest openFPGALoader --sca
 ```
 
 ### 6. Compile And Flash Blinky (Persistent)
+
 ```bash
-bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts \
-	--board boards/tang_nano_20k.board.json \
-	--out .artifacts/tang20k \
-	--flash
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/blinker/blinker.ts \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/blinker \
+  --flash
 ```
 
-Expected output includes:
-- `openFPGALoader --external-flash --write-flash --verify`
-- `write to flash`
-- `Verifying write (May take time)`
-- `DONE`
+Confirmed flash output (Winbond W25Q64, Tang Nano 20K):
+
+```
+Detected: Winbond W25Q64 128 sectors size: 64Mb
+Writing:  [==================================================] 100.00%  Done
+Verifying write ... Reading: [==================================================] Done
+```
 
 ### 7. Power Cycle And Recheck
 Power off/on the board. Behavior should persist because image was written to external flash.
 
-## Quickstart From Zero To WS2812 Demo
-Important: this demo needs WS2812 hardware connected to the configured `ws2812` pin.
-For Tang Nano 20K in this repo, that pin is `79` (`PIN79_WS2812`).
+## Quickstart From Zero To WS2812 Interactive Demo
+
+The WS2812 interactive demo features 4 color modes (rainbow, fire, ocean, forest), a 6-LED walking pattern that runs simultaneously, and hardware button debounce for mode cycling. WS2812 strip must be connected to pin 79 (Tang Nano 20K).
 
 ```bash
-bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_ws2812b.ts \
-	--board boards/tang_nano_20k.board.json \
-	--out .artifacts/ws2812 \
-	--flash
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/ws2812_demo \
+  --flash
 ```
 
-If the board flashes successfully but no LED strip effect appears:
-- verify strip wiring and ground reference,
-- verify data pin matches board definition (`ws2812` -> pin `79` for Tang Nano 20K),
-- verify strip voltage/current budget.
+This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 
 ## Core Commands
 - `bun run quality`: typecheck + lint + test + build.
 - `bun run test:root`: run focused root regression suite (`tests/class-compiler.test.ts`).
-- `bun run test:uvm`: compile `examples/alu.ts` and `examples/hardware/tang_nano_20k_blinker.ts`, generate UVM-style benches from TypeScript specs, run simulation in Podman/Docker, and emit per-suite reports (`.artifacts/uvm/reports/*.json|*.md`).
+- `bun run test:uvm`: compile `examples/alu/alu.ts` and `examples/hardware/tang_nano_20k/blinker/blinker.ts`, generate UVM-style benches from TypeScript specs, run simulation in Podman/Docker, and emit per-suite reports (`.artifacts/uvm/reports/*.json|*.md`).
 - `bun run toolchain:image:build`: build local synth/flash image.
 - `bun run compile:example`: compile default example.
 - `bun run flash:tang20k <bitstream.fs>`: direct flash helper entrypoint.
 
 ## Documentation Index
 - `docs/quickstart.md`: WS2812-first end-to-end quickstart with explicit pass/fail checks.
+- `docs/guides/end-to-end-delivery.md`: **step-by-step compile-to-flash delivery guide** (start here for new hardware modules).
 - `docs/guides/board-definition-authoring.md`: complete board definition guide.
 - `docs/guides/board-definition-properties-reference.md`: complete property reference (`std`, `drive`, `pull`, `freq`, vendor mappings).
 - `docs/guides/tang_nano_20k_programming.md`: Tang Nano 20K flashing runbook.
@@ -93,11 +96,8 @@ If the board flashes successfully but no LED strip effect appears:
 - `docs/guides/programmer-profiles-and-usb-permissions.md`: profile and permission model.
 - `docs/guides/user-usb-debugger-onboarding.md`: practical USB probe onboarding.
 - `docs/guides/examples-matrix.md`: examples, intent, and expected hardware behavior.
-<<<<<<< HEAD
-=======
 - `docs/guides/uvm-simulation-with-podman.md`: containerized simple UVM-style simulation flow.
 - `docs/guides/uvm-suite-authoring.md`: how to add future UVM-style verification suites and reports.
->>>>>>> master
 - `docs/guides/ws2812-protocol-and-brightness.md`: WS2812 protocol semantics and brightness behavior.
 - `docs/development.md`: contributor/developer workflow.
 - `docs/hardware-toolchain.md`: synth/programming architecture and command flow.
@@ -119,6 +119,11 @@ If the board flashes successfully but no LED strip effect appears:
 - `packages/process`: process runtime abstraction.
 - `packages/types`: shared interfaces/contracts.
 - `boards`: board definitions used by compile/flash flow.
+- `examples/`: hardware examples organized by name, each subfolder contains its TypeScript source and a SystemVerilog testbench.
+  - `examples/hardware/tang_nano_20k/blinker/` — 6-LED chaser (hardware baseline)
+  - `examples/hardware/tang_nano_20k/ws2812_demo/` — WS2812 interactive demo (flagship, confirmed flashed)
+  - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`, etc. — simulation examples
+- `testbenches/uvm/`: UVM-style testbench specs (TypeScript) compiled to SV for simulation.
 
 ## License
 MIT. See `LICENSE`.

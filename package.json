@@ -16,7 +16,7 @@
     "format:check": "bunx biome format .",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "test:root": "bun test tests/class-compiler.test.ts tests/uvm-flow.test.ts",
+    "test:root": "bun test tests/class-compiler.test.ts tests/uvm-flow.test.ts tests/codegen.test.ts tests/integration.test.ts tests/lexer.test.ts tests/parser.test.ts tests/typechecker.test.ts",
     "test:uvm": "bash scripts/run-uvm-testbench.sh",
     "typecheck": "turbo run typecheck",
     "quality": "bun run typecheck && bun run lint && bun run test && bun run test:root && bun run build",
@@ -25,7 +25,7 @@
     "toolchain:image:build:docker": "TS2V_CONTAINER_RUNTIME=docker bash scripts/build-toolchain-image.sh",
     "toolchain:image:build:podman": "TS2V_CONTAINER_RUNTIME=podman bash scripts/build-toolchain-image.sh",
     "flash:tang20k": "bun run packages/toolchain/src/entrypoints/flash-tang20k.ts",
-    "compile:example": "bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k"
+    "compile:example": "bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/blinker/blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k"
   },
   "devDependencies": {
     "husky": "^9.1.7",

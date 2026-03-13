@@ -43,11 +43,14 @@ bun run test:uvm
 ```
 5. Compile and flash known-good example:
 ```bash
-bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k_blinker.ts \
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/blinker/blinker.ts \
   --board boards/tang_nano_20k.board.json \
-  --out .artifacts/tang20k \
+  --out .artifacts/blinker \
   --flash
 ```
+
+> **Important**: After changing any source in `packages/core/`, run `bun run build` before compiling examples so the dist files stay in sync.
 
 ## Mandatory Hardware Validation
 For changes affecting toolchain, board definitions, or flashing:
@@ -69,9 +72,11 @@ Use this guide:
 - Start bring-up with minimal one-output designs before complex buses/peripherals.
 
 ## Example Progression
-1. `examples/hardware/tang_nano_20k_led0_solid_on.ts`
-2. `examples/hardware/tang_nano_20k_blinker.ts`
-3. `examples/hardware/tang_nano_20k_ws2812b.ts`
+
+1. `examples/hardware/tang_nano_20k/blinker/blinker.ts` — 6-LED walking blinker (minimal hardware baseline)
+2. `examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts` — WS2812 interactive demo (4 color modes, LED walking pattern, button debounce; flagship example — **confirmed flashed to hardware**)
+
+All other examples (`examples/adder/`, `examples/alu/`, `examples/uart_tx/`, etc.) are simulation-only and include per-example SystemVerilog testbenches.
 
 ## Production Acceptance Checklist
 - `bun run quality` passes.

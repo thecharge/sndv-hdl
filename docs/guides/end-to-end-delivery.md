@@ -1,0 +1,253 @@
+# End-to-End Delivery Guide
+
+Step-by-step workflow from writing TypeScript hardware source to a bitstream running on real FPGA hardware.
+
+## Prerequisites
+
+| Tool               | Minimum Version | Purpose                               |
+| ------------------ | --------------- | ------------------------------------- |
+| Bun                | 1.3+            | Package manager, runtime, test runner |
+| Podman (or Docker) | any             | Synthesis/flash container             |
+| Git                | any             | Source control                        |
+| Linux host         | —               | USB passthrough to FPGA programmer    |
+
+---
+
+## Step 1 — Set Up the Workspace
+
+```bash
+git clone https://github.com/yourusername/ts2v.git
+cd ts2v
+bun install
+```
+
+Run the quality gate to confirm the workspace is healthy before touching any hardware:
+
+```bash
+bun run quality
+# Expected: 189+ pass, 0 fail
+```
+
+---
+
+## Step 2 — Build the Toolchain Container (Once)
+
+The synthesis and programming flow runs inside `ts2v-gowin-oss:latest`, which bundles Yosys, nextpnr-himbaechel, gowin_pack, and openFPGALoader.
+
+```bash
+bun run toolchain:image:build
+```
+
+This is only needed once (or after `toolchain/Dockerfile` changes).
+
+---
+
+## Step 3 — Write Your Hardware Module
+
+Create a new example subfolder. Every example lives in its own directory with its source and testbench co-located:
+
+```
+examples/hardware/tang_nano_20k/my_module/
+  my_module.ts       ← TypeScript hardware source
+  tb_my_module.sv    ← SystemVerilog testbench
+```
+
+**Minimal template:**
+
+```typescript
+import { Module, Input, Output, Sequential, Logic } from '@ts2v/runtime';
+
+class MyModule extends Module {
+  @Input  clk:   Logic<1>;
+  @Input  rst_n: Logic<1>;
+  @Output led:   Logic<6> = 0x3f; // active-low: all off
+
+  @Sequential
+  tick() {
+    if (!this.rst_n) {
+      this.led = 0x3f;
+    } else {
+      this.led = this.led + 1;
+    }
+  }
+}
+```
+
+Key rules:
+- Extend `Module` and use `@Input` / `@Output` decorators — these become IEEE 1800-2017 ANSI ports.
+- Use `Logic<N>` for N-bit signals; all ports are emitted as `input logic` / `output logic`.
+- Use `@Sequential` for `always_ff`; use `@Combinational` for `always_comb`.
+- Local `let`/`const` variables inside `@Sequential` that are assigned in multiple branches are promoted to module-level `logic` registers automatically.
+- Write all logic as `this.signalName` assignments — no direct SV emit.
+
+See `docs/specification.md` for the complete language reference.
+
+---
+
+## Step 4 — Compile to SystemVerilog
+
+After any changes to `packages/core/`, run `bun run build` first to keep dist files in sync.
+
+```bash
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/my_module/my_module.ts \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/my_module
+```
+
+Inspect the generated SystemVerilog before synthesis:
+
+```bash
+cat .artifacts/my_module/my_module.sv
+```
+
+Confirm:
+- Module name matches your class name.
+- All ports are declared as `input logic` / `output logic`.
+- `always_ff @(posedge clk or negedge rst_n)` is present for sequential blocks.
+- No TypeScript artifacts in the output.
+
+---
+
+## Step 5 — Verify USB Probe Visibility
+
+Connect the Tang Nano 20K via USB and put it in programming mode (press S2 then S1 while connected, or follow the board manual).
+
+```bash
+# Host-side check
+lsusb
+# Expected line: 0403:6010 Future Technology Devices International, Ltd FT2232C/D/H
+# (may appear as "SIPEED USB Debugger")
+
+# Container-side probe scan
+podman run --rm --device /dev/bus/usb ts2v-gowin-oss:latest openFPGALoader --scan-usb
+```
+
+If the device is not found:
+- Check USB permissions: the running user must be in the `plugdev` group (or equivalent).
+- On some distros: `sudo udevadm control --reload && sudo udevadm trigger`
+- See `docs/guides/programmer-profiles-and-usb-permissions.md` for full diagnostics.
+
+---
+
+## Step 6 — Synthesize and Flash
+
+Add `--flash` to the compile command. The CLI handles compile → synthesize (yosys → nextpnr → gowin_pack) → flash (openFPGALoader) in a single invocation:
+
+```bash
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/my_module/my_module.ts \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/my_module \
+  --flash
+```
+
+### Confirmed Flash Output
+
+A successful flash to Winbond W25Q64 (Tang Nano 20K) looks like:
+
+```
+[artifact] systemverilog: .artifacts/my_module/my_module.sv
+[artifact] constraints:   .artifacts/my_module/tang_nano_20k.cst
+[toolchain] yosys synth_gowin ...
+[toolchain] nextpnr-himbaechel ...
+[toolchain] gowin_pack ...
+[programmer] openFPGALoader --external-flash --write-flash --verify --cable ft2232
+Detected: Winbond W25Q64 128 sectors size: 64Mb
+Writing:  [==================================================] 100.00%  Done
+Verifying write ... Reading: [==================================================] Done
+```
+
+If flash fails, see `docs/guides/debugging-and-troubleshooting.md`.
+
+---
+
+## Step 7 — Power Cycle and Verify
+
+Power off the board and power it back on. The bitstream is written to external SPI flash and reloads automatically on power-up. Expected behavior should persist without a USB connection.
+
+---
+
+## Step 8 — Write the Testbench
+
+Every example must have a co-located `.sv` testbench. Use Icarus Verilog-compatible syntax:
+
+```systemverilog
+`timescale 1ns/1ps
+`default_nettype none
+
+module tb_my_module;
+  logic clk   = 0;
+  logic rst_n = 0;
+  logic [5:0] led;
+
+  MyModule dut (.*);
+
+  always #18 clk = ~clk; // 27 MHz
+
+  integer pass = 0, fail = 0;
+  task check(input string label, input logic [5:0] got, input logic [5:0] exp);
+    if (got === exp) begin $display("PASS %s", label); pass++; end
+    else             begin $display("FAIL %s got=%h exp=%h", label, got, exp); fail++; end
+  endtask
+
+  initial begin
+    #36; rst_n = 1;
+    // ... test vectors ...
+    $display("Result: %0d pass, %0d fail", pass, fail);
+    $finish;
+  end
+endmodule
+```
+
+---
+
+## Step 9 — Run the Quality Gate
+
+```bash
+bun run quality
+# Must be: X pass, 0 fail
+```
+
+Also run the UVM simulation suite if you added or modified verification specs:
+
+```bash
+bun run test:uvm
+# ALU: 25/25, Blinky: 6/6
+```
+
+---
+
+## Flagship Reference Example
+
+The WS2812 Interactive Demo (`examples/hardware/tang_nano_20k/ws2812_demo/`) is the most complex example in the repository. It demonstrates:
+
+- 4 color modes (rainbow, fire, ocean, forest) each with 4 color steps
+- 6-LED walking pattern running simultaneously
+- Hardware button debounce with anti-repeat (`btnArmed` pattern)
+- WS2812 serial state machine with `T0H`/`T1H`/`treset` timing
+- Method-local registers (`bitValue`, `highTicks`) promoted from `@Sequential`
+
+It has been confirmed synthesized and flashed to a physical Tang Nano 20K (Winbond W25Q64). Use it as the reference for non-trivial module design.
+
+```bash
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/ws2812_demo \
+  --flash
+```
+
+---
+
+## Troubleshooting Reference
+
+| Problem                  | First Check                                        | Guide                                                    |
+| ------------------------ | -------------------------------------------------- | -------------------------------------------------------- |
+| `bun run quality` fails  | Check error output for file/line                   | `docs/qa-testing.md`                                     |
+| Compile error            | Check TypeScript source for unsupported constructs | `docs/specification.md`                                  |
+| Synthesis fails          | Check yosys stderr for unsupported SV constructs   | `docs/guides/debugging-and-troubleshooting.md`           |
+| Flash: device not found  | `lsusb`, USB permissions, probe profile            | `docs/guides/programmer-profiles-and-usb-permissions.md` |
+| Flash: wrong behavior    | Check pin mapping in board JSON                    | `docs/guides/board-definition-authoring.md`              |
+| Power-cycle: no behavior | Confirm `--external-flash` was used                | `docs/guides/tang_nano_20k_programming.md`               |
+| Stale codegen            | Run `bun run build` after `packages/core` changes  | `docs/development.md`                                    |

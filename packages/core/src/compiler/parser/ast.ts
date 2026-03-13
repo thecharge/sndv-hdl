@@ -109,10 +109,10 @@ export type StatementNode =
 
 export type BinaryOperator =
   | '+' | '-' | '*'
-  | '&' | '|' | '^' | '>>' | '<<'
+  | '&' | '|' | '^' | '>>' | '>>>' | '<<'
   | '===' | '!==' | '>' | '<' | '>=' | '<=';
 
-export type UnaryOperator = '~' | '-';
+export type UnaryOperator = '~' | '-' | '!';
 
 export interface AssignmentExpressionNode extends AstNodeBase {
   kind: AstNodeKind.AssignmentExpression;

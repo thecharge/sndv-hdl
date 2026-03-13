@@ -27,23 +27,25 @@ describe('Hardware examples behavior', () => {
   }
 
   test('blinker emits deterministic phase pattern updates', async () => {
-    const sv = await compileToSv('examples/hardware/tang_nano_20k_blinker.ts');
+    const sv = await compileToSv('examples/hardware/tang_nano_20k/blinker/blinker.ts');
 
     expect(sv.includes('module Blinker')).toBe(true);
     expect(sv.includes('logic [24:0] counter')).toBe(true);
     expect(sv.includes('logic [2:0] phase')).toBe(true);
-    expect(sv.includes("led <= 8'h3e")).toBe(true);
-    expect(sv.includes("led <= 8'h1f")).toBe(true);
+    expect(sv.includes("led <= 6'h3e")).toBe(true);
+    expect(sv.includes("led <= 6'h1f")).toBe(true);
   });
 
-  test('ws2812 demo emits timing-controlled serial driver', async () => {
-    const sv = await compileToSv('examples/hardware/tang_nano_20k_ws2812b.ts');
+  test('ws2812 interactive demo emits timing-controlled serial driver with button control', async () => {
+    const sv = await compileToSv('examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts');
 
-    expect(sv.includes('module Ws2812bDemo')).toBe(true);
+    expect(sv.includes('module Ws2812InteractiveDemo')).toBe(true);
     expect(sv.includes('t1h')).toBe(true);
     expect(sv.includes('t0h')).toBe(true);
     expect(sv.includes('tbit')).toBe(true);
     expect(sv.includes('treset')).toBe(true);
+    expect(sv.includes('btnDebounce')).toBe(true);
+    expect(sv.includes('ledPhase')).toBe(true);
     expect(sv.includes("ws2812 <= 1'b1")).toBe(true);
     expect(sv.includes("ws2812 <= 1'b0")).toBe(true);
   });
