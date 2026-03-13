@@ -87,6 +87,21 @@ describe('ClassModuleCompiler', () => {
       assert.ok(result.systemverilog.includes("a <= 4'd5"));
       assert.ok(!result.systemverilog.includes("a = 4'd5;"));
     });
+
+    it('does not emit reset branch when rst_n input is not declared', () => {
+      const result = compileClassModule(`
+        class X extends Module {
+          @Input clk: Logic<1>;
+          @Output q: Logic<8> = 12;
+          @Sequential(clk)
+          tick() { this.q = this.q + 1; }
+        }
+      `);
+      assert.ok(result.success, result.errors.join(', '));
+      assert.ok(result.systemverilog.includes('always_ff @(posedge clk)'));
+      assert.ok(!result.systemverilog.includes('if (!rst_n)'));
+      assert.ok(result.systemverilog.includes('q <= q + 1'));
+    });
   });
 
   describe('combinational logic', () => {
@@ -330,6 +345,19 @@ describe('BoardConstraintGenerator', () => {
     assert.ok(result.content.includes('set_property PACKAGE_PIN D10'));
   });
 
+  it('emits Xilinx drive and pull properties when present', () => {
+    const board: BoardDefinition = {
+      vendor: 'xilinx', family: 'artix7', part: 'xc7a35t',
+      clocks: { sys_clk: { pin: 'E3', freq: '100MHz', std: 'LVCMOS33' } },
+      io: {
+        led: { pin: 'D10', std: 'LVCMOS33', drive: '8', pull: 'UP' }
+      }
+    };
+    const result = generateConstraints(board);
+    assert.ok(result.content.includes('set_property DRIVE 8 [get_ports led]'));
+    assert.ok(result.content.includes('set_property PULLTYPE UP [get_ports led]'));
+  });
+
   it('generates Intel .qsf', () => {
     const board: BoardDefinition = {
       vendor: 'intel', family: 'cyclone10', part: '10CL025YU256C8G',
@@ -352,5 +380,17 @@ describe('BoardConstraintGenerator', () => {
     assert.ok(result.filename.endsWith('.lpf'));
     assert.ok(result.content.includes('LOCATE COMP "clk" SITE "P3"'));
     assert.ok(result.content.includes('FREQUENCY PORT "clk" 25 MHz'));
+  });
+
+  it('emits Gowin drive and pull properties when present', () => {
+    const board: BoardDefinition = {
+      vendor: 'gowin', family: 'GW1NR-9C', part: 'GW1NR-LV9QN88PC6/I5',
+      clocks: { clk: { pin: '52', freq: '27MHz', std: 'LVCMOS33' } },
+      io: {
+        led: { pin: '10', std: 'LVCMOS33', drive: '8', pull: 'UP' }
+      }
+    };
+    const result = generateConstraints(board);
+    assert.ok(result.content.includes('IO_PORT "led" IO_TYPE=LVCMOS33 DRIVE=8 PULL_MODE=UP;'));
   });
 });

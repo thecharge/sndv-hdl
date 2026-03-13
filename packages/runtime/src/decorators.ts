@@ -30,13 +30,11 @@ export function Submodule(_target: object, _propertyKey: string): void {
  * Marks a method as clocked sequential logic.
  */
 export function Sequential(_clock: string): MethodDecorator {
-  return function (
+  return (
     _target: object,
     _propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
-  ): PropertyDescriptor {
-    return descriptor;
-  };
+  ): PropertyDescriptor => descriptor;
 }
 
 /**

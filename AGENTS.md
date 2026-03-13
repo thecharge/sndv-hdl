@@ -24,6 +24,8 @@ This workspace is organized for production-grade TypeScript-to-SystemVerilog del
 	- validation command list
 	- known residual risks
 - Toolchain changes must include at least one command log proving behavior.
+- Verification-flow changes should include at least one `bun run test:uvm` command log.
+- Verification-flow changes should update `docs/guides/uvm-suite-authoring.md` when workflow conventions evolve.
 - Documentation changes must be mirrored in `README.md` docs index.
 
 ## Working Rules
@@ -47,6 +49,7 @@ This workspace is organized for production-grade TypeScript-to-SystemVerilog del
 ## Delivery Gates
 - `bun run quality` must pass.
 - `bun run compile:example` must generate artifacts.
+- `bun run test:uvm` should pass for verification-flow updates.
 - Hardware steps must be reproducible with logged commands and outputs.
 
 ## Legal And Attribution

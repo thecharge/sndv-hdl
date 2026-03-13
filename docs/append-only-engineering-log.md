@@ -515,3 +515,101 @@
   - programmer command includes `openFPGALoader --external-flash --write-flash --verify -r -b tangnano20k`
   - probe row includes `0x0403:0x6010 FTDI2232 SIPEED`
   - `write to flash`, `DONE`, `Verifying write (May take time)`, final `Done`.
+
+## 2026-03-13T11:20:00Z - Simple UVM-Style Testbench + Fidelity Expansion
+- Added containerized UVM-style smoke verification assets:
+  - `testbenches/uvm/uvm_lite_pkg.sv`
+  - `testbenches/uvm/uvm_lite_macros.svh`
+  - `testbenches/uvm/tb_alu_uvm.sv`
+- Added automation script:
+  - `scripts/run-uvm-testbench.sh`
+  - behavior: compiles `examples/alu.ts` via CLI to `.artifacts/uvm/alu.sv`, then runs `iverilog` + `vvp` inside `ts2v-gowin-oss` image.
+- Added root and UVM command entrypoints:
+  - `package.json`:
+    - `test:root`
+    - `test:uvm`
+  - `quality` now includes root tests (`bun run test:root`) in addition to package-level test tasks.
+- Added compiler/constraints test fidelity in `tests/class-compiler.test.ts`:
+  - sequential block coverage when `rst_n` is absent (no implicit reset branch emission)
+  - Xilinx `DRIVE`/`PULLTYPE` emission assertions
+  - Gowin `DRIVE`/`PULL_MODE` emission assertions
+- Documentation updates:
+  - new guide: `docs/guides/uvm-simulation-with-podman.md`
+  - updated command and docs index coverage in `README.md`
+  - updated `docs/qa-testing.md` and `docs/development.md`
+  - updated `AGENTS.md` handoff + delivery gate expectations for verification-flow changes.
+
+## 2026-03-13T11:45:00Z - Validation Execution Proof (Podman + Quality)
+- Environment recovery after container prune:
+  - command: `bun install`
+  - result: workspace dev dependencies restored (`turbo`, `typescript`, `bun-types`, `husky`).
+- UVM-style simulation proof:
+  - command: `bun run test:uvm`
+  - key lines:
+    - `Starting simple UVM-style ALU smoke test`
+    - `checked 10_3`
+    - `checked zero_zero`
+    - `checked pattern_mix`
+    - `checked wraparound_add`
+    - `checked cross_pattern`
+    - `alu uvm-lite testbench: 25 passed, 0 failed`
+    - `UVM-style simulation completed successfully.`
+- Root fidelity suite proof:
+  - command: `bun run test:root`
+  - result: `23 pass, 0 fail`.
+- Full gate proof:
+  - command: `TURBO_UI=false bun run quality`
+  - result: typecheck + lint + package tests + root test + build all successful.
+
+## 2026-03-13T12:20:00Z - TypeScript-Driven UVM Bench Generation + Reports
+- Replaced static hand-authored UVM bench usage with TypeScript spec-driven generation:
+  - new generator: `packages/core/src/compiler/verification/uvm-lite-testbench-generator.ts`
+  - typed spec: `testbenches/uvm/alu.uvm-spec.ts`
+  - generator entrypoint: `scripts/generate-uvm-alu-testbench.ts`
+  - generated bench artifact: `.artifacts/uvm/tb_alu_uvm.sv`
+- Added simulation report generation for production traceability:
+  - parser/report script: `scripts/generate-uvm-report.ts`
+  - artifacts:
+    - `.artifacts/uvm/reports/uvm-alu-report.json`
+    - `.artifacts/uvm/reports/uvm-alu-report.md`
+- Updated runner:
+  - `scripts/run-uvm-testbench.sh` now performs compile -> TS bench generation -> container sim -> report generation.
+- Added root unit test coverage for compiler + TS bench generation:
+  - `tests/uvm-flow.test.ts`
+  - wired via `package.json` `test:root` command.
+- Removed obsolete static bench source to avoid dual-path drift:
+  - deleted: `testbenches/uvm/tb_alu_uvm.sv`.
+- Validation run in-session:
+  - `bun run test:root` -> `25 pass, 0 fail`
+  - `bun run test:uvm` -> `25 passed, 0 failed` with generated report artifacts
+  - `TURBO_UI=false bun run quality` -> pass.
+
+## 2026-03-13T12:45:00Z - Blinky UVM Suite + Lifecycle Guidance
+- Added second TS-driven UVM-style suite for Tang Nano 20K blinky behavior:
+  - spec: `testbenches/uvm/blinky.uvm-spec.ts`
+  - generator: `packages/core/src/compiler/verification/uvm-lite-blinky-testbench-generator.ts`
+  - entrypoint: `scripts/generate-uvm-blinky-testbench.ts`
+- Expanded `scripts/run-uvm-testbench.sh` to run ALU + Blinky suites and emit per-suite reports.
+- Report generator hardened to fail execution when suite status is not pass.
+- Added/updated guidance docs:
+  - `docs/guides/uvm-suite-authoring.md`
+  - `docs/guides/uvm-simulation-with-podman.md`
+  - `docs/qa-testing.md`
+  - `README.md` docs index and command descriptions.
+- Validation run in-session:
+  - `bun run test:root` -> `26 pass, 0 fail`
+  - `bun run test:uvm` ->
+    - ALU: `25 passed, 0 failed`
+    - Blinky: `6 passed, 0 failed`
+  - `TURBO_UI=false bun run quality` -> pass.
+
+## 2026-03-13T13:40:00Z - Suite-Agnostic Report Parser Fix
+- Fixed report parser bias that only recognized ALU-tagged lines:
+  - file: `scripts/generate-uvm-report.ts`
+  - now parses suite-agnostic `[UVM_INFO][*_TEST] checked ...` lines and generic `uvm-lite testbench` summary lines.
+- Hardened status policy:
+  - report fails when structural evidence is missing (no summary and/or no checked cases), even if explicit fail count is not present.
+- Re-generated blinky report and confirmed corrected values:
+  - `passCount: 6`
+  - `failCount: 0`
+  - checked cases populated (`phase0_led0_on` ... `phase5_led5_on`).

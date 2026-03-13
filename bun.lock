@@ -58,6 +58,13 @@
         "@biomejs/biome": "^1.9.4",
       },
     },
+    "packages/runtime": {
+      "name": "@ts2v/runtime",
+      "version": "2.0.0",
+      "devDependencies": {
+        "@biomejs/biome": "^1.9.4",
+      },
+    },
     "packages/toolchain": {
       "name": "@ts2v/toolchain",
       "version": "2.0.0",
@@ -104,6 +111,8 @@
     "@ts2v/core": ["@ts2v/core@workspace:packages/core"],
 
     "@ts2v/process": ["@ts2v/process@workspace:packages/process"],
+
+    "@ts2v/runtime": ["@ts2v/runtime@workspace:packages/runtime"],
 
     "@ts2v/toolchain": ["@ts2v/toolchain@workspace:packages/toolchain"],
 
