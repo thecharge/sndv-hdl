@@ -654,3 +654,25 @@ Done
 ### Quality gate
 - `bun run quality` → 7 tasks successful, 0 failures
 - `bun run test:uvm` → ALU 25 pass, Blinky 6 pass
+
+## 2026-03-14: Strike 2 Remediation Complete
+
+### Source refactoring
+- `packages/core/src/compiler/class-compiler/class-module-compiler.ts` split into 9 files using inheritance chain (ParserBase, ClassDeclParser, ClassStmtParser, ClassModuleParser, EmitterBase, SequentialEmitter, ClassModuleEmitter). All files under 285 lines.
+- All test files split to under 285 lines: v1-features, v1-features-hierarchy, class-compiler, class-compiler-constraints, v1-production, v1-production-assignment, v1-production-compliance, v1-production-hardware.
+- All 4 v1-production*.test.ts files converted from custom test harness to Bun describe/it framework. Test count: 298 (pre-conversion) to 325 (post-conversion).
+
+### Documentation
+- Fixed `ts2v compile` references in api-reference.md and api.md to use `bun run apps/cli/src/index.ts compile`.
+- Removed Unicode arrow (`→`) and em-dash (` — `) from all user-facing docs prose (specification.md, hardware-toolchain.md, compliance.md, development.md, README.md, guides/end-to-end-delivery.md, guides/getting-started.md). Mermaid node labels retained.
+
+### Quality gate
+- `bun run quality`: 7 tasks successful, 0 failures
+- `bun test`: 325 pass, 0 fail (30 files)
+
+### WS2812 flash (Tang Nano 20K, session 2026-03-14)
+- Board: Tang Nano 20K (GW2AR-18C), Winbond W25Q64 external SPI flash
+- Bitstream: `.artifacts/ws2812_demo/ws2812_demo.fs`
+- Command: `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812_demo --flash`
+- Result: Erase, Write, Verify all Done. External flash programming confirmed.
+- Programmer profile: Sipeed USB debugger (FT2232H), cable auto-detected by openFPGALoader.

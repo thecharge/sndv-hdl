@@ -73,8 +73,8 @@ Use this guide:
 
 ## Example Progression
 
-1. `examples/hardware/tang_nano_20k/blinker/blinker.ts` — 6-LED walking blinker (minimal hardware baseline)
-2. `examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts` — WS2812 interactive demo (4 color modes, LED walking pattern, button debounce; flagship example — **confirmed flashed to hardware**)
+1. `examples/hardware/tang_nano_20k/blinker/blinker.ts`: 6-LED walking blinker (minimal hardware baseline)
+2. `examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts`: WS2812 interactive demo (4 color modes, LED walking pattern, button debounce; flagship example, **confirmed flashed to hardware**)
 
 All other examples (`examples/adder/`, `examples/alu/`, `examples/uart_tx/`, etc.) are simulation-only and include per-example SystemVerilog testbenches.
 

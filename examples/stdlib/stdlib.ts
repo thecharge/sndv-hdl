@@ -34,7 +34,7 @@ function priority_encoder_4bit(in3: boolean, in2: boolean, in1: boolean, in0: bo
 }
 
 // Even parity generator: XOR reduction of 8 data bits (manual unroll).
-function parity_8bit(d7: boolean, d6: boolean, d5: boolean, d4: boolean, d3: boolean, d2: boolean, d1: boolean, d0: boolean): boolean {
+function parity_8bit(d7: number, d6: number, d5: number, d4: number, d3: number, d2: number, d1: number, d0: number): number {
   const p01: number = d0 ^ d1;
   const p23: number = d2 ^ d3;
   const p45: number = d4 ^ d5;

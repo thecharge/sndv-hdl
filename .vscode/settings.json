@@ -29,5 +29,6 @@
   },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
-  }
+  },
+  "chat.tools.terminal.enableAutoApprove": false
 }

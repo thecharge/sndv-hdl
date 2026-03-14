@@ -51,7 +51,7 @@ function ws2812_pack_grb(red: number, green: number, blue: number): number {
 function ws2812_extract_bit(grb_word: number, bit_position: number): boolean {
   const inverted_position: number = 23 - bit_position;
   const shifted: number = grb_word >> inverted_position;
-  return shifted & 1;
+  return (shifted & 1) !== 0;
 }
 
 // Reset detector: output true when in reset phase (>50us low).

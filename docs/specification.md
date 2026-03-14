@@ -5,12 +5,12 @@
 ts2v compiles a subset of TypeScript into IEEE 1800-2017 SystemVerilog for FPGA deployment.
 Two compilation paths are supported:
 
-1. **Functional compiler** — `function` declarations map to combinational `module` blocks.
-2. **Class compiler** — `class` declarations with decorators map to sequential/combinational `module` blocks with `always_ff`/`always_comb`.
+1. **Functional compiler**: `function` declarations map to combinational `module` blocks.
+2. **Class compiler**: `class` declarations with decorators map to sequential/combinational `module` blocks with `always_ff`/`always_comb`.
 
 ## Functional Compiler
 
-### TypeScript Types → SystemVerilog Types
+### TypeScript to SystemVerilog Types
 
 | TypeScript   | SystemVerilog               | Width           |
 | ------------ | --------------------------- | --------------- |
@@ -22,11 +22,11 @@ Two compilation paths are supported:
 ### Variable Declarations
 - `const` and `let` with explicit or inferred type annotation
 
-### Functions → Modules
+### Functions to Modules
 Each function declaration becomes one Verilog module:
-- Parameters → `input logic` ports
-- Return value → `output logic` port named `result`
-- Local variables → `logic` declarations with `assign` statements
+- Parameters: `input logic` ports
+- Return value: `output logic` port named `result`
+- Local variables: `logic` declarations with `assign` statements
 
 ### Operators
 
@@ -41,7 +41,7 @@ Each function declaration becomes one Verilog module:
 | `===`, `!==`, `>`, `<`, `>=`, `<=` | `==`, `!=`, etc. | Comparison                                       |
 
 ### Control Flow
-- `if/else` → ternary mux chains (combinational assignment)
+- `if/else`: emitted as ternary mux chains (combinational assignment)
 
 ### Literals
 | TypeScript | SystemVerilog | Notes                          |
@@ -110,7 +110,7 @@ class Blinker extends Module {
 - Blocking assignments `=` (IEEE 1800-2017 §10.4.1)
 - No latches when all outputs are assigned
 
-### Enums → typedef enum
+### Enums as typedef enum
 ```typescript
 enum State { Idle = 0, Active = 1, Done = 2 }
 ```
@@ -185,7 +185,7 @@ flowchart LR
 ```
 
 ## Configuration
-Layered: `base.config.json` → board config → user config (via CLI `--config`).
+Layered: `base.config.json`, then board config, then user config (via CLI `--config`).
 
 ## Quality Requirements
 - All tests pass: `bun run quality`

@@ -1,0 +1,194 @@
+// Top-level module parser: orchestrates parsing of TypeScript @Module classes
+// into ClassModuleAST. Extends ClassStmtParser via the inheritance chain.
+
+import { Lexer } from '../lexer/lexer';
+import { TokenKind } from '../lexer/token';
+import {
+    ClassModuleAST, DecoratorAST, ModuleConfig, MethodAST, StatementAST,
+    EnumAST, AssertionAST,
+} from './class-module-ast';
+import { ClassStmtParser } from './class-stmt-parser';
+
+export class ClassModuleParser extends ClassStmtParser {
+    constructor(source: string) {
+        super(new Lexer(source).tokenize());
+    }
+
+    parse(): { enums: EnumAST[]; modules: ClassModuleAST[] } {
+        const enums: EnumAST[] = [];
+        const modules: ClassModuleAST[] = [];
+        while (!this.isAtEnd()) {
+            this.skipImportsAndExports();
+            if (this.isAtEnd()) break;
+            if (this.check(TokenKind.Enum)) {
+                enums.push(this.parseEnum());
+            } else if (
+                this.check(TokenKind.At) ||
+                this.check(TokenKind.Class) ||
+                this.check(TokenKind.Export)
+            ) {
+                modules.push(this.parseClass(enums));
+            } else {
+                this.advance();
+            }
+        }
+        return { enums, modules };
+    }
+
+    private parseClass(enums: EnumAST[]): ClassModuleAST {
+        const decorators = [];
+        while (this.check(TokenKind.At)) {
+            decorators.push(this.parseDecorator());
+        }
+        if (this.check(TokenKind.Export)) this.advance();
+        this.expect(TokenKind.Class);
+        const name = this.advance().value;
+
+        let base_class: string | null = null;
+        if (this.check(TokenKind.Extends)) {
+            this.advance();
+            base_class = this.advance().value;
+        }
+
+        // Skip generic parameters <...>
+        if (this.check(TokenKind.LessThan)) {
+            let depth = 1;
+            this.advance();
+            while (depth > 0 && !this.isAtEnd()) {
+                if (this.check(TokenKind.LessThan)) depth++;
+                if (this.check(TokenKind.GreaterThan)) depth--;
+                this.advance();
+            }
+        }
+
+        this.expect(TokenKind.LeftBrace);
+
+        const config: ModuleConfig = {
+            reset_signal: 'rst_n',
+            reset_polarity: 'active_low',
+            reset_type: 'async',
+        };
+
+        const config_dec = decorators.find(d => d.name === 'ModuleConfig');
+        if (config_dec && config_dec.args.length > 0) {
+            const cfg_str = config_dec.args.join(',');
+            if (cfg_str.includes('active_high')) config.reset_polarity = 'active_high';
+            if (cfg_str.includes('synchronous')) config.reset_type = 'sync';
+            const sig_match = cfg_str.match(/resetSignal[:\s]*["']?(\w+)["']?/);
+            if (sig_match) config.reset_signal = sig_match[1];
+        }
+
+        const properties = [];
+        const methods = [];
+        const submodules = [];
+        const assertions: AssertionAST[] = [];
+
+        while (!this.check(TokenKind.RightBrace) && !this.isAtEnd()) {
+            if (this.check(TokenKind.At)) {
+                const dec = this.parseDecorator();
+
+                if (dec.name === 'Submodule') {
+                    submodules.push(this.parseSubmoduleDecl(dec));
+                    continue;
+                }
+
+                if (dec.name === 'Assert') {
+                    const cond = dec.args[0] || 'true';
+                    let actual_cond = cond;
+                    let message: string | null = null;
+                    let depth = 0;
+                    let split_at = -1;
+                    for (let i = 0; i < cond.length; i++) {
+                        if (cond[i] === '(' || cond[i] === '[') depth++;
+                        if (cond[i] === ')' || cond[i] === ']') depth--;
+                        if (depth === 0 && cond[i] === ',') { split_at = i; break; }
+                    }
+                    if (split_at >= 0) {
+                        actual_cond = cond.substring(0, split_at).trim();
+                        message = cond.substring(split_at + 1).trim().replace(/^["']|["']$/g, '');
+                    }
+                    assertions.push({ label: `assert_${assertions.length}`, condition: actual_cond, clock: 'clk', message });
+                    continue;
+                }
+
+                if (
+                    this.check(TokenKind.Identifier) ||
+                    this.check(TokenKind.Private) ||
+                    this.check(TokenKind.Public)
+                ) {
+                    if (this.peekIsMethod()) {
+                        methods.push(this.parseMethod(dec));
+                    } else {
+                        properties.push(this.parseProperty(dec));
+                    }
+                } else if (this.check(TokenKind.Async)) {
+                    methods.push(this.parseMethod(dec));
+                } else {
+                    this.skipToSemicolonOrBrace();
+                }
+            } else if (this.check(TokenKind.Private) || this.check(TokenKind.Public)) {
+                properties.push(this.parseProperty(null));
+            } else if (this.check(TokenKind.Identifier)) {
+                if (this.peekIsMethod()) {
+                    methods.push(this.parseMethod(null));
+                } else {
+                    properties.push(this.parseProperty(null));
+                }
+            } else if (this.check(TokenKind.Async)) {
+                methods.push(this.parseMethod(null));
+            } else {
+                this.advance();
+            }
+        }
+        this.expect(TokenKind.RightBrace);
+
+        return { name, base_class, decorators, config, enums, properties, methods, submodules, assertions };
+    }
+
+    private parseMethod(decorator: DecoratorAST | null): MethodAST {
+        let is_async = false;
+        if (this.check(TokenKind.Async)) { this.advance(); is_async = true; }
+
+        const name = this.advance().value;
+        let type: 'sequential' | 'combinational' = 'combinational';
+        let clock = 'clk';
+
+        if (decorator) {
+            if (decorator.name === 'Sequential') {
+                type = 'sequential';
+                if (decorator.args.length > 0) clock = decorator.args[0].replace(/[()'"]/g, '').trim();
+            }
+        }
+
+        this.expect(TokenKind.LeftParen);
+        while (!this.check(TokenKind.RightParen) && !this.isAtEnd()) this.advance();
+        this.expect(TokenKind.RightParen);
+
+        if (this.check(TokenKind.Colon)) {
+            this.advance();
+            while (!this.check(TokenKind.LeftBrace) && !this.isAtEnd()) this.advance();
+        }
+
+        this.expect(TokenKind.LeftBrace);
+        const body = this.parseStatements();
+        this.expect(TokenKind.RightBrace);
+        const has_await = this.bodyHasAwait(body);
+
+        return { name, type, clock, is_async, body, has_await };
+    }
+
+    private bodyHasAwait(stmts: StatementAST[]): boolean {
+        for (const s of stmts) {
+            if (s.kind === 'await') return true;
+            if (s.kind === 'if') {
+                if (this.bodyHasAwait(s.then_body)) return true;
+                if (s.else_body && this.bodyHasAwait(s.else_body)) return true;
+            }
+            if (s.kind === 'switch') {
+                for (const c of s.cases) if (this.bodyHasAwait(c.body)) return true;
+                if (s.default_body && this.bodyHasAwait(s.default_body)) return true;
+            }
+        }
+        return false;
+    }
+}

@@ -8,7 +8,7 @@ Author: Radoslav Sandov
 
 ## What This Repository Delivers
 - TypeScript class-style hardware source (`@Module`, `@Sequential`, `@Combinational`) compiled into standard, portable SystemVerilog.
-- Board constraint generation from JSON board definitions — add your own board in minutes.
+- Board constraint generation from JSON board definitions: add your own board in minutes.
 - Containerised synthesis, place-and-route, and bitstream packaging (Yosys + nextpnr + gowin_pack).
 - Persistent FPGA programming using `openFPGALoader --external-flash --write-flash --verify`.
 - TypeScript-native UVM-style verification: write testbench specs in TypeScript, simulate in-container.
@@ -89,7 +89,7 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - `bun run flash:tang20k <bitstream.fs>`: direct flash helper entrypoint.
 
 ## Documentation Index
-- [docs/guides/getting-started.md](docs/guides/getting-started.md): **newcomer onboarding — from empty folder to flashed blinker with testbench** (start here if you are new).
+- [docs/guides/getting-started.md](docs/guides/getting-started.md): **newcomer onboarding, from empty folder to flashed blinker with testbench** (start here if you are new).
 - [docs/quickstart.md](docs/quickstart.md): WS2812-first end-to-end quickstart with explicit pass/fail checks.
 - [docs/guides/end-to-end-delivery.md](docs/guides/end-to-end-delivery.md): **step-by-step compile-to-flash delivery guide** (reference for new hardware modules).
 - [docs/guides/board-definition-authoring.md](docs/guides/board-definition-authoring.md): complete board definition guide.
@@ -124,9 +124,9 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - `packages/types`: shared interfaces/contracts.
 - `boards`: board definitions used by compile/flash flow.
 - `examples/`: hardware examples organized by name, each subfolder contains its TypeScript source and a SystemVerilog testbench.
-  - `examples/hardware/tang_nano_20k/blinker/` — 6-LED chaser (hardware baseline)
-  - `examples/hardware/tang_nano_20k/ws2812_demo/` — WS2812 interactive demo (flagship, confirmed flashed)
-  - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`, etc. — simulation examples
+  - `examples/hardware/tang_nano_20k/blinker/`: 6-LED chaser (hardware baseline)
+  - `examples/hardware/tang_nano_20k/ws2812_demo/`: WS2812 interactive demo (flagship, confirmed flashed)
+  - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`, etc.: simulation examples
 - `testbenches/uvm/`: UVM-style testbench specs (TypeScript) compiled to SV for simulation.
 
 ## License

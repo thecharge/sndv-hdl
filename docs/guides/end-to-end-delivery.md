@@ -13,7 +13,7 @@ Step-by-step workflow from writing TypeScript hardware source to a bitstream run
 
 ---
 
-## Step 1 — Set Up the Workspace
+## Step 1: Set Up the Workspace
 
 ```bash
 git clone https://github.com/thecharge/sndv-hdl.git ts2v
@@ -30,7 +30,7 @@ bun run quality
 
 ---
 
-## Step 2 — Build the Toolchain Container (Once)
+## Step 2: Build the Toolchain Container (Once)
 
 The synthesis and programming flow runs inside `ts2v-gowin-oss:latest`, which bundles Yosys, nextpnr-himbaechel, gowin_pack, and openFPGALoader.
 
@@ -42,7 +42,7 @@ This is only needed once (or after `toolchain/Dockerfile` changes).
 
 ---
 
-## Step 3 — Write Your Hardware Module
+## Step 3: Write Your Hardware Module
 
 Create a new example subfolder. Every example lives in its own directory with its source and testbench co-located:
 
@@ -74,17 +74,17 @@ class MyModule extends Module {
 ```
 
 Key rules:
-- Extend `Module` and use `@Input` / `@Output` decorators — these become IEEE 1800-2017 ANSI ports.
+- Extend `Module` and use `@Input` / `@Output` decorators: these become IEEE 1800-2017 ANSI ports.
 - Use `Logic<N>` for N-bit signals; all ports are emitted as `input logic` / `output logic`.
 - Use `@Sequential` for `always_ff`; use `@Combinational` for `always_comb`.
 - Local `let`/`const` variables inside `@Sequential` that are assigned in multiple branches are promoted to module-level `logic` registers automatically.
-- Write all logic as `this.signalName` assignments — no direct SV emit.
+- Write all logic as `this.signalName` assignments: no direct SV emit.
 
 See `docs/specification.md` for the complete language reference.
 
 ---
 
-## Step 4 — Compile to SystemVerilog
+## Step 4: Compile to SystemVerilog
 
 After any changes to `packages/core/`, run `bun run build` first to keep dist files in sync.
 
@@ -109,7 +109,7 @@ Confirm:
 
 ---
 
-## Step 5 — Verify USB Probe Visibility
+## Step 5: Verify USB Probe Visibility
 
 Connect the Tang Nano 20K via USB and put it in programming mode (press S2 then S1 while connected, or follow the board manual).
 
@@ -130,9 +130,9 @@ If the device is not found:
 
 ---
 
-## Step 6 — Synthesize and Flash
+## Step 6: Synthesize and Flash
 
-Add `--flash` to the compile command. The CLI handles compile → synthesize (yosys → nextpnr → gowin_pack) → flash (openFPGALoader) in a single invocation:
+Add `--flash` to the compile command. The CLI handles compile to synthesize (yosys to nextpnr to gowin_pack) to flash (openFPGALoader) in a single invocation:
 
 ```bash
 bun run apps/cli/src/index.ts compile \
@@ -162,13 +162,13 @@ If flash fails, see `docs/guides/debugging-and-troubleshooting.md`.
 
 ---
 
-## Step 7 — Power Cycle and Verify
+## Step 7: Power Cycle and Verify
 
 Power off the board and power it back on. The bitstream is written to external SPI flash and reloads automatically on power-up. Expected behavior should persist without a USB connection.
 
 ---
 
-## Step 8 — Write the Testbench Spec (TypeScript only)
+## Step 8: Write the Testbench Spec (TypeScript only)
 
 All testbench source in ts2v is **TypeScript**. Never write raw SystemVerilog testbench files. Use the spec types from `testbenches/tb-spec-types.ts` and place the spec in `testbenches/`:
 
@@ -203,7 +203,7 @@ The UVM-style simulation pipeline (`bun run test:uvm`) reads TypeScript specs fr
 
 ---
 
-## Step 9 — Run the Quality Gate
+## Step 9: Run the Quality Gate
 
 ```bash
 bun run quality
@@ -223,11 +223,11 @@ bun run test:uvm
 
 The WS2812 Interactive Demo (`examples/hardware/tang_nano_20k/ws2812_demo/`) is the flagship hardware example. It demonstrates:
 
-- S2 (btn) held → WS2812 strip outputs solid RED; released → off (black)
-- S1 (rst_n) held → 6-LEDs walk one by one; released → all LEDs off and walk resets
+- S2 (btn) held to WS2812 strip outputs solid RED; released to off (black)
+- S1 (rst_n) held to 6-LEDs walk one by one; released to all LEDs off and walk resets
 - WS2812 serial state machine with `t0h`/`t1h`/`treset` timing constants
 - Method-local registers (`bitValue`, `highTicks`) promoted from `@Sequential` to module scope
-- No async reset — FPGA registers initialise to declared defaults on power-up
+- No async reset: FPGA registers initialise to declared defaults on power-up
 
 It has been confirmed synthesised and flashed to a physical Tang Nano 20K (Winbond W25Q64). Its TypeScript testbench spec lives in `testbenches/ws2812_demo.tb-spec.ts`.
 

@@ -51,4 +51,6 @@ Behavior:
 Runtime command line entry.
 
 Supported command:
-- `ts2v compile <input.ts|input-dir> [--out <dir>] [--board <board.json>] [--flash]`
+```bash
+bun run apps/cli/src/index.ts compile <input.ts|input-dir> [--out <dir>] [--board <board.json>] [--flash]
+```

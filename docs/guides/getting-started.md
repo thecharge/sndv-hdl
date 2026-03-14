@@ -4,7 +4,7 @@ This guide is for someone who has never used ts2v before.
 You will go from a completely empty folder to a blinking LED running on a Tang Nano 20K, with a passing TypeScript testbench spec.
 
 **Your project lives in ITS OWN folder. You never put your source files inside the ts2v repository.**
-The ts2v repository is a tool — you clone it once, install it, and call it from your project.
+The ts2v repository is a tool: you clone it once, install it, and call it from your project.
 
 No prior knowledge of Verilog, SystemVerilog, or FPGA toolchains is required.
 
@@ -20,7 +20,7 @@ No prior knowledge of Verilog, SystemVerilog, or FPGA toolchains is required.
 
 ---
 
-## Part 1 — Install Prerequisites
+## Part 1: Install Prerequisites
 
 You need three tools on your host:
 
@@ -42,7 +42,7 @@ git --version
 
 ---
 
-## Part 2 — Set Up the ts2v Toolchain (Once)
+## Part 2: Set Up the ts2v Toolchain (Once)
 
 Clone the ts2v repository to a **tools directory** (not inside your project):
 
@@ -70,7 +70,7 @@ You only need to repeat these steps when you update ts2v.
 
 ---
 
-## Part 3 — Create Your Project Folder
+## Part 3: Create Your Project Folder
 
 **In a completely different directory from ts2v**, create your project:
 
@@ -83,7 +83,7 @@ This is now **your** working directory for everything that follows.
 
 ---
 
-## Part 3 — Build the Toolchain Container (Once)
+## Part 3: Build the Toolchain Container (Once)
 
 The synthesis, place-and-route, and flash steps run inside a container image that bundles the full OSS CAD suite (Yosys, nextpnr, gowin_pack, openFPGALoader).
 
@@ -91,11 +91,11 @@ The synthesis, place-and-route, and flash steps run inside a container image tha
 bun run toolchain:image:build
 ```
 
-This takes a few minutes the first time. It only needs to run once — unless you change `toolchain/Dockerfile`.
+This takes a few minutes the first time. It only needs to run once: unless you change `toolchain/Dockerfile`.
 
 ---
 
-## Part 4 — Verify the Workspace Is Healthy
+## Part 4: Verify the Workspace Is Healthy
 
 ```bash
 bun run quality
@@ -112,7 +112,7 @@ If any tests fail at this point, stop and check the README troubleshooting secti
 
 ---
 
-## Part 4 — Write Your Blinker in TypeScript
+## Part 4: Write Your Blinker in TypeScript
 
 Inside **your project folder** (`~/projects/my-fpga-project/`), create `blinker.ts`:
 
@@ -183,7 +183,7 @@ export { MyBlinker };
 
 ---
 
-## Part 5 — Compile to SystemVerilog
+## Part 5: Compile to SystemVerilog
 
 Run the ts2v compiler from your project folder, pointing at your source file and the ts2v installation:
 
@@ -227,11 +227,11 @@ Key things to confirm:
 - Counter is `[24:0]` (25 bits).
 
 > **Never put your source files inside the ts2v repository folder.**
-> The compiler is invoked by pointing at your own file. The ts2v repo is not a workspace — it is a tool.
+> The compiler is invoked by pointing at your own file. The ts2v repo is not a workspace: it is a tool.
 
 ---
 
-## Part 6 — Connect the Board and Verify USB
+## Part 6: Connect the Board and Verify USB
 
 Plug in the Tang Nano 20K and put it into **programming mode**:
 1. Hold **S2** (key near USB port).
@@ -250,13 +250,13 @@ Look for a line like:
 Bus 001 Device 005: ID 0403:6010 Future Technology Devices International, Ltd FT2232C/D/H Dual UART/FIFO IC
 ```
 
-(It may say "SIPEED USB Debugger" instead of the full name — both are correct.)
+(It may say "SIPEED USB Debugger" instead of the full name: both are correct.)
 
 ---
 
-## Part 7 — Flash to Hardware
+## Part 7: Flash to Hardware
 
-Add `--flash` to the compile command. Everything happens automatically: TypeScript → SystemVerilog → synthesis → place-and-route → bitstream → flash.
+Add `--flash` to the compile command. Everything happens automatically: TypeScript to SystemVerilog to synthesis to place-and-route to bitstream to flash.
 
 ```bash
 bun run ~/tools/ts2v/apps/cli/src/index.ts compile \
@@ -273,11 +273,11 @@ Writing:  [==================================================] 100.00%  Done
 Verifying write ... Reading: [==================================================] Done
 ```
 
-Power the board off and back on. The LEDs should walk persistently — the bitstream is now in external SPI flash.
+Power the board off and back on. The LEDs should walk persistently: the bitstream is now in external SPI flash.
 
 ---
 
-## Part 8 — Write the Testbench Spec (TypeScript)
+## Part 8: Write the Testbench Spec (TypeScript)
 
 Every module must have a TypeScript testbench spec. This documents the expected behaviour.
 
@@ -285,7 +285,7 @@ Create `blinker.tb-spec.ts` in **your project folder**:
 
 ```typescript
 import type { SeqTestSpec } from '~/tools/ts2v/testbenches/tb-spec-types';
-// Or copy tb-spec-types.ts into your own project — it has no runtime dependencies.
+// Or copy tb-spec-types.ts into your own project: it has no runtime dependencies.
 
 export const blinkerSpec: SeqTestSpec = {
   kind: 'sequential',
@@ -315,12 +315,12 @@ export const blinkerSpec: SeqTestSpec = {
 
 **Rules for testbench specs:**
 - All testbench source is TypeScript. Never create `.sv` testbench files by hand.
-- Generated SV testbenches live in `.artifacts/` — they are build artefacts, not source files.
+- Generated SV testbenches live in `.artifacts/`: they are build artefacts, not source files.
 - The spec types live in `testbenches/tb-spec-types.ts` inside the ts2v repository.
 
 ---
 
-## Part 9 — Run the Quality Gate (ts2v)
+## Part 9: Run the Quality Gate (ts2v)
 
 Run this from the ts2v directory to confirm you have not broken anything:
 
@@ -329,7 +329,7 @@ cd ~/tools/ts2v
 bun run quality
 ```
 
-This runs: TypeScript typecheck → Biome lint → all tests → build. It must report 0 failures.
+This runs: TypeScript typecheck to Biome lint to all tests to build. It must report 0 failures.
 
 Optionally simulate with the UVM pipeline (requires the toolchain container from Part 2):
 
@@ -348,7 +348,7 @@ Run `bun run build` first if you changed any files under `packages/core/`. Stale
 ### Flash fails: "No device found" or `openFPGALoader` exits with an error
 
 1. Confirm the board is in programming mode (S2 + S1 sequence in Part 7).
-2. Run `lsusb` — confirm `0403:6010` appears.
+2. Run `lsusb`: confirm `0403:6010` appears.
 3. Check USB permissions: your user must be in the `plugdev` group.
    ```bash
    sudo usermod -aG plugdev $USER
@@ -377,6 +377,6 @@ Run `bun run build` first if you changed any files under `packages/core/`. Stale
 | Combinational logic examples          | `~/tools/ts2v/examples/adder/adder.ts`, `~/tools/ts2v/examples/mux/mux.ts`          |
 | ALU with UVM verification             | `~/tools/ts2v/examples/alu/alu.ts` + `~/tools/ts2v/testbenches/uvm/alu.uvm-spec.ts` |
 | nibble4 soft-CPU                      | `~/tools/ts2v/examples/cpu/nibble4/nibble4_soc.ts`                                  |
-| Multi-file project structure          | See the ws2812_demo directory — 3 TypeScript files compiled as one unit             |
+| Multi-file project structure          | See the ws2812_demo directory: 3 TypeScript files compiled as one unit              |
 | Add a new board                       | `~/tools/ts2v/docs/guides/board-definition-authoring.md`                            |
 | Full delivery workflow                | `~/tools/ts2v/docs/guides/end-to-end-delivery.md`                                   |

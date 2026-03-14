@@ -6,7 +6,7 @@
 
 **Generated and conformant:**
 - ANSI-style port declarations (Section 23.2.2)
-- `logic` data type for all ports and signals (Section 6.3.4) — the IEEE 1800-2017 preferred type over `wire`
+- `logic` data type for all ports and signals (Section 6.3.4): the IEEE 1800-2017 preferred type over `wire`
 - Continuous assignment with `assign` (Section 10.3)
 - Sized literals: `32'd42`, `32'hFF`, `4'b1010` (Section 5.7)
 - `` `timescale `` directive (Section 22.7)
@@ -23,7 +23,7 @@
 - No TypeScript artifacts in output
 - No multiply-driven nets (linter check)
 
-**Not generated (functional compiler — by design):**
+**Not generated (functional compiler, by design):**
 
 | Feature              | IEEE Section | Notes               |
 | -------------------- | ------------ | ------------------- |
@@ -42,7 +42,7 @@ The class compiler implements full IEEE 1800-2017-compliant sequential and combi
 - `always_ff @(posedge clk or negedge rst_n)` with non-blocking assignments `<=`
 - `always_comb` with blocking assignments `=`
 - `typedef enum logic [N:0]` for TypeScript enums
-- `logic` for all signal types (never `wire` — IEEE 1800-2017 preferred)
+- `logic` for all signal types (never `wire`; IEEE 1800-2017 preferred)
 - `input logic` for input ports (not `input wire logic`)
 - Submodule instantiation with named port connections
 - Concurrent `$assert` annotations
@@ -57,7 +57,7 @@ The class compiler implements full IEEE 1800-2017-compliant sequential and combi
 | Yosys + nextpnr-himbaechel (Gowin boards) | **Full**                    |
 | Icarus Verilog (simulation)               | **Full**                    |
 | Verilator (lint/simulation)               | **Full**                    |
-| Yosys + nextpnr-xilinx (Xilinx 7-series)  | Experimental — not in scope |
+| Yosys + nextpnr-xilinx (Xilinx 7-series)  | Experimental (not in scope) |
 
 Closed-source tools (Vivado, Quartus, proprietary Gowin EDA pack) are **not in scope**.
 

@@ -15,7 +15,7 @@ function uart_baud_counter_next(baud_counter: number, baud_divisor: number): num
 // Bit selector: extract bit at position from data byte (8-bit, LSB first).
 function uart_bit_select(data_byte: number, bit_index: number): boolean {
   const shifted: number = data_byte >> bit_index;
-  return shifted & 1;
+  return (shifted & 1) !== 0;
 }
 
 // TX line output: mux between idle, start, data, and stop based on state.

@@ -5,7 +5,7 @@
 ts2v exclusively targets open-source synthesis and programming tools. No closed-source EDA tools (Vivado, Quartus, Gowin EDA proprietary pack) are required or supported.
 
 Every board in the toolchain must have a verified, reproducible end-to-end path:  
-**Yosys synthesis → nextpnr place-and-route → bitstream pack → openFPGALoader programming**
+**Yosys synthesis, nextpnr place-and-route, bitstream pack, openFPGALoader programming**
 
 ## Fully Supported Boards
 
@@ -18,8 +18,8 @@ Every board in the toolchain must have a verified, reproducible end-to-end path:
 
 | Board     | FPGA      | Reason                                                     |
 | --------- | --------- | ---------------------------------------------------------- |
-| Arty A7   | XC7A35T   | nextpnr-xilinx requires xraydb from Vivado — not fully OSS |
-| DE10-Nano | Cyclone V | Intel Quartus required — no viable OSS synthesis           |
+| Arty A7   | XC7A35T   | nextpnr-xilinx requires xraydb from Vivado (not fully OSS) |
+| DE10-Nano | Cyclone V | Intel Quartus required (no viable OSS synthesis)           |
 
 The constraint generator (`board-constraint-gen.ts`) can generate `.xdc` files for Arty A7, but no synthesis flow is provided.
 
@@ -56,7 +56,7 @@ bun run toolchain:image:build:docker
 
 ## Compile + Flash (Tang Nano 20K)
 
-The project CLI handles compile → synthesize → flash in a single command. No manual container orchestration is needed.
+The project CLI handles compile, synthesize, and flash in a single command. No manual container orchestration is needed.
 
 ### Blinker (minimal example)
 
@@ -136,7 +136,7 @@ Multiple profiles are tried in order (autodetect first, then explicit cable/VID/
 
 ## Deep Dive Guides
 
-- `docs/guides/end-to-end-delivery.md` — step-by-step compile-to-flash workflow
+- `docs/guides/end-to-end-delivery.md`: step-by-step compile-to-flash workflow
 - `docs/guides/board-definition-authoring.md`
 - `docs/guides/tang_nano_20k_programming.md`
 - `docs/guides/debugging-and-troubleshooting.md`

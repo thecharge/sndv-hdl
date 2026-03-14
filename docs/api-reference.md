@@ -6,7 +6,7 @@
 - `@ts2v/core`: compiler facade and compiler engine integration.
 - `@ts2v/process`: process execution and runtime detection.
 - `@ts2v/toolchain`: synthesis/programming facade and adapters.
-- `@ts2v/cli`: command-line entrypoint (`ts2v compile ...`).
+- `@ts2v/cli`: command-line entrypoint (`bun run apps/cli/src/index.ts compile ...`).
 
 ## Compiler Paths (Canonical)
 - `packages/core/src/compiler/class-compiler/*`
@@ -21,12 +21,7 @@
 
 ## CLI
 ```bash
-ts2v compile <input.ts|input-dir> [--out <dir>] [--board <board.json>] [--flash]
-```
-
-Equivalent workspace command:
-```bash
-bun run apps/cli/src/index.ts compile <input.ts> --out <dir> --board <board.json>
+bun run apps/cli/src/index.ts compile <input.ts|input-dir> [--out <dir>] [--board <board.json>] [--flash]
 ```
 
 ## Toolchain

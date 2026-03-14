@@ -11,7 +11,7 @@ function i2c_address_match(received_address: number, device_address: number): bo
 
 // Read/write bit extractor: bit 0 of the address byte (1=read, 0=write).
 function i2c_is_read_operation(address_byte: number): boolean {
-  return address_byte & 1;
+  return (address_byte & 1) !== 0;
 }
 
 // ACK/NACK detector: SDA low during 9th clock = ACK, high = NACK.
@@ -40,7 +40,7 @@ function i2c_master_sda_out(data_byte: number, bit_counter: number, awaiting_ack
   } else {
     const bit_position: number = 7 - bit_counter;
     const shifted: number = data_byte >> bit_position;
-    return shifted & 1;
+    return (shifted & 1) !== 0;
   }
 }
 

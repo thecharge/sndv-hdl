@@ -3,7 +3,13 @@
     "target": "ES2022",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "bun-types",
+      "@types/node"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -16,13 +22,30 @@
     "noUnusedParameters": false,
     "baseUrl": ".",
     "paths": {
-      "@ts2v/types": ["packages/types/src/index.ts"],
-      "@ts2v/config": ["packages/config/src/index.ts"],
-      "@ts2v/process": ["packages/process/src/index.ts"],
-      "@ts2v/core": ["packages/core/src/index.ts"],
-      "@ts2v/toolchain": ["packages/toolchain/src/index.ts"],
-      "@ts2v/runtime": ["packages/runtime/src/index.ts"]
+      "@ts2v/types": [
+        "packages/types/src/index.ts"
+      ],
+      "@ts2v/config": [
+        "packages/config/src/index.ts"
+      ],
+      "@ts2v/process": [
+        "packages/process/src/index.ts"
+      ],
+      "@ts2v/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@ts2v/toolchain": [
+        "packages/toolchain/src/index.ts"
+      ],
+      "@ts2v/runtime": [
+        "packages/runtime/src/index.ts"
+      ]
     }
   },
-  "exclude": ["node_modules", "dist", "build", ".turbo"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".turbo"
+  ]
 }
