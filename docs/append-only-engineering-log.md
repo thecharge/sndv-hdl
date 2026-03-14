@@ -676,3 +676,33 @@ Done
 - Command: `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts --board boards/tang_nano_20k.board.json --out .artifacts/ws2812_demo --flash`
 - Result: Erase, Write, Verify all Done. External flash programming confirmed.
 - Programmer profile: Sipeed USB debugger (FT2232H), cable auto-detected by openFPGALoader.
+
+---
+
+## 2025 – WS2812 Compiler Fix: Top-Level `const` Support
+
+**Problem:** `examples/hardware/tang_nano_20k/ws2812_demo` uses module-level `const` declarations (`WALK_DWELL_MASK = 0x7FFFFF`, `LED_COUNT = 6`, `ALL_LEDS_OFF = 0x3F`, `LED_WALK_0`–`LED_WALK_5`). The class compiler (`ClassModuleParser.parse()`) silently dropped these with `else { this.advance(); }`, leaving undefined net names in generated SV — which caused the WS2812 strip to be dark and all 6 board LEDs to light solid (active-low, powers up to 0).
+
+**Fix:**
+1. `class-module-ast.ts`: Added `TopLevelConstAST { name: string; value: string }` and added `consts: TopLevelConstAST[]` to `ClassCompilationResult.parsed`.
+2. `class-module-parser.ts`: Added `parseTopLevelConst()` and a `TokenKind.Const` branch in `parse()`. `collectUntilSemicolon()` reconstructs hex literals as `0x...` strings.
+3. `class-emitter-base.ts`: Added `protected global_consts: Map<string, string>` field and inline substitution in `translateExpr()` before the hex-sizing pass — so `WALK_DWELL_MASK` → `0x7FFFFF` → `24'h7FFFFF`.
+4. `class-module-emitter.ts`: `emit()` populates `global_consts` from `parsed.consts` before module emission.
+
+**Validation:**
+- 325 tests pass, 0 fail.
+- Generated SV confirms: `WALK_DWELL_MASK` → `24'h7FFFFF`, `ALL_LEDS_OFF` → `6'h3F`, `LED_WALK_0`–`LED_WALK_5` → `6'h3E`–`6'h1F`.
+- Flash: Erase SRAM Done / Verifying write Done — Tang Nano 20K board confirmed programmed.
+
+**Expected hardware behavior after correct flash:**
+- S2 held (btn active-low): WS2812 strip cycles 6 rainbow colors (~0.31 s/step: RED → YELLOW → GREEN → CYAN → BLUE → MAGENTA).
+- S2 released: strip dark.
+- S1 held (rst_n active-low): 6 board LEDs walk one at a time (~0.31 s/LED).
+- S1 released: all board LEDs off, walk resets.
+
+**Command log:**
+```
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/ws2812_demo \
+  --board boards/tang_nano_20k.board.json --out .artifacts/ws2812_demo --flash
+# Erase SRAM Done, Verifying write Done
+```

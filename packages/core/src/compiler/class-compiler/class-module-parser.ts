@@ -5,7 +5,7 @@ import { Lexer } from '../lexer/lexer';
 import { TokenKind } from '../lexer/token';
 import {
     ClassModuleAST, DecoratorAST, ModuleConfig, MethodAST, StatementAST,
-    EnumAST, AssertionAST,
+    EnumAST, AssertionAST, TopLevelConstAST,
 } from './class-module-ast';
 import { ClassStmtParser } from './class-stmt-parser';
 
@@ -14,14 +14,18 @@ export class ClassModuleParser extends ClassStmtParser {
         super(new Lexer(source).tokenize());
     }
 
-    parse(): { enums: EnumAST[]; modules: ClassModuleAST[] } {
+    parse(): { enums: EnumAST[]; modules: ClassModuleAST[]; consts: TopLevelConstAST[] } {
         const enums: EnumAST[] = [];
         const modules: ClassModuleAST[] = [];
+        const consts: TopLevelConstAST[] = [];
         while (!this.isAtEnd()) {
             this.skipImportsAndExports();
             if (this.isAtEnd()) break;
             if (this.check(TokenKind.Enum)) {
                 enums.push(this.parseEnum());
+            } else if (this.check(TokenKind.Const)) {
+                const c = this.parseTopLevelConst();
+                if (c) consts.push(c);
             } else if (
                 this.check(TokenKind.At) ||
                 this.check(TokenKind.Class) ||
@@ -32,7 +36,31 @@ export class ClassModuleParser extends ClassStmtParser {
                 this.advance();
             }
         }
-        return { enums, modules };
+        return { enums, modules, consts };
+    }
+
+    private parseTopLevelConst(): TopLevelConstAST | null {
+        this.advance(); // consume 'const'
+        if (!this.check(TokenKind.Identifier)) {
+            this.skipToSemicolonOrBrace();
+            return null;
+        }
+        const name = this.advance().value;
+        // Skip optional type annotation: ': type'
+        if (this.check(TokenKind.Colon)) {
+            this.advance();
+            while (!this.check(TokenKind.Equals) && !this.check(TokenKind.Semicolon) && !this.isAtEnd()) {
+                this.advance();
+            }
+        }
+        if (!this.check(TokenKind.Equals)) {
+            this.skipToSemicolonOrBrace();
+            return null;
+        }
+        this.advance(); // consume '='
+        const value = this.collectUntilSemicolon();
+        if (this.check(TokenKind.Semicolon)) this.advance();
+        return { name, value };
     }
 
     private parseClass(enums: EnumAST[]): ClassModuleAST {

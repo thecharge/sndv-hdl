@@ -91,9 +91,16 @@ export interface ModuleSignature {
     outputs: { name: string; bit_width: number }[];
 }
 
+// Top-level const declaration (e.g. `const FOO = 0x7FFFFF;`).
+// Emitted as inline substitutions in generated SV expressions.
+export interface TopLevelConstAST {
+    name: string;
+    value: string; // raw TypeScript value string (hex as '0x...')
+}
+
 export interface ClassCompilationResult {
     success: boolean;
     systemverilog: string;
     errors: string[];
-    parsed: { enums: EnumAST[]; modules: ClassModuleAST[] } | null;
+    parsed: { enums: EnumAST[]; modules: ClassModuleAST[]; consts: TopLevelConstAST[] } | null;
 }

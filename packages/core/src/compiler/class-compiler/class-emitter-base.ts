@@ -8,6 +8,8 @@ import { sanitize } from './class-sv-helpers';
 export class EmitterBase {
     protected lines: string[] = [];
     protected indent: number = 0;
+    // Top-level const values for inline substitution in expressions.
+    protected global_consts: Map<string, string> = new Map();
 
     protected line(text: string): void {
         if (text === '') {
@@ -41,6 +43,12 @@ export class EmitterBase {
         let result = expr;
 
         result = result.replace(/this\.(\w+)/g, (_, name) => sanitize(name));
+
+        // Substitute top-level const identifiers with their raw values before
+        // hex/operator translation so they get properly sized in SV context.
+        for (const [cname, cvalue] of this.global_consts) {
+            result = result.replace(new RegExp(`\\b${cname}\\b`, 'g'), cvalue);
+        }
 
         for (const e of enums) {
             for (const m of e.members) {
