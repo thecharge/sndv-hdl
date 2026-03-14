@@ -24,7 +24,7 @@ No closed-source EDA tools (Quartus, Vivado, Gowin EDA proprietary bits beyond p
 - **Hard requirement**: every supported board must have a complete end-to-end open-source toolchain:
   synthesis (Yosys), place-and-route (nextpnr family), bitstream pack, and programming (openFPGALoader).
 - **Currently fully supported (OSS end-to-end)**:
-  - Tang Nano 20K (GW2AR-18, Gowin): Yosys `synth_gowin` → `nextpnr-himbaechel` → `gowin_pack` → `openFPGALoader`
+  - Tang Nano 20K (GW2AR-18, Gowin): Yosys `synth_gowin` -> `nextpnr-himbaechel` -> `gowin_pack` -> `openFPGALoader`
   - Tang Nano 9K (GW1NR-9, Gowin): same toolchain family
 - **Constraint-gen only (no synthesis flow)**:
   - Arty A7 (Xilinx Artix-7): `.xdc` constraint files are generated, but `nextpnr-xilinx` still requires xray DB from Vivado; synthesis flow not in scope until a fully self-contained OSS solution exists.
@@ -50,10 +50,10 @@ No closed-source EDA tools (Quartus, Vivado, Gowin EDA proprietary bits beyond p
 - Keep process execution behind command + facade boundaries.
 - Document every operational or architectural decision in append-only logs.
 - Generated SystemVerilog must comply with IEEE 1800-2017; use `logic` (not `wire`) for all signal declarations; input ports are `input logic`, not `input wire logic`.
-- After any change to `packages/core/` source, run `bun run build` before compiling examples — stale dist files cause silent failures.
+- After any change to `packages/core/` source, run `bun run build` before compiling examples - stale dist files cause silent failures.
 - Hardware examples live under `examples/hardware/<board>/`. Each example gets its own subfamily folder with the TypeScript source only. Do not place hardware examples at the root of `examples/`.
 - Simulation examples live under `examples/<name>/` with the TypeScript source only. Do not use flat `examples/*.ts` files.
-- **All testbench source must be TypeScript** — use the spec types in `testbenches/tb-spec-types.ts` and place specs in `testbenches/`. Never write raw `.sv` testbench files. Generated SV testbenches are build artifacts (`.artifacts/`) not source files.
+- **All testbench source must be TypeScript** - use the spec types in `testbenches/tb-spec-types.ts` and place specs in `testbenches/`. Never write raw `.sv` testbench files. Generated SV testbenches are build artifacts (`.artifacts/`) not source files.
 - CPU and SoC TypeScript sources live under `examples/cpu/`. Their imports must use `'@ts2v/runtime'`, not the old `'ts2sv'` alias.
 - The verified flash command for Tang Nano 20K is `bun run apps/cli/src/index.ts compile <file> --board boards/tang_nano_20k.board.json --out <dir> --flash`. No manual docker/podman orchestration required.
 
@@ -79,6 +79,37 @@ No closed-source EDA tools (Quartus, Vivado, Gowin EDA proprietary bits beyond p
 - `bun run compile:example` must generate artifacts.
 - `bun run test:uvm` should pass for verification-flow updates.
 - Hardware steps must be reproducible with logged commands and outputs.
+
+## Forbidden Patterns
+
+Never introduce any of the following in source, tests, or documentation.
+
+### Comments
+- `// -- Label -----` separator comments (any combination of em-dashes or box-drawing characters)
+- JSDoc-style block comments on internal functions that do not add information beyond the function name
+
+### Typography in prose and source comments
+- Unicode arrow `->` must be written as `->`. Never use `→`.
+- Em-dash ` - ` must be written as ` - ` (hyphen-minus). Never use `—` or `--` as an em-dash substitute.
+- Any other non-ASCII typographic symbol in source comments or Markdown prose.
+
+### Documentation
+- `ts2v compile ...` or `ts2v build ...` as a command in docs or comments. The CLI has no global install. Use `bun run apps/cli/src/index.ts compile ...`.
+- Mermaid node labels using `→`. Use `->` inside quoted labels: `["A -> B"]`.
+
+### Hardware source (.ts examples)
+- Ternary operator `?:` - the class compiler does not support it.
+- `let` or `var` at module level - use `const` for module-level values.
+- Hardcoded magic numbers in sequential or combinational logic - define a `const` at the top of the file.
+- `wire` in generated or hand-written SV - use `logic`.
+- `input wire logic` port style - use `input logic`.
+- `'ts2sv'` import alias - use `'@ts2v/runtime'`.
+
+### Examples layout
+- Flat `examples/*.ts` files. Every example must live in its own subfolder.
+- Hardware examples outside `examples/hardware/<board>/<name>/`.
+- Raw `.sv` testbench files in `testbenches/` - write TypeScript specs only.
+- Multi-file designs compiled by passing a single `.ts` file path. Pass the directory.
 
 ## Legal And Attribution
 - Project license: MIT (`LICENSE`).

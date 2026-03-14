@@ -68,11 +68,18 @@ Power off/on the board. Behavior should persist because image was written to ext
 
 ## Quickstart From Zero To WS2812 Interactive Demo
 
-The WS2812 interactive demo features 4 color modes (rainbow, fire, ocean, forest), a 6-LED walking pattern that runs simultaneously, and hardware button debounce for mode cycling. WS2812 strip must be connected to pin 79 (Tang Nano 20K).
+The WS2812 demo cycles a connected strip through a 6-colour rainbow (GRB
+order: RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA) while walking the six board
+LEDs. Tang Nano 20K pin 79 carries the WS2812 data line.
+
+- S2 (pin 87) held: strip cycles colours. Released: strip goes dark.
+- S1 (pin 88) held: 6 board LEDs walk one at a time. Released: all LEDs off.
+
+Both buttons are active-high (pull-down to GND at rest, press drives pin to 3.3V).
 
 ```bash
 bun run apps/cli/src/index.ts compile \
-  examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts \
+  examples/hardware/tang_nano_20k/ws2812_demo \
   --board boards/tang_nano_20k.board.json \
   --out .artifacts/ws2812_demo \
   --flash

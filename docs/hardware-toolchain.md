@@ -27,14 +27,14 @@ The constraint generator (`board-constraint-gen.ts`) can generate `.xdc` files f
 
 ```mermaid
 flowchart TD
-    A["CLI compile command"] --> B["Compiler Core\nTypeScript → SystemVerilog .sv"]
-    A --> C["Board Constraint Generator\nboard.json → .cst / .xdc"]
-    B --> D["Synthesis Container\nts2v-gowin-oss:latest"]
+    A["CLI compile command"] --> B["Compiler Core: TypeScript -> SystemVerilog .sv"]
+    A --> C["Board Constraint Generator: board.json -> .cst / .xdc"]
+    B --> D["Synthesis Container: ts2v-gowin-oss:latest"]
     C --> D
-    D --> E["yosys synth_gowin\n→ JSON netlist"]
-    E --> F["nextpnr-himbaechel\n→ PnR JSON"]
-    F --> G["gowin_pack\n→ bitstream .fs"]
-    G --> H["openFPGALoader\n→ flash to FPGA"]
+    D --> E["yosys synth_gowin -> JSON netlist"]
+    E --> F["nextpnr-himbaechel -> placed JSON"]
+    F --> G["gowin_pack -> bitstream .fs"]
+    G --> H["openFPGALoader -> flash to FPGA"]
 ```
 
 ## Container Runtime

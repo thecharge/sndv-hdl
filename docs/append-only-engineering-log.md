@@ -706,3 +706,39 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/ws2812_dem
   --board boards/tang_nano_20k.board.json --out .artifacts/ws2812_demo --flash
 # Erase SRAM Done, Verifying write Done
 ```
+
+---
+
+## 2026-03-14 - WS2812 Button Polarity Fix: Active-High Correction
+
+**Problem report:** After flashing the corrected 3-module bitstream, user observed:
+- WS2812 strip showed RED at power-on (without pressing S2)
+- Board LEDs walking at power-on (without pressing S1)
+- Pressing S1 turned LEDs off; releasing turned them back on (inverted)
+- Pressing S2 had no visible effect
+
+**Root cause:** The Tang Nano 20K uses MODE0 (pin 88, KEY1/S1) and MODE1 (pin 87, KEY2/S2) as user buttons. Per the board schematic (Tang_Nano_20K_3921_Schematics.pdf), both MODE pins have external pull-DOWN resistors to GND for normal JTAG configuration mode. When not pressed, both pins are at 0 (LOW). Pressing a button connects the pin to 3.3V (HIGH). Both buttons are therefore active-HIGH, not active-low.
+
+The original design used `if (btn == 0)` (active-low) and `PULL_MODE=UP` - the internal FPGA pull-up cannot overcome the external board pull-down, so both pins rested at 0, causing the inverted behavior observed.
+
+**Fix:**
+- `ws2812_demo.ts`: Changed `if (this.btn === 0)` -> `if (this.btn === 1)` and `if (this.rst_n === 0)` -> `if (this.rst_n === 1)`. Changed port defaults to `= 0` (rest state). Added const named symbols (WALK_DWELL_MASK, LED_COUNT, ALL_LEDS_OFF, LED_WALK_0-5). Removed all forbidden patterns (// -- comments, arrow chars, em-dashes).
+- `boards/tang_nano_20k.board.json`: Removed `pull: "UP"` from rst_n and btn (was already absent - confirmed). Generated CST has no PULL_MODE for these pins.
+
+**Expected behavior after fix:**
+- Power-on: WS2812 dark, all 6 board LEDs off (btn=0 at rest -> enable=0; rst_n=0 at rest -> else branch -> led=6'h3F)
+- S1 pressed (rst_n=1): 6 LEDs walk one at a time (~0.31 s/LED)
+- S1 released (rst_n=0): all LEDs off, walk resets
+- S2 pressed (btn=1): WS2812 strip cycles 6-colour rainbow
+- S2 released (btn=0): WS2812 strip dark, rainbow resets
+
+**Flash confirmation:**
+```
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/ws2812_demo \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/ws2812_demo --flash
+# Erase SRAM Done, Verifying write Done
+```
+
+**Tests:** 335 pass, 0 fail (includes 10 new class-compiler-const.test.ts tests).

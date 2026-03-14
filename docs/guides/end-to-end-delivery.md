@@ -9,7 +9,7 @@ Step-by-step workflow from writing TypeScript hardware source to a bitstream run
 | Bun                | 1.3+            | Package manager, runtime, test runner |
 | Podman (or Docker) | any             | Synthesis/flash container             |
 | Git                | any             | Source control                        |
-| Linux host         | —               | USB passthrough to FPGA programmer    |
+| Linux host         | any             | USB passthrough to FPGA programmer    |
 
 ---
 

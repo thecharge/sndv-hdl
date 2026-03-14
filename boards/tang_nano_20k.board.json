@@ -12,13 +12,11 @@
   "io": {
     "rst_n": {
       "pin": "88",
-      "std": "LVCMOS33",
-      "pull": "UP"
+      "std": "LVCMOS33"
     },
     "btn": {
       "pin": "87",
-      "std": "LVCMOS33",
-      "pull": "UP"
+      "std": "LVCMOS33"
     },
     "led[0]": {
       "pin": "15",
