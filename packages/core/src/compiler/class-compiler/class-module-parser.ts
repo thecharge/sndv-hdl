@@ -110,6 +110,7 @@ export class ClassModuleParser extends ClassStmtParser {
         const methods = [];
         const submodules = [];
         const assertions: AssertionAST[] = [];
+        const helpers: Record<string, StatementAST[]> = {};
 
         while (!this.check(TokenKind.RightBrace) && !this.isAtEnd()) {
             if (this.check(TokenKind.At)) {
@@ -155,7 +156,13 @@ export class ClassModuleParser extends ClassStmtParser {
                     this.skipToSemicolonOrBrace();
                 }
             } else if (this.check(TokenKind.Private) || this.check(TokenKind.Public)) {
-                properties.push(this.parseProperty(null));
+                // Private/public non-decorated: could be a property or a helper method.
+                if (this.peekIsMethod()) {
+                    const m = this.parseMethod(null);
+                    helpers[m.name] = m.body;
+                } else {
+                    properties.push(this.parseProperty(null));
+                }
             } else if (this.check(TokenKind.Identifier)) {
                 if (this.peekIsMethod()) {
                     methods.push(this.parseMethod(null));
@@ -170,11 +177,13 @@ export class ClassModuleParser extends ClassStmtParser {
         }
         this.expect(TokenKind.RightBrace);
 
-        return { name, base_class, decorators, config, enums, properties, methods, submodules, assertions };
+        return { name, base_class, decorators, config, enums, properties, methods, submodules, assertions, helpers };
     }
 
     private parseMethod(decorator: DecoratorAST | null): MethodAST {
         let is_async = false;
+        // Consume optional access modifier (private / public) before method name.
+        if (this.check(TokenKind.Private) || this.check(TokenKind.Public)) this.advance();
         if (this.check(TokenKind.Async)) { this.advance(); is_async = true; }
 
         const name = this.advance().value;

@@ -11,6 +11,10 @@ export interface ClassModuleAST {
     methods: MethodAST[];
     submodules: SubmoduleAST[];
     assertions: AssertionAST[];
+    // Named bodies of private helper methods declared in the class.
+    // The sequential emitter inlines these at call sites and eliminates
+    // early returns by converting them to else clauses.
+    helpers: Record<string, StatementAST[]>;
 }
 
 export interface DecoratorAST {
@@ -71,7 +75,7 @@ export type MethodBodyAST = StatementAST[];
 export type StatementAST =
     | AssignAST | IfAST | SwitchAST | ReturnAST
     | VarDeclAST | ExprStmtAST | WhileAST | ForAST
-    | AssertStmtAST | AwaitAST;
+    | AssertStmtAST | AwaitAST | CallStmtAST;
 
 export interface AssignAST { kind: 'assign'; target: string; value: string; }
 export interface IfAST { kind: 'if'; condition: string; then_body: StatementAST[]; else_body: StatementAST[] | null; }
@@ -83,6 +87,8 @@ export interface WhileAST { kind: 'while'; condition: string; body: StatementAST
 export interface ForAST { kind: 'for'; init: string; cond: string; incr: string; body: StatementAST[]; }
 export interface AssertStmtAST { kind: 'assert'; condition: string; message: string | null; }
 export interface AwaitAST { kind: 'await'; signal: string; }
+// Inlined helper method call: this.methodName() inside @Sequential body.
+export interface CallStmtAST { kind: 'call'; method: string; }
 
 // Module signature for hierarchy support (two-pass compilation).
 export interface ModuleSignature {

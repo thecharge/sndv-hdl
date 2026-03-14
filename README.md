@@ -104,12 +104,14 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - [docs/guides/tang_nano_20k_programming.md](docs/guides/tang_nano_20k_programming.md): Tang Nano 20K flashing runbook.
 - [docs/guides/debugging-and-troubleshooting.md](docs/guides/debugging-and-troubleshooting.md): end-to-end debug flow and failure signatures.
 - [docs/guides/production-reality-check.md](docs/guides/production-reality-check.md): production acceptance workflow with proof commands.
+- [docs/production-readiness.md](docs/production-readiness.md): **production analysis** - compiler status, WS2812 timing verification, known limitations, disclaimers.
 - [docs/guides/programmer-profiles-and-usb-permissions.md](docs/guides/programmer-profiles-and-usb-permissions.md): profile and permission model.
 - [docs/guides/user-usb-debugger-onboarding.md](docs/guides/user-usb-debugger-onboarding.md): practical USB probe onboarding.
 - [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md): examples, intent, and expected hardware behavior.
 - [docs/guides/uvm-simulation-with-podman.md](docs/guides/uvm-simulation-with-podman.md): containerized simple UVM-style simulation flow.
 - [docs/guides/uvm-suite-authoring.md](docs/guides/uvm-suite-authoring.md): how to add future UVM-style verification suites and reports.
 - [docs/guides/ws2812-protocol-and-brightness.md](docs/guides/ws2812-protocol-and-brightness.md): WS2812 protocol semantics and brightness behavior.
+- [docs/guides/ws2812-debug-guide.md](docs/guides/ws2812-debug-guide.md): **WS2812 NeoPixel debug guide** - protocol root causes, chip variant timing (WS2812B vs WS2812C-2020), oscilloscope verification checklist.
 - [docs/development.md](docs/development.md): contributor/developer workflow.
 - [docs/hardware-toolchain.md](docs/hardware-toolchain.md): synth/programming architecture and command flow.
 - [docs/architecture.md](docs/architecture.md): system architecture with Mermaid diagrams.
@@ -132,9 +134,19 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - `boards`: board definitions used by compile/flash flow.
 - `examples/`: hardware examples organized by name, each subfolder contains its TypeScript source and a SystemVerilog testbench.
   - `examples/hardware/tang_nano_20k/blinker/`: 6-LED chaser (hardware baseline)
-  - `examples/hardware/tang_nano_20k/ws2812_demo/`: WS2812 interactive demo (flagship, confirmed flashed)
+  - `examples/hardware/tang_nano_20k/ws2812_demo/`: WS2812 rainbow demo (flagship, confirmed flashed) - see [ws2812-debug-guide.md](docs/guides/ws2812-debug-guide.md) for troubleshooting
   - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`, etc.: simulation examples
 - `testbenches/uvm/`: UVM-style testbench specs (TypeScript) compiled to SV for simulation.
+
+## Hardware Warnings
+
+> **WS2812 chip variant reset requirement**: The on-board WS2812C-2020 (Tang Nano 20K pin 79) requires T_RESET > 280 µs. The commonly-cited 50 µs value applies only to WS2812B strips. Using 50 µs reset will cause the LED to silently do nothing. The serialiser in this repo uses 370 µs (10 000 clocks at 27 MHz).
+
+> **3.3 V logic vs 5 V WS2812B strips**: FPGA GPIO outputs 3.3 V. External 5 V WS2812B strips may require a 74AHCT125 level shifter on the data line for reliable operation. The on-board LED works directly at 3.3 V.
+
+> **Confirmed flash status scope**: The `ws2812_demo` confirmed-flash status reflects the on-board LED only. External strip behavior depends on your power supply, level shifting, and the exact WS2812 variant in use.
+
+> **Open-source toolchain only**: This project targets Yosys + nextpnr exclusively. No Quartus, Vivado, or Gowin EDA proprietary bits are required. The Arty A7 board definition generates `.xdc` constraint files but has no synthesis flow - constraint output only until a fully self-contained OSS path exists for Xilinx 7-series.
 
 ## License
 MIT. See `LICENSE`.

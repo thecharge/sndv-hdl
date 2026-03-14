@@ -4,7 +4,7 @@
 import { TokenKind } from '../lexer/token';
 import {
     StatementAST, IfAST, SwitchAST, WhileAST, ReturnAST, VarDeclAST,
-    AssignAST, ExprStmtAST, AssertStmtAST, AwaitAST,
+    AssignAST, ExprStmtAST, AssertStmtAST, AwaitAST, CallStmtAST,
 } from './class-module-ast';
 import { ClassDeclParser } from './class-decl-parser';
 
@@ -163,13 +163,23 @@ export class ClassStmtParser extends ClassDeclParser {
 
     // Token-level assignment and expression parser.
     // Handles this.prop = expr, this.prop++/-- and compound assignments.
-    protected parseAssignOrExpr(): AssignAST | ExprStmtAST {
+    // Also handles this.method() calls (stored as CallStmtAST for inlining).
+    protected parseAssignOrExpr(): AssignAST | ExprStmtAST | CallStmtAST {
         const saved_pos = this.pos;
 
         if (this.check(TokenKind.This)) {
             const target_result = this.tryParseAssignTarget();
             if (target_result) {
                 const { target } = target_result;
+
+                // this.method() - no-arg helper call for inlining
+                if (this.check(TokenKind.LeftParen)) {
+                    this.advance(); // (
+                    if (this.check(TokenKind.RightParen)) this.advance(); // )
+                    if (this.check(TokenKind.Semicolon)) this.advance();
+                    const methodName = target.startsWith('this.') ? target.slice(5) : target;
+                    return { kind: 'call', method: methodName } satisfies CallStmtAST;
+                }
 
                 if (this.check(TokenKind.PlusPlus)) {
                     this.advance();

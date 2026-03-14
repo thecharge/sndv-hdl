@@ -43,16 +43,34 @@ describe('Hardware examples behavior', () => {
     expect(sv.includes('module Ws2812Serialiser')).toBe(true);
     expect(sv.includes('module RainbowGen')).toBe(true);
     expect(sv.includes('module Ws2812Demo')).toBe(true);
-    // Serialiser timing constants
-    expect(sv.includes('T1H')).toBe(true);
-    expect(sv.includes('T0H')).toBe(true);
-    expect(sv.includes('TRESET')).toBe(true);
-    // Rainbow generator state
+
+    // Serialiser: shift-register FSM state variables
+    expect(sv.includes('shiftReg')).toBe(true);
+    expect(sv.includes('bitCnt')).toBe(true);
+    expect(sv.includes('timer')).toBe(true);
+
+    // Protocol: correct reset and bit-period constants (inlined, not as localparams)
+    expect(sv.includes('9999')).toBe(true); // TRESET_LAST = 10000 clocks
+    expect(sv.includes('timer < 9')).toBe(true); // T0H = 9 clocks
+    expect(sv.includes('timer < 19')).toBe(true); // T1H = 19 clocks
+    expect(sv.includes('timer == 29')).toBe(true); // TBIT_LAST = 30 clocks
+    expect(sv.includes('bitCnt == 23')).toBe(true); // 24 bits exactly
+
+    // Shift-register bit extraction (inline, not via a stale register)
+    expect(sv.includes('(shiftReg >> 23) & 1')).toBe(true);
+
+    // Helper inlining and early-return eliminated: no unresolved calls in output
+    expect(sv.includes('unresolved call')).toBe(false);
+
+    // Rainbow generator: switch-case palette
+    expect(sv.includes('case (step)')).toBe(true);
     expect(sv.includes('step')).toBe(true);
     expect(sv.includes('enable')).toBe(true);
+
     // Top-level LED walk state
     expect(sv.includes('walkTick')).toBe(true);
     expect(sv.includes('ledPhase')).toBe(true);
+
     // WS2812 serial output toggling
     expect(sv.includes("ws2812 <= 1'b1")).toBe(true);
     expect(sv.includes("ws2812 <= 1'b0")).toBe(true);

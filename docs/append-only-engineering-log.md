@@ -742,3 +742,62 @@ bun run apps/cli/src/index.ts compile \
 ```
 
 **Tests:** 335 pass, 0 fail (includes 10 new class-compiler-const.test.ts tests).
+
+---
+
+## 2025-07-14: WS2812 Protocol Fix, Compiler Extension, Production Analysis
+
+### Problem
+
+S2 (WS2812 rainbow) produced no output despite S1 (LED walk) working correctly. Three root-cause bugs identified:
+
+1. **Insufficient T_RESET**: 1600 clocks (59 µs) is below the 280 µs minimum required by the on-board WS2812C-2020. Fixed: 10 000 clocks (370 µs).
+2. **25 bits per frame instead of 24**: `if (bitIndex >= 24)` evaluated against pre-increment value; 25 bits sent. Fixed: `bitCnt === 23` (exact equality, 0-based counter).
+3. **Stale bit-value register**: `const bitValue = (this.shiftReg >> 23) & 1` synthesized as a flip-flop (one clock late). Fixed: inline expression `((this.shiftReg >> 23) & 1) === 1` in the conditional.
+
+### Compiler Extensions Added
+
+- **Helper method inlining** (`CallStmtAST` + `inlineHelpers()`): private no-arg helper methods called from `@Sequential`/`@Combinational` are inlined into the generated `always_ff`/`always_comb` block.
+- **Early return elimination** (`eliminateReturns()`): `if (...) { ...; return; }` guard pattern is transformed to `if (...) begin ... end else begin ... end` in generated SV.
+
+Modified files: `class-module-ast.ts`, `class-stmt-parser.ts`, `class-module-parser.ts`, `class-sequential-emitter.ts`.
+
+### Hardware Source Rewritten
+
+- `examples/hardware/tang_nano_20k/ws2812_demo/ws2812_serialiser.ts`: full rewrite using shift-register FSM, helper methods, early returns, exact-equality timers.
+- `examples/hardware/tang_nano_20k/ws2812_demo/rainbow_gen.ts`: full rewrite using `switch` palette and helper methods.
+
+### Tests
+
+339 pass, 0 fail. Added 4 new tests to `tests/class-compiler.test.ts` covering helper inlining and early return elimination. Updated `packages/core/src/facades/hardware-examples-behavior.test.ts` to match new signal names and protocol constants.
+
+### Documentation Added
+
+- `docs/guides/ws2812-debug-guide.md`: comprehensive WS2812 debug guide (protocol, chip variants, root causes, checklist, oscilloscope measurements).
+- `docs/production-readiness.md`: extended with WS2812 production analysis section (timing table, root cause history, compiler capability analysis, disclaimers, production verdict table).
+- `README.md`: added `ws2812-debug-guide.md` to docs index, added `production-readiness.md` to docs index, added Hardware Warnings section.
+
+### Flash Confirmation (ws2812_demo, post-fix)
+
+```
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/ws2812_demo \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/ws2812_demo --flash
+# Bus device vid:pid     probe_type manufacturer serial     product
+# 005 060  0x0403:0x6010 FTDI2232   SIPEED       2025012315 USB Debugger
+# write to flash
+# JEDEC ID: 0xef4017 - Winbond W25Q64 128 sectors size: 64Mb
+# Erasing ... Done
+# Writing ... 100.00% Done
+# Verifying write ... 100.00% Done
+```
+
+**Expected behavior:**
+- Power-on: WS2812 dark, 6 board LEDs off
+- S1 held: 6 LEDs walk (~0.31 s/LED)
+- S1 released: all LEDs off, walk resets
+- S2 held: WS2812 cycles RED -> YELLOW -> GREEN -> CYAN -> BLUE -> MAGENTA (~0.31 s/colour)
+- S2 released: WS2812 dark, rainbow resets
+
+**Cable/profile:** FTDI2232 SIPEED USB Debugger serial 2025012315, `board-autodetect` profile, `--external-flash --write-flash --verify -r -b tangnano20k`.

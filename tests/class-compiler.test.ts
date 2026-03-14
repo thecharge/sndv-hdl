@@ -282,4 +282,111 @@ describe('ClassModuleCompiler', () => {
       assert.ok(result.systemverilog.includes('out <= cnt'));
     });
   });
+
+  describe('helper method inlining', () => {
+    it('inlines a no-arg private helper called from @Sequential', () => {
+      const result = compileClassModule(`
+        class Counter extends Module {
+          @Input clk: Logic<1>;
+          @Output out: Logic<4> = 0;
+          private cnt: Logic<4> = 0;
+          @Sequential(clk)
+          tick() {
+            this.increment();
+          }
+          private increment() {
+            this.cnt = this.cnt + 1;
+            this.out = this.cnt;
+          }
+        }
+      `);
+      assert.ok(result.success, result.systemverilog);
+      // Inlined: no unresolved call comment
+      assert.ok(!result.systemverilog.includes('unresolved call'));
+      // Body of increment() should appear directly in always_ff
+      assert.ok(result.systemverilog.includes('cnt <= cnt + 1'));
+      assert.ok(result.systemverilog.includes('out <= cnt'));
+    });
+
+    it('eliminates early return by converting to else clause', () => {
+      const result = compileClassModule(`
+        class Guard extends Module {
+          @Input clk: Logic<1>;
+          @Input en: Logic<1> = 0;
+          @Output out: Logic<4> = 0;
+          private cnt: Logic<4> = 0;
+          @Sequential(clk)
+          tick() {
+            if (this.en === 0) {
+              this.cnt = 0;
+              return;
+            }
+            this.cnt = this.cnt + 1;
+            this.out = this.cnt;
+          }
+        }
+      `);
+      assert.ok(result.success, result.systemverilog);
+      // Guard pattern: the reset and the increment should be in if/else, not sequential
+      assert.ok(result.systemverilog.includes('if (en == 0) begin'));
+      assert.ok(result.systemverilog.includes('end else begin'));
+      assert.ok(result.systemverilog.includes('cnt <= cnt + 1'));
+    });
+
+    it('inlines helper then eliminates return in the inlined body', () => {
+      const result = compileClassModule(`
+        class Ws2812Like extends Module {
+          @Input clk: Logic<1>;
+          @Input enable: Logic<1> = 0;
+          @Output out: Logic<1> = 0;
+          private phase: Logic<1> = 0;
+          @Sequential(clk)
+          tick() {
+            if (this.enable === 0) {
+              this.clearAll();
+              return;
+            }
+            this.runPhase();
+          }
+          private clearAll() {
+            this.out   = 0;
+            this.phase = 0;
+          }
+          private runPhase() {
+            this.out   = 1;
+            this.phase = 1;
+          }
+        }
+      `);
+      assert.ok(result.success, result.systemverilog);
+      // clearAll and runPhase should be inlined, not as separate blocks
+      assert.ok(!result.systemverilog.includes('unresolved call'));
+      // Guard structure: enable==0 branch and else branch
+      assert.ok(result.systemverilog.includes('if (enable == 0) begin'));
+      assert.ok(result.systemverilog.includes('end else begin'));
+    });
+
+    it('emits switch/case for palette-style dispatch', () => {
+      const result = compileClassModule(`
+        const RED   = 0xFF0000;
+        const GREEN = 0x00FF00;
+        class Palette extends Module {
+          @Input clk: Logic<1>;
+          @Input sel: Logic<2> = 0;
+          @Output colour: Logic<24> = 0;
+          @Sequential(clk)
+          tick() {
+            switch (this.sel) {
+              case 0: this.colour = RED;   break;
+              case 1: this.colour = GREEN; break;
+              default: this.colour = 0;   break;
+            }
+          }
+        }
+      `);
+      assert.ok(result.success, result.systemverilog);
+      assert.ok(result.systemverilog.includes('case (sel)'));
+      assert.ok(result.systemverilog.includes('endcase'));
+    });
+  });
 });

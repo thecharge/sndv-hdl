@@ -1,96 +1,115 @@
-// ws2812_serialiser.ts - WS2812 NeoPixel protocol serialiser.
+// ws2812_serialiser.ts - WS2812B/WS2812C-2020 protocol serialiser.
 //
-// Protocol timing at 27 MHz (approx 37 ns per clock):
-//   Reset pulse : 1600 clocks (>59 us, spec requires >50 us)
-//   '0' bit     : 10 clocks high (~370 ns) + 24 clocks low (~888 ns)
-//   '1' bit     : 19 clocks high (~703 ns) + 15 clocks low (~555 ns)
-//   Bit period  : 34 clocks (~1.26 us)
-//   Full frame  : 1600 + 24*34 = 2416 clocks (~89 us)
+// Protocol (NeoPixel, single-wire, GRB order, MSB first):
+//   Reset pulse : ws2812 LOW for > reset threshold
+//   Bit '0'     : HIGH for T0H, then LOW for T0L
+//   Bit '1'     : HIGH for T1H, then LOW for T1L
+//   Data latched: LEDs update when they see the reset after all bit data
 //
-// Behaviour:
-//   enable = 0 -> ws2812 held low, all state reset.
-//   enable = 1 -> continuously transmit frame: reset pulse then 24 bits,
-//                 then immediately restart.  frame is sampled at the start
-//                 of each new reset pulse so that colour changes from
-//                 RainbowGen are visible on the next refresh cycle.
+// Timing at 27 MHz (1 clock = 37.04 ns) - chosen to satisfy both WS2812B
+// (the common strip chip) and WS2812C-2020 (on-board Tang Nano 20K LED):
+//
+//   T0H_CLOCKS  =  9 clk =  333 ns  WS2812B: 250-550ns  WS2812C-2020: 220-380ns
+//   T1H_CLOCKS  = 19 clk =  703 ns  WS2812B: 650-950ns  WS2812C-2020: 580-1000ns
+//   TBIT_LAST   = 29      → 30 clk per bit = 1111 ns  (shared T0+T1 period)
+//                           WS2812B:  ~1250ns  WS2812C-2020:  ~1000ns
+//   T0L         = 21 clk =  777 ns  WS2812B: 700-1000ns WS2812C-2020: 580-1600ns
+//   T1L         = 11 clk =  407 ns  WS2812B: 300-600ns  WS2812C-2020: 220-420ns
+//
+//   TRESET_LAST = 9999    → 10000 clk = 370 µs conservative reset
+//                           WS2812B needs > 50 µs, WS2812C-2020 needs > 280 µs
+//
+// FSM:  PHASE_RESET -> ws2812 LOW, count 10000 clocks, latch frame at END
+//       PHASE_BITS  -> emit 24 bits MSB-first from shiftReg; after each bit
+//                      shift left (bringing next bit to [23]).  After bit 23
+//                      go back to PHASE_RESET.
+//
+// enable = 0 -> ws2812 LOW, all state cleared, restart on next enable=1.
+// enable = 1 -> PHASE_RESET -> PHASE_BITS -> PHASE_RESET -> ...
+//               frame is sampled once, at the END of the reset pulse, so
+//               colour changes are picked up before each new transmission.
 
 import { HardwareModule, Module, ModuleConfig, Input, Output, Sequential } from '@ts2v/runtime';
 import type { Bit, Logic } from '@ts2v/runtime';
 
-const T1H_CLOCKS = 19;
-const T0H_CLOCKS = 10;
-const TBIT_CLOCKS = 34;
-const TRESET_CLOCKS = 1600;
-const BITS_PER_FRAME = 24;
+const T0H_CLOCKS  = 9;
+const T1H_CLOCKS  = 19;
+const TBIT_LAST   = 29;    // timer counts 0..29 = 30 clocks per bit
+const TRESET_LAST = 9999;  // timer counts 0..9999 = 10000 clocks = 370 µs
+const BITS_LAST   = 23;    // bit counter 0..23 = 24 bits
+const PHASE_RESET = 0;
+const PHASE_BITS  = 1;
 
 @Module
 @ModuleConfig('resetSignal: "no_rst"')
 class Ws2812Serialiser extends HardwareModule {
-    @Input clk: Bit = 0;
-    @Input frame: Logic<24> = 0;
-    @Input enable: Bit = 0;
-    @Output ws2812: Bit = 0;
+    @Input  clk:    Bit       = 0;
+    @Input  frame:  Logic<24> = 0;  // GRB24: [23:16]=G [15:8]=R [7:0]=B
+    @Input  enable: Bit       = 0;
+    @Output ws2812: Bit       = 0;
 
-    private readonly T1H: Logic<6> = T1H_CLOCKS;
-    private readonly T0H: Logic<6> = T0H_CLOCKS;
-    private readonly TBIT: Logic<6> = TBIT_CLOCKS;
-    private readonly TRESET: Logic<12> = TRESET_CLOCKS;
-
-    private latchedFrame: Logic<24> = 0;
-    private bitIndex: Logic<5> = 0;
-    private tickInBit: Logic<6> = 0;
-    private resetTicks: Logic<12> = 0;
-    // phase: 0 = idle/reset-pulse, 1 = data bits
-    private phase: Bit = 0;
-    // currentBit is latched at tickInBit===0 (start of each bit period) and
-    // held stable for the full 34-clock bit window.
-    private currentBit: Bit = 0;
+    private phase:    Bit       = PHASE_RESET;
+    private timer:    Logic<14> = 0;  // wide enough for TRESET_LAST (9999 < 2^14)
+    private shiftReg: Logic<24> = 0;  // MSB-first; shiftReg[23] = current bit
+    private bitCnt:   Logic<5>  = 0;  // 0..BITS_LAST
 
     @Sequential('clk')
     tick(): void {
         if (this.enable === 0) {
-            // Not enabled: hold output low, reset everything.
+            this.clearState();
+            return;
+        }
+        if (this.phase === PHASE_RESET) {
+            this.tickResetPhase();
+            return;
+        }
+        this.tickBitsPhase();
+    }
+
+    private clearState(): void {
+        this.ws2812   = 0;
+        this.phase    = PHASE_RESET;
+        this.timer    = 0;
+        this.shiftReg = 0;
+        this.bitCnt   = 0;
+    }
+
+    private tickResetPhase(): void {
+        this.ws2812 = 0;
+        if (this.timer === TRESET_LAST) {
+            // End of reset: latch the frame and begin transmission.
+            this.shiftReg = this.frame;
+            this.timer    = 0;
+            this.bitCnt   = 0;
+            this.phase    = PHASE_BITS;
+        } else {
+            this.timer = this.timer + 1;
+        }
+    }
+
+    private tickBitsPhase(): void {
+        // shiftReg[23] is the current bit. T0H portion is always HIGH.
+        // T1H extends to T1H_CLOCKS for a '1' bit, then goes LOW.
+        if (this.timer < T0H_CLOCKS) {
+            this.ws2812 = 1;
+        } else if (this.timer < T1H_CLOCKS && ((this.shiftReg >> 23) & 1) === 1) {
+            this.ws2812 = 1;
+        } else {
             this.ws2812 = 0;
-            this.phase = 0;
-            this.resetTicks = 0;
-            this.bitIndex = 0;
-            this.tickInBit = 0;
-            this.currentBit = 0;
-        } else if (this.phase === 0) {
-            // Phase 0: reset low pulse.  Latch frame at the start.
-            this.ws2812 = 0;
-            if (this.resetTicks === 0) {
-                this.latchedFrame = this.frame;
-            }
-            this.resetTicks = this.resetTicks + 1;
-            if (this.resetTicks >= TRESET_CLOCKS) {
-                this.resetTicks = 0;
-                this.bitIndex = 0;
-                this.tickInBit = 0;
-                this.phase = 1;
+        }
+
+        if (this.timer === TBIT_LAST) {
+            // End of this bit: shift left to expose the next bit, advance counter.
+            this.timer    = 0;
+            this.shiftReg = this.shiftReg << 1;
+            if (this.bitCnt === BITS_LAST) {
+                this.bitCnt = 0;
+                this.phase  = PHASE_RESET;
+            } else {
+                this.bitCnt = this.bitCnt + 1;
             }
         } else {
-            // Phase 1: transmit 24 bits MSB-first.
-            // Latch the bit value at the start of each bit period.
-            if (this.tickInBit === 0) {
-                this.currentBit = (this.latchedFrame >> (BITS_PER_FRAME - 1 - this.bitIndex)) & 1;
-            }
-            if (this.tickInBit < T0H_CLOCKS) {
-                this.ws2812 = 1;
-            } else if (this.tickInBit < T1H_CLOCKS && this.currentBit === 1) {
-                this.ws2812 = 1;
-            } else {
-                this.ws2812 = 0;
-            }
-            this.tickInBit = this.tickInBit + 1;
-            if (this.tickInBit >= TBIT_CLOCKS) {
-                this.tickInBit = 0;
-                this.bitIndex = this.bitIndex + 1;
-                if (this.bitIndex >= BITS_PER_FRAME) {
-                    // Frame complete: go back to reset phase (re-latch frame).
-                    this.phase = 0;
-                }
-            }
+            this.timer = this.timer + 1;
         }
     }
 }
