@@ -88,7 +88,7 @@ describe('ClassModuleCompiler', () => {
       assert.ok(!result.systemverilog.includes("a = 4'd5;"));
     });
 
-    it('does not emit reset branch when rst_n input is not declared', () => {
+    it('auto-injects rst_n and emits reset branch when rst_n is not explicitly declared', () => {
       const result = compileClassModule(`
         class X extends Module {
           @Input clk: Logic<1>;
@@ -98,8 +98,9 @@ describe('ClassModuleCompiler', () => {
         }
       `);
       assert.ok(result.success, result.errors.join(', '));
-      assert.ok(result.systemverilog.includes('always_ff @(posedge clk)'));
-      assert.ok(!result.systemverilog.includes('if (!rst_n)'));
+      assert.ok(result.systemverilog.includes('always_ff @(posedge clk or negedge rst_n)'));
+      assert.ok(result.systemverilog.includes('if (!rst_n)'));
+      assert.ok(result.systemverilog.includes("q <= 8'd12"));
       assert.ok(result.systemverilog.includes('q <= q + 1'));
     });
   });
@@ -201,7 +202,7 @@ describe('ClassModuleCompiler', () => {
       assert.ok(result.systemverilog.includes('output      logic [8:0] sum'));
     });
 
-    it('auto-injects clk but does not force implicit reset input', () => {
+    it('auto-injects clk and rst_n for sequential modules without explicit declarations', () => {
       const result = compileClassModule(`
         class X extends Module {
           @Output q: Logic<1> = 0;
@@ -211,8 +212,8 @@ describe('ClassModuleCompiler', () => {
       `);
       assert.ok(result.success);
       assert.ok(result.systemverilog.includes('input  logic clk'));
-      assert.ok(!result.systemverilog.includes('input  logic rst_n'));
-      assert.ok(result.systemverilog.includes('always_ff @(posedge clk)'));
+      assert.ok(result.systemverilog.includes('input  logic rst_n'));
+      assert.ok(result.systemverilog.includes('always_ff @(posedge clk or negedge rst_n)'));
     });
 
     it('supports UintN and UIntN widths above 64 bits', () => {

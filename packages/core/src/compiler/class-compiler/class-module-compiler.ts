@@ -951,6 +951,12 @@ export class ClassModuleEmitter {
       if (p.direction === 'input') inputs.push({ name: p.name, bit_width: p.bit_width });
       if (p.direction === 'output') outputs.push({ name: p.name, bit_width: p.bit_width });
     }
+    // Include auto-injected reset in signature so submodule auto-bind can connect it
+    if (has_seq && mod.config.reset_type === 'async' && mod.config.reset_signal !== 'no_rst') {
+      if (!inputs.some((i) => i.name === mod.config.reset_signal)) {
+        inputs.push({ name: mod.config.reset_signal, bit_width: 1 });
+      }
+    }
     this.module_signatures.set(mod.name, { name: mod.name, inputs, outputs });
   }
 
@@ -970,9 +976,11 @@ export class ClassModuleEmitter {
   private emitModule(mod: ClassModuleAST, global_enums: EnumAST[]): void {
     const all_enums = [...global_enums, ...mod.enums];
     const has_sequential = mod.methods.some(m => m.type === 'sequential');
-    const has_declared_reset = mod.properties.some(
-      (p) => p.direction === 'input' && p.name === mod.config.reset_signal,
-    );
+    // Auto-inject reset when there is no explicit @Input for the reset signal and the
+    // module is not configured for synchronous reset or opted out via 'no_rst'.
+    const has_declared_reset =
+      mod.properties.some((p) => p.direction === 'input' && p.name === mod.config.reset_signal) ||
+      (mod.config.reset_type === 'async' && mod.config.reset_signal !== 'no_rst');
 
     // Build property width lookup for context-aware bit-width emission
     const pw = new Map<string, number>();
@@ -1115,9 +1123,9 @@ export class ClassModuleEmitter {
   private emitSequential(method: MethodAST, mod: ClassModuleAST, enums: EnumAST[], pw: Map<string, number>): void {
     const clk = sanitize(method.clock);
     const rst = sanitize(mod.config.reset_signal);
-    const has_declared_reset = mod.properties.some(
-      (p) => p.direction === 'input' && p.name === mod.config.reset_signal,
-    );
+    const has_declared_reset =
+      mod.properties.some((p) => p.direction === 'input' && p.name === mod.config.reset_signal) ||
+      (mod.config.reset_type === 'async' && mod.config.reset_signal !== 'no_rst');
     const is_async = mod.config.reset_type === 'async';
     const is_active_low = mod.config.reset_polarity === 'active_low';
 

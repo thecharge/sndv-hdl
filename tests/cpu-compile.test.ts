@@ -39,14 +39,14 @@ describe('CPU TypeScript -> SystemVerilog', () => {
     });
 
     it('resets all registers', () => {
-      assert.ok(result.systemverilog.includes('pc <= 0'));
-      assert.ok(result.systemverilog.includes('r0 <= 0'));
-      assert.ok(result.systemverilog.includes('r1 <= 0'));
-      assert.ok(result.systemverilog.includes('r2 <= 0'));
-      assert.ok(result.systemverilog.includes('r3 <= 0'));
-      assert.ok(result.systemverilog.includes('state <= 0'));
-      assert.ok(result.systemverilog.includes('flag_z <= 0'));
-      assert.ok(result.systemverilog.includes('flag_c <= 0'));
+      assert.ok(result.systemverilog.includes("pc <= 8'd0"));
+      assert.ok(result.systemverilog.includes("r0 <= 4'd0"));
+      assert.ok(result.systemverilog.includes("r1 <= 4'd0"));
+      assert.ok(result.systemverilog.includes("r2 <= 4'd0"));
+      assert.ok(result.systemverilog.includes("r3 <= 4'd0"));
+      assert.ok(result.systemverilog.includes("state <= 3'd0"));
+      assert.ok(result.systemverilog.includes("flag_z <= 1'b0"));
+      assert.ok(result.systemverilog.includes("flag_c <= 1'b0"));
     });
 
     it('has case statement over state', () => {
