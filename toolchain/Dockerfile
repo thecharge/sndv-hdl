@@ -6,24 +6,25 @@ ARG OSS_CAD_SUITE_TAG=20260311
 ARG OPENFPGALOADER_TAG=v0.13.1
 
 RUN apt-get update -o Acquire::Retries=5 && \
-    apt-get install -y --no-install-recommends \
-      ca-certificates \
-      curl \
-      xz-utils \
-      git \
-      build-essential \
-      cmake \
-      pkg-config \
-      python3 \
-      python3-pip \
-      libftdi1-dev \
-      libusb-1.0-0-dev \
-      libhidapi-dev \
-      libudev-dev \
-      libjson-c-dev \
-      zlib1g-dev \
-      libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+  apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  xz-utils \
+  git \
+  build-essential \
+  cmake \
+  pkg-config \
+  python3 \
+  python3-pip \
+  libftdi1-dev \
+  libusb-1.0-0-dev \
+  libhidapi-dev \
+  libudev-dev \
+  libjson-c-dev \
+  zlib1g-dev \
+  libssl-dev \
+  && pip3 install --no-cache-dir --break-system-packages numpy fastcrc \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN curl -L --retry 3 --retry-delay 5 \
   -o /tmp/oss-cad-suite.tgz \

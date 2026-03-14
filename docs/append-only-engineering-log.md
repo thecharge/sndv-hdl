@@ -613,3 +613,44 @@
   - `passCount: 6`
   - `failCount: 0`
   - checked cases populated (`phase0_led0_on` ... `phase5_led5_on`).
+
+## 2026-03-14 — WS2812 Multi-File Flagship Demo: Flash Verified
+
+### Changes
+- **ws2812_demo directory** (`examples/hardware/tang_nano_20k/ws2812_demo/`):
+  - `ws2812_demo.ts` — rewritten completely with proper imports for `RainbowGen` and `Ws2812Serialiser`, and `@ModuleConfig('resetSignal: "no_rst"')` to prevent `rst_n` from triggering async reset on flip flops (allows S1 to be read as a plain input for LED walk)
+  - `rainbow_gen.ts` — unchanged
+  - `ws2812_serialiser.ts` — unchanged
+- **`@ModuleConfig` decorator** added to `packages/runtime/src/decorators.ts` and exported from `index.ts`
+- **`resolveTopModuleName`** in `apps/cli/src/commands/compile-command-handler.ts` — fixed to find the module not instantiated by others (was returning first module `RainbowGen` instead of top `Ws2812Demo`)
+- **Board JSON** `boards/tang_nano_20k.board.json` — `family` corrected from `GW2A-18C` → `GW2AR-18C`
+- **`v1-production.test.ts`** — 5 tests fixed: header `v2.0.0`, blinker/breathe/counter paths and assertions, board family name
+- **New examples**: `examples/hardware/tang_nano_20k/breathe/breathe.ts` (PwmCore + BreatheLed), `examples/hardware/tang_nano_20k/counter/counter.ts`
+- **Biome lint** — `legacy-compiler-adapter.ts` import order, arrow function parens, object literal formatting fixed
+
+### Compile command
+```
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/ws2812_demo \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/ws2812_demo --flash
+```
+
+### Flash log (2026-03-14, Tang Nano 20K, probe 0403:6010)
+```
+Attribute `top' found on module `Ws2812Demo'. Setting top module to Ws2812Demo.
+Writing: [==================================================] 100.00%
+Done
+Verifying write (May take time)
+Done
+```
+
+### Observed hardware behaviour
+- S2 held → WS2812 strip cycles through 6-colour rainbow (RED → YELLOW → GREEN → CYAN → BLUE → MAGENTA, ~0.31 s/step)
+- S2 released → strip immediately dark
+- S1 held → 6 board LEDs walk one at a time (~0.31 s/LED)
+- S1 released → all LEDs off
+
+### Quality gate
+- `bun run quality` → 7 tasks successful, 0 failures
+- `bun run test:uvm` → ALU 25 pass, Blinky 6 pass

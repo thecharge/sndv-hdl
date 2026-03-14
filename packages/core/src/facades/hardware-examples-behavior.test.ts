@@ -36,16 +36,24 @@ describe('Hardware examples behavior', () => {
     expect(sv.includes("led <= 6'h1f")).toBe(true);
   });
 
-  test('ws2812 interactive demo emits timing-controlled serial driver with button control', async () => {
-    const sv = await compileToSv('examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts');
+  test('ws2812 flagship demo compiles the multi-file directory to one SV with all three modules', async () => {
+    const sv = await compileToSv('examples/hardware/tang_nano_20k/ws2812_demo');
 
-    expect(sv.includes('module Ws2812InteractiveDemo')).toBe(true);
-    expect(sv.includes('t1h')).toBe(true);
-    expect(sv.includes('t0h')).toBe(true);
-    expect(sv.includes('tbit')).toBe(true);
-    expect(sv.includes('treset')).toBe(true);
+    // All three modules must be present in the combined output
+    expect(sv.includes('module Ws2812Serialiser')).toBe(true);
+    expect(sv.includes('module RainbowGen')).toBe(true);
+    expect(sv.includes('module Ws2812Demo')).toBe(true);
+    // Serialiser timing constants
+    expect(sv.includes('T1H')).toBe(true);
+    expect(sv.includes('T0H')).toBe(true);
+    expect(sv.includes('TRESET')).toBe(true);
+    // Rainbow generator state
+    expect(sv.includes('step')).toBe(true);
+    expect(sv.includes('enable')).toBe(true);
+    // Top-level LED walk state
     expect(sv.includes('walkTick')).toBe(true);
     expect(sv.includes('ledPhase')).toBe(true);
+    // WS2812 serial output toggling
     expect(sv.includes("ws2812 <= 1'b1")).toBe(true);
     expect(sv.includes("ws2812 <= 1'b0")).toBe(true);
   });

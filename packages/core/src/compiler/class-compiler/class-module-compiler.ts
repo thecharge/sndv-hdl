@@ -1047,18 +1047,16 @@ export class ClassModuleEmitter {
 
     // SVA Assertions (v1.0.0)
     if (mod.assertions.length > 0) {
-      this.line('    // SystemVerilog Assertions');
+      this.line('    // SystemVerilog Assertions (IEEE 1800-2017 SVA)');
       const clk = mod.methods.find(m => m.type === 'sequential')?.clock || 'clk';
       for (const a of mod.assertions) {
         const cond = this.translateExpr(a.condition, all_enums, mod);
         const label = a.label || `assert_${mod.assertions.indexOf(a)}`;
         if (a.message) {
-          this.line(`    // ${label}: ${a.message}`);
-          this.line(`    // Assertion translated to synthesis-safe check`);
-          this.line(`    always @(*) if (!(${cond})) begin end`);
+          this.line(`    ${label}: assert property (@(posedge ${clk}) ${cond})`);
+          this.line(`        else $error("${a.message}");`);
         } else {
-          this.line(`    // ${label}: assertion translated to synthesis-safe check`);
-          this.line(`    always @(*) if (!(${cond})) begin end`);
+          this.line(`    ${label}: assert property (@(posedge ${clk}) ${cond});`);
         }
       }
       this.line('');
@@ -1307,10 +1305,9 @@ export class ClassModuleEmitter {
       case 'assert': {
         const cond = this.translateExpr(stmt.condition, enums, mod);
         if (stmt.message) {
-          this.line(`// assert: ${stmt.message}`);
-          this.line(`if (!(${cond})) begin end`);
+          this.line(`assert (${cond}) else $error("${stmt.message}");`);
         } else {
-          this.line(`if (!(${cond})) begin end`);
+          this.line(`assert (${cond});`);
         }
         break;
       }

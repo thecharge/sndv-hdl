@@ -17,18 +17,18 @@ function compileExample(filename: string): string {
 }
 
 describe('Golden output: blinker', () => {
-  const verilog = compileExample('blinker.ts');
+  const verilog = compileExample('blinker/blinker.ts');
 
   it('generates blinker_counter_next module with wrap logic', () => {
     assert.ok(verilog.includes('module blinker_counter_next'));
-    assert.ok(verilog.includes('input  wire [31:0] current_count'));
-    assert.ok(verilog.includes('input  wire [31:0] max_count'));
+    assert.ok(verilog.includes('input  logic [31:0] current_count'));
+    assert.ok(verilog.includes('input  logic [31:0] max_count'));
     assert.ok(verilog.includes('(current_count == max_count)'));
   });
 
   it('generates blinker_toggle module with conditional flip', () => {
     assert.ok(verilog.includes('module blinker_toggle'));
-    assert.ok(verilog.includes('input  wire  current_led'));
+    assert.ok(verilog.includes('input  logic  current_led'));
   });
 
   it('generates blinker_pattern module with hex patterns', () => {
@@ -41,18 +41,18 @@ describe('Golden output: blinker', () => {
 });
 
 describe('Golden output: UART TX', () => {
-  const verilog = compileExample('uart_tx.ts');
+  const verilog = compileExample('uart_tx/uart_tx.ts');
 
   it('generates uart_baud_tick as comparison output', () => {
     assert.ok(verilog.includes('module uart_baud_tick'));
-    assert.ok(verilog.includes('output wire  result'));
+    assert.ok(verilog.includes('output logic  result'));
     assert.ok(verilog.includes('(baud_counter == baud_divisor)'));
   });
 
   it('generates uart_tx_output with state-based mux', () => {
     assert.ok(verilog.includes('module uart_tx_output'));
-    assert.ok(verilog.includes('input  wire [31:0] state'));
-    assert.ok(verilog.includes('input  wire  data_bit'));
+    assert.ok(verilog.includes('input  logic [31:0] state'));
+    assert.ok(verilog.includes('input  logic  data_bit'));
     assert.ok(verilog.includes('?'));
   });
 
@@ -69,7 +69,7 @@ describe('Golden output: UART TX', () => {
 });
 
 describe('Golden output: PWM', () => {
-  const verilog = compileExample('pwm.ts');
+  const verilog = compileExample('pwm/pwm.ts');
 
   it('generates pwm_output as comparator', () => {
     assert.ok(verilog.includes('module pwm_output'));
@@ -94,7 +94,7 @@ describe('Golden output: PWM', () => {
 });
 
 describe('Golden output: WS2812', () => {
-  const verilog = compileExample('ws2812.ts');
+  const verilog = compileExample('ws2812/ws2812.ts');
 
   it('generates ws2812_bit_output with T0H/T1H timing select', () => {
     assert.ok(verilog.includes('module ws2812_bit_output'));
@@ -121,7 +121,7 @@ describe('Golden output: WS2812', () => {
 });
 
 describe('Golden output: I2C', () => {
-  const verilog = compileExample('i2c.ts');
+  const verilog = compileExample('i2c/i2c.ts');
 
   it('generates i2c_address_match with 7-bit mask', () => {
     assert.ok(verilog.includes('module i2c_address_match'));
@@ -154,7 +154,7 @@ describe('Golden output: I2C', () => {
 });
 
 describe('Golden output: stdlib', () => {
-  const verilog = compileExample('stdlib.ts');
+  const verilog = compileExample('stdlib/stdlib.ts');
 
   it('generates mux2 as ternary', () => {
     assert.ok(verilog.includes('module mux2'));

@@ -7,8 +7,21 @@ import { type CompileRequest, SupportedBoardId } from '@ts2v/types';
 export class CompileCommandHandler {
   private resolveTopModuleName(outputSystemVerilogPath: string, fallbackName: string): string {
     const source = readFileSync(outputSystemVerilogPath, 'utf8');
-    const moduleMatch = source.match(/module\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/);
-    return moduleMatch?.[1] ?? fallbackName;
+    // Collect all module definitions
+    const moduleDefs = [...source.matchAll(/\bmodule\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)].map(
+      (m) => m[1],
+    );
+    if (moduleDefs.length <= 1) return moduleDefs[0] ?? fallbackName;
+    // Find modules that are instantiated inside other modules.
+    // Instantiation pattern: ModuleName instance_name (
+    const instantiated = new Set<string>();
+    for (const name of moduleDefs) {
+      const re = new RegExp(`\\b${name}\\s+[A-Za-z_][A-Za-z0-9_]*\\s*\\(`, 'g');
+      if (re.test(source)) instantiated.add(name);
+    }
+    // The top module is the one never instantiated by another module in this file.
+    const topCandidates = moduleDefs.filter((n) => !instantiated.has(n));
+    return topCandidates[0] ?? moduleDefs[moduleDefs.length - 1] ?? fallbackName;
   }
 
   async execute(options: {

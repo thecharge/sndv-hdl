@@ -9,7 +9,7 @@ describe('Hardware examples compile', () => {
 
   const examples = [
     'examples/hardware/tang_nano_20k/blinker/blinker.ts',
-    'examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts',
+    'examples/hardware/tang_nano_20k/ws2812_demo', // multi-file directory
   ];
 
   for (const examplePath of examples) {

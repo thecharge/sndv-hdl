@@ -54,3 +54,17 @@ export function Combinational(
 export function Assert(_condition: boolean, _message?: string): void {
   // Parsed by ts2v compiler.
 }
+
+/**
+ * Overrides module-level compiler configuration (reset signal name, polarity,
+ * reset type).  Accepted keys in the config string:
+ *   resetSignal: "<name>"   — signal used as the hardware reset (default: rst_n)
+ *   active_high             — reset is active-high (default: active_low)
+ *   synchronous             — use synchronous reset (default: async)
+ * Example: @ModuleConfig('resetSignal: "no_rst"')
+ */
+export function ModuleConfig(_config: string): ClassDecorator {
+  return (_target: object) => {
+    // No-op at runtime; parsed by ts2v compiler.
+  };
+}

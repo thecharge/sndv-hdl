@@ -127,7 +127,7 @@ describe('v1.0.0: Context-Aware Bit-Width Emission', () => {
     `);
     assert.ok(result.success, result.errors.join(', '));
     // Reset value should be sized to 1 bit
-    assert.ok(result.systemverilog.includes("flag <= 1'b0"), 
+    assert.ok(result.systemverilog.includes("flag <= 1'b0"),
       'Reset value 0 for 1-bit should be 1\'b0, got:\n' + result.systemverilog);
     // Assignment value should be sized to 1 bit  
     assert.ok(result.systemverilog.includes("flag <= 1'b1"),
@@ -438,6 +438,6 @@ describe('v1.0.0: Regression — existing features preserved', () => {
       }
     `);
     assert.ok(result.success);
-    assert.ok(result.systemverilog.includes('v1.0.0'));
+    assert.ok(result.systemverilog.includes('v2.0.0'), 'Generated SV must contain version header');
   });
 });

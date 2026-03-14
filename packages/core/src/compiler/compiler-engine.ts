@@ -53,6 +53,22 @@ export function buildFile(inputPath: string, outDir: string): {
   }
 }
 
+// Compile a pre-assembled multi-file source string as one class-mode unit.
+// outName is used as the .sv output basename (no extension).
+export function buildClassSource(source: string, outName: string, outDir: string): {
+  success: boolean;
+  outPath: string;
+  lines: number;
+} {
+  const classCompileResult = compileClassModule(source);
+  if (!classCompileResult.success) {
+    return { success: false, outPath: '', lines: 0 };
+  }
+  const outputPath = join(outDir, `${outName}.sv`);
+  writeFileSync(outputPath, classCompileResult.systemverilog);
+  return { success: true, outPath: outputPath, lines: classCompileResult.systemverilog.split('\n').length };
+}
+
 export function generateConstraints(boardJsonPath: string, outDir: string): string {
   const raw = JSON.parse(readFileSync(boardJsonPath, 'utf-8')) as Record<string, unknown>;
   const board = (raw.board as Record<string, unknown> | undefined) ?? raw;

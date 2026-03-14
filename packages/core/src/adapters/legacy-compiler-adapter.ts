@@ -1,3 +1,4 @@
+import { readFileSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import type {
   CompileArtifact,
@@ -6,7 +7,7 @@ import type {
   CompileResult,
   CompilerAdapter,
 } from '@ts2v/types';
-import { buildFile, generateConstraints } from '../compiler/compiler-engine';
+import { buildClassSource, buildFile, generateConstraints } from '../compiler/compiler-engine';
 import type { FileSystemRepository } from '../repositories/file-system-repository';
 
 export class LegacyCompilerAdapter implements CompilerAdapter {
@@ -14,27 +15,72 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
 
   async compile(request: CompileRequest): Promise<CompileResult> {
     this.fileSystemRepository.ensureDirectory(request.outputDirectoryPath);
-    const sourceFilePaths = this.fileSystemRepository.listTypeScriptFiles(request.inputPath);
 
     const artifacts: CompileArtifact[] = [];
     const diagnostics: CompileDiagnostic[] = [];
 
-    for (const sourceFilePath of sourceFilePaths) {
-      const buildResult = buildFile(sourceFilePath, request.outputDirectoryPath);
+    // Directory of class-mode sources → concatenate into one compilation unit.
+    const isDirectory = statSync(request.inputPath).isDirectory();
+    if (isDirectory) {
+      const sourceFilePaths = this.fileSystemRepository.listTypeScriptFiles(request.inputPath);
+      const sources = sourceFilePaths.map((p) => readFileSync(p, 'utf-8'));
+      const hasClassMode = sources.some(
+        (s) => s.includes('@Module') || s.includes('extends HardwareModule'),
+      );
+
+      if (hasClassMode) {
+        const combinedSource = sources.join('\n\n');
+        const dirName = basename(request.inputPath);
+        const buildResult = buildClassSource(combinedSource, dirName, request.outputDirectoryPath);
+        if (!buildResult.success) {
+          diagnostics.push({
+            severity: 'error',
+            code: 'MULTIFILE_BUILD_FAILED',
+            message: `Failed to compile multi-file directory: ${request.inputPath}`,
+          });
+        } else {
+          artifacts.push({
+            filePath: buildResult.outPath,
+            lineCount: buildResult.lines,
+            kind: 'systemverilog',
+          });
+        }
+        // Fall through to constraints + manifest below.
+      } else {
+        // Function-mode directory: compile each file individually.
+        for (const sourceFilePath of sourceFilePaths) {
+          const buildResult = buildFile(sourceFilePath, request.outputDirectoryPath);
+          if (!buildResult.success) {
+            diagnostics.push({
+              severity: 'error',
+              code: 'LEGACY_BUILD_FAILED',
+              message: `Failed to compile source: ${sourceFilePath}`,
+            });
+            continue;
+          }
+          artifacts.push({
+            filePath: buildResult.outPath,
+            lineCount: buildResult.lines,
+            kind: 'systemverilog',
+          });
+        }
+      }
+    } else {
+      // Single file compilation (existing behaviour).
+      const buildResult = buildFile(request.inputPath, request.outputDirectoryPath);
       if (!buildResult.success) {
         diagnostics.push({
           severity: 'error',
           code: 'LEGACY_BUILD_FAILED',
-          message: `Failed to compile source: ${sourceFilePath}`,
+          message: `Failed to compile source: ${request.inputPath}`,
         });
-        continue;
+      } else {
+        artifacts.push({
+          filePath: buildResult.outPath,
+          lineCount: buildResult.lines,
+          kind: 'systemverilog',
+        });
       }
-
-      artifacts.push({
-        filePath: buildResult.outPath,
-        lineCount: buildResult.lines,
-        kind: 'systemverilog',
-      });
     }
 
     if (request.boardConfigPath) {

@@ -1,21 +1,62 @@
 {
   "vendor": "gowin",
-  "family": "GW2A-18C",
+  "family": "GW2AR-18C",
   "part": "GW2AR-LV18QN88C8/I7",
   "clocks": {
-    "clk": { "pin": "4", "freq": "27MHz", "std": "LVCMOS33" }
+    "clk": {
+      "pin": "4",
+      "freq": "27MHz",
+      "std": "LVCMOS33"
+    }
   },
   "io": {
-    "rst_n":   { "pin": "88", "std": "LVCMOS33", "pull": "UP" },
-    "btn":     { "pin": "87", "std": "LVCMOS33", "pull": "UP" },
-    "led[0]":  { "pin": "15", "std": "LVCMOS33" },
-    "led[1]":  { "pin": "16", "std": "LVCMOS33" },
-    "led[2]":  { "pin": "17", "std": "LVCMOS33" },
-    "led[3]":  { "pin": "18", "std": "LVCMOS33" },
-    "led[4]":  { "pin": "19", "std": "LVCMOS33" },
-    "led[5]":  { "pin": "20", "std": "LVCMOS33" },
-    "uart_tx": { "pin": "15", "std": "LVCMOS33", "drive": "8" },
-    "uart_rx": { "pin": "16", "std": "LVCMOS33" },
-    "ws2812":  { "pin": "79", "std": "LVCMOS33", "drive": "8" }
+    "rst_n": {
+      "pin": "88",
+      "std": "LVCMOS33",
+      "pull": "UP"
+    },
+    "btn": {
+      "pin": "87",
+      "std": "LVCMOS33",
+      "pull": "UP"
+    },
+    "led[0]": {
+      "pin": "15",
+      "std": "LVCMOS33"
+    },
+    "led[1]": {
+      "pin": "16",
+      "std": "LVCMOS33"
+    },
+    "led[2]": {
+      "pin": "17",
+      "std": "LVCMOS33"
+    },
+    "led[3]": {
+      "pin": "18",
+      "std": "LVCMOS33"
+    },
+    "led[4]": {
+      "pin": "19",
+      "std": "LVCMOS33"
+    },
+    "led[5]": {
+      "pin": "20",
+      "std": "LVCMOS33"
+    },
+    "uart_tx": {
+      "pin": "15",
+      "std": "LVCMOS33",
+      "drive": "8"
+    },
+    "uart_rx": {
+      "pin": "16",
+      "std": "LVCMOS33"
+    },
+    "ws2812": {
+      "pin": "79",
+      "std": "LVCMOS33",
+      "drive": "8"
+    }
   }
 }

@@ -89,30 +89,30 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - `bun run flash:tang20k <bitstream.fs>`: direct flash helper entrypoint.
 
 ## Documentation Index
-- `docs/guides/getting-started.md`: **newcomer onboarding — from empty folder to flashed blinker with testbench** (start here if you are new).
-- `docs/quickstart.md`: WS2812-first end-to-end quickstart with explicit pass/fail checks.
-- `docs/guides/end-to-end-delivery.md`: **step-by-step compile-to-flash delivery guide** (reference for new hardware modules).
-- `docs/guides/board-definition-authoring.md`: complete board definition guide.
-- `docs/guides/board-definition-properties-reference.md`: complete property reference (`std`, `drive`, `pull`, `freq`, vendor mappings).
-- `docs/guides/tang_nano_20k_programming.md`: Tang Nano 20K flashing runbook.
-- `docs/guides/debugging-and-troubleshooting.md`: end-to-end debug flow and failure signatures.
-- `docs/guides/production-reality-check.md`: production acceptance workflow with proof commands.
-- `docs/guides/programmer-profiles-and-usb-permissions.md`: profile and permission model.
-- `docs/guides/user-usb-debugger-onboarding.md`: practical USB probe onboarding.
-- `docs/guides/examples-matrix.md`: examples, intent, and expected hardware behavior.
-- `docs/guides/uvm-simulation-with-podman.md`: containerized simple UVM-style simulation flow.
-- `docs/guides/uvm-suite-authoring.md`: how to add future UVM-style verification suites and reports.
-- `docs/guides/ws2812-protocol-and-brightness.md`: WS2812 protocol semantics and brightness behavior.
-- `docs/development.md`: contributor/developer workflow.
-- `docs/hardware-toolchain.md`: synth/programming architecture and command flow.
-- `docs/architecture.md`: system architecture with Mermaid diagrams.
-- `docs/specification.md`: language and generation spec.
-- `docs/compliance.md`: standards and subset compliance.
-- `docs/qa-testing.md`: test strategy and quality gates.
-- `docs/package-inventory.md`: package boundaries and responsibilities.
-- `docs/security-compliance.md`: repository compliance and security posture.
-- `docs/append-only-engineering-log.md`: append-only operational log.
-- `cpu/README_ASSEMBLY.md`: nibble4 CPU architecture and assembly guide.
+- [docs/guides/getting-started.md](docs/guides/getting-started.md): **newcomer onboarding — from empty folder to flashed blinker with testbench** (start here if you are new).
+- [docs/quickstart.md](docs/quickstart.md): WS2812-first end-to-end quickstart with explicit pass/fail checks.
+- [docs/guides/end-to-end-delivery.md](docs/guides/end-to-end-delivery.md): **step-by-step compile-to-flash delivery guide** (reference for new hardware modules).
+- [docs/guides/board-definition-authoring.md](docs/guides/board-definition-authoring.md): complete board definition guide.
+- [docs/guides/board-definition-properties-reference.md](docs/guides/board-definition-properties-reference.md): complete property reference (`std`, `drive`, `pull`, `freq`, vendor mappings).
+- [docs/guides/tang_nano_20k_programming.md](docs/guides/tang_nano_20k_programming.md): Tang Nano 20K flashing runbook.
+- [docs/guides/debugging-and-troubleshooting.md](docs/guides/debugging-and-troubleshooting.md): end-to-end debug flow and failure signatures.
+- [docs/guides/production-reality-check.md](docs/guides/production-reality-check.md): production acceptance workflow with proof commands.
+- [docs/guides/programmer-profiles-and-usb-permissions.md](docs/guides/programmer-profiles-and-usb-permissions.md): profile and permission model.
+- [docs/guides/user-usb-debugger-onboarding.md](docs/guides/user-usb-debugger-onboarding.md): practical USB probe onboarding.
+- [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md): examples, intent, and expected hardware behavior.
+- [docs/guides/uvm-simulation-with-podman.md](docs/guides/uvm-simulation-with-podman.md): containerized simple UVM-style simulation flow.
+- [docs/guides/uvm-suite-authoring.md](docs/guides/uvm-suite-authoring.md): how to add future UVM-style verification suites and reports.
+- [docs/guides/ws2812-protocol-and-brightness.md](docs/guides/ws2812-protocol-and-brightness.md): WS2812 protocol semantics and brightness behavior.
+- [docs/development.md](docs/development.md): contributor/developer workflow.
+- [docs/hardware-toolchain.md](docs/hardware-toolchain.md): synth/programming architecture and command flow.
+- [docs/architecture.md](docs/architecture.md): system architecture with Mermaid diagrams.
+- [docs/specification.md](docs/specification.md): language and generation spec.
+- [docs/compliance.md](docs/compliance.md): standards and subset compliance.
+- [docs/qa-testing.md](docs/qa-testing.md): test strategy and quality gates.
+- [docs/package-inventory.md](docs/package-inventory.md): package boundaries and responsibilities.
+- [docs/security-compliance.md](docs/security-compliance.md): repository compliance and security posture.
+- [docs/append-only-engineering-log.md](docs/append-only-engineering-log.md): append-only operational log.
+- [cpu/README_ASSEMBLY.md](cpu/README_ASSEMBLY.md): nibble4 CPU architecture and assembly guide.
 
 ## Repository Layout
 - `apps/cli`: CLI argument parsing and command handlers.

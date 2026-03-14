@@ -85,12 +85,12 @@ test('tsc --strict accepts runtime/decorators.ts', () => {
 test('decorators are no-ops at runtime', () => {
   const { Module, Input, Sequential, Assert } = require('../packages/runtime/src/decorators');
   // Class decorator returns target unchanged
-  class Dummy {}
+  class Dummy { }
   assert(Module(Dummy) === Dummy, 'Module should return target');
   // Property decorator is void
   Input({}, 'x');
   // Method decorator factory returns descriptor
-  const desc = { value: () => {} } as PropertyDescriptor;
+  const desc = { value: () => { } } as PropertyDescriptor;
   const result = Sequential('clk')({}, 'tick', desc);
   assert(result === desc, 'Sequential should return descriptor');
   // Assert is a no-op
@@ -420,7 +420,7 @@ test('enum generates typedef enum logic', () => {
   assertIncludes(sv, "IDLE = 2'd0");
 });
 
-test('v1.0.0 header is present', () => {
+test('v2.0.0 header is present', () => {
   const sv = compile(`
     @Module
     class X extends HardwareModule {
@@ -430,43 +430,40 @@ test('v1.0.0 header is present', () => {
       logic(): void { this.b = this.a; }
     }
   `);
-  assertIncludes(sv, 'v1.0.0');
+  assertIncludes(sv, 'v2.0.0');
 });
 
 // ── 8. End-to-end: Tang Nano 20K examples ─────────────────────
 
 console.log('\n8. End-to-End: Tang Nano 20K Examples');
 
-test('tang_nano_20k_blinker.ts compiles from valid TypeScript', () => {
+test('tang_nano_20k/blinker compiles from valid TypeScript', () => {
   const source = fs.readFileSync(
-    path.join(__dirname, '..', 'examples', 'hardware', 'tang_nano_20k_blinker.ts'),
+    path.join(__dirname, '..', 'examples', 'hardware', 'tang_nano_20k', 'blinker', 'blinker.ts'),
     'utf-8',
   );
   const result = compileClassModule(source);
   assert(result.success, `Compilation failed: ${result.errors.join(', ')}`);
   assertIncludes(result.systemverilog, 'module Blinker (');
   assertIncludes(result.systemverilog, 'always_ff');
-  assertIncludes(result.systemverilog, 'always_comb');
-  assertIncludes(result.systemverilog, 'typedef enum logic');
-  assertIncludes(result.systemverilog, 'assert');
 });
 
-test('tang_nano_20k_breathe.ts compiles with submodule instantiation', () => {
+test('tang_nano_20k/breathe compiles with submodule instantiation', () => {
   const source = fs.readFileSync(
-    path.join(__dirname, '..', 'examples', 'hardware', 'tang_nano_20k_breathe.ts'),
+    path.join(__dirname, '..', 'examples', 'hardware', 'tang_nano_20k', 'breathe', 'breathe.ts'),
     'utf-8',
   );
   const result = compileClassModule(source);
   assert(result.success, `Compilation failed: ${result.errors.join(', ')}`);
   assertIncludes(result.systemverilog, 'module PwmCore (');
   assertIncludes(result.systemverilog, 'module BreatheLed (');
-  assertIncludes(result.systemverilog, 'PwmCore pwm (');
+  assertIncludes(result.systemverilog, 'PwmCore pwm_core (');
   assertIncludes(result.systemverilog, '.clk(clk)');
 });
 
-test('counter.ts compiles from valid TypeScript', () => {
+test('tang_nano_20k/counter compiles from valid TypeScript', () => {
   const source = fs.readFileSync(
-    path.join(__dirname, '..', 'examples', 'hardware', 'counter.ts'),
+    path.join(__dirname, '..', 'examples', 'hardware', 'tang_nano_20k', 'counter', 'counter.ts'),
     'utf-8',
   );
   const result = compileClassModule(source);

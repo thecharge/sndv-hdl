@@ -194,6 +194,6 @@ describe('Build pipeline: golden reference validation', () => {
     const source = 'function flag(a: number, b: number): boolean { return a > b; }';
     const result = pipeline.compile(source);
     assert.ok(result.success);
-    assert.ok(result.verilog.includes('output wire  result'));
+    assert.ok(result.verilog.includes('output logic  result'), 'IEEE 1800-2017: output must be logic not wire');
   });
 });

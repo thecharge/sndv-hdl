@@ -1,7 +1,10 @@
 # Getting Started: From Empty Folder to Working Blinker
 
 This guide is for someone who has never used ts2v before.
-You will go from an empty folder to a blinking LED running on a Tang Nano 20K, with a passing testbench.
+You will go from a completely empty folder to a blinking LED running on a Tang Nano 20K, with a passing TypeScript testbench spec.
+
+**Your project lives in ITS OWN folder. You never put your source files inside the ts2v repository.**
+The ts2v repository is a tool — you clone it once, install it, and call it from your project.
 
 No prior knowledge of Verilog, SystemVerilog, or FPGA toolchains is required.
 
@@ -9,11 +12,11 @@ No prior knowledge of Verilog, SystemVerilog, or FPGA toolchains is required.
 
 ## What You Will Have at the End
 
-- A TypeScript class that describes blinking hardware.
-- The generated IEEE 1800-2017 SystemVerilog from that class.
+- **Your own project folder** (`my-fpga-project/`) with a TypeScript blinker source file.
+- The generated IEEE 1800-2017 SystemVerilog produced by the ts2v compiler.
 - A bitstream running persistently on a Tang Nano 20K from external flash.
-- A TypeScript testbench spec that describes and documents the module's behaviour.
-- A green quality gate.
+- A TypeScript testbench spec in your project that documents the module's behaviour.
+- A passing quality gate on the ts2v toolchain.
 
 ---
 
@@ -39,13 +42,44 @@ git --version
 
 ---
 
-## Part 2 — Clone the Repository
+## Part 2 — Set Up the ts2v Toolchain (Once)
+
+Clone the ts2v repository to a **tools directory** (not inside your project):
 
 ```bash
-git clone https://github.com/thecharge/sndv-hdl.git ts2v
-cd ts2v
+mkdir -p ~/tools
+git clone https://github.com/thecharge/sndv-hdl.git ~/tools/ts2v
+cd ~/tools/ts2v
 bun install
 ```
+
+Build the synthesis container (takes a few minutes the first time):
+
+```bash
+bun run toolchain:image:build
+```
+
+Verify it installed correctly:
+
+```bash
+bun run quality
+# Expected output: N pass, 0 fail
+```
+
+You only need to repeat these steps when you update ts2v.
+
+---
+
+## Part 3 — Create Your Project Folder
+
+**In a completely different directory from ts2v**, create your project:
+
+```bash
+mkdir -p ~/projects/my-fpga-project
+cd ~/projects/my-fpga-project
+```
+
+This is now **your** working directory for everything that follows.
 
 ---
 
@@ -78,15 +112,18 @@ If any tests fail at this point, stop and check the README troubleshooting secti
 
 ---
 
-## Part 5 — Write Your Blinker in TypeScript
+## Part 4 — Write Your Blinker in TypeScript
 
-Create a folder for your module:
+Inside **your project folder** (`~/projects/my-fpga-project/`), create `blinker.ts`:
 
 ```bash
-mkdir -p examples/hardware/tang_nano_20k/my_blinker
+# Make sure you are in your own project directory, not in ts2v
+cd ~/projects/my-fpga-project
 ```
 
-Create `examples/hardware/tang_nano_20k/my_blinker/my_blinker.ts`:
+Create `blinker.ts`:
+
+```typescript
 
 ```typescript
 import {
@@ -146,23 +183,26 @@ export { MyBlinker };
 
 ---
 
-## Part 6 — Compile to SystemVerilog
+## Part 5 — Compile to SystemVerilog
+
+Run the ts2v compiler from your project folder, pointing at your source file and the ts2v installation:
 
 ```bash
-bun run apps/cli/src/index.ts compile \
-  examples/hardware/tang_nano_20k/my_blinker/my_blinker.ts \
-  --board boards/tang_nano_20k.board.json \
-  --out .artifacts/my_blinker
+# Still in ~/projects/my-fpga-project
+bun run ~/tools/ts2v/apps/cli/src/index.ts compile \
+  blinker.ts \
+  --board ~/tools/ts2v/boards/tang_nano_20k.board.json \
+  --out .artifacts/blinker
 ```
 
 You will see:
 
 ```
-[artifact] systemverilog: .artifacts/my_blinker/my_blinker.sv
-[artifact] constraints:   .artifacts/my_blinker/tang_nano_20k.cst
+[artifact] systemverilog: .artifacts/blinker/blinker.sv
+[artifact] constraints:   .artifacts/blinker/tang_nano_20k.cst
 ```
 
-Open `.artifacts/my_blinker/my_blinker.sv` and verify it looks like this:
+Open `.artifacts/blinker/blinker.sv` and verify it looks like this:
 
 ```systemverilog
 module MyBlinker (
@@ -186,9 +226,12 @@ Key things to confirm:
 - Ports are `input logic` / `output logic` (not `wire`).
 - Counter is `[24:0]` (25 bits).
 
+> **Never put your source files inside the ts2v repository folder.**
+> The compiler is invoked by pointing at your own file. The ts2v repo is not a workspace — it is a tool.
+
 ---
 
-## Part 7 — Connect the Board and Verify USB
+## Part 6 — Connect the Board and Verify USB
 
 Plug in the Tang Nano 20K and put it into **programming mode**:
 1. Hold **S2** (key near USB port).
@@ -211,15 +254,15 @@ Bus 001 Device 005: ID 0403:6010 Future Technology Devices International, Ltd FT
 
 ---
 
-## Part 8 — Flash to Hardware
+## Part 7 — Flash to Hardware
 
 Add `--flash` to the compile command. Everything happens automatically: TypeScript → SystemVerilog → synthesis → place-and-route → bitstream → flash.
 
 ```bash
-bun run apps/cli/src/index.ts compile \
-  examples/hardware/tang_nano_20k/my_blinker/my_blinker.ts \
-  --board boards/tang_nano_20k.board.json \
-  --out .artifacts/my_blinker \
+bun run ~/tools/ts2v/apps/cli/src/index.ts compile \
+  blinker.ts \
+  --board ~/tools/ts2v/boards/tang_nano_20k.board.json \
+  --out .artifacts/blinker \
   --flash
 ```
 
@@ -234,19 +277,20 @@ Power the board off and back on. The LEDs should walk persistently — the bitst
 
 ---
 
-## Part 9 — Write the Testbench Spec (TypeScript)
+## Part 8 — Write the Testbench Spec (TypeScript)
 
-Every module must have a TypeScript testbench spec. This documents the expected behaviour and enables automated simulation.
+Every module must have a TypeScript testbench spec. This documents the expected behaviour.
 
-Create `testbenches/my_blinker.tb-spec.ts`:
+Create `blinker.tb-spec.ts` in **your project folder**:
 
 ```typescript
-import type { SeqTestSpec } from './tb-spec-types';
+import type { SeqTestSpec } from '~/tools/ts2v/testbenches/tb-spec-types';
+// Or copy tb-spec-types.ts into your own project — it has no runtime dependencies.
 
-export const myBlinkerSpec: SeqTestSpec = {
+export const blinkerSpec: SeqTestSpec = {
   kind: 'sequential',
   module: 'MyBlinker',
-  sourceFile: 'examples/hardware/tang_nano_20k/my_blinker/my_blinker.ts',
+  sourceFile: 'blinker.ts',
   clock: 'clk',
   clockHalfPeriodNs: 18, // 27 MHz
   checks: [
@@ -269,23 +313,25 @@ export const myBlinkerSpec: SeqTestSpec = {
 };
 ```
 
-**Rules:**
+**Rules for testbench specs:**
 - All testbench source is TypeScript. Never create `.sv` testbench files by hand.
-- Generated SV testbenches live in `.artifacts/` — they are build outputs, not source files.
-- Place specs in `testbenches/` (top-level) for combinational and hardware sequential modules.
-- The spec types are in `testbenches/tb-spec-types.ts`.
+- Generated SV testbenches live in `.artifacts/` — they are build artefacts, not source files.
+- The spec types live in `testbenches/tb-spec-types.ts` inside the ts2v repository.
 
 ---
 
-## Part 10 — Run the Quality Gate
+## Part 9 — Run the Quality Gate (ts2v)
+
+Run this from the ts2v directory to confirm you have not broken anything:
 
 ```bash
+cd ~/tools/ts2v
 bun run quality
 ```
 
 This runs: TypeScript typecheck → Biome lint → all tests → build. It must report 0 failures.
 
-Optionally simulate the module with the UVM pipeline (requires the toolchain container from Part 3):
+Optionally simulate with the UVM pipeline (requires the toolchain container from Part 2):
 
 ```bash
 bun run test:uvm
@@ -325,12 +371,12 @@ Run `bun run build` first if you changed any files under `packages/core/`. Stale
 
 ## What to Explore Next
 
-| Topic                     | Where to look                                                |
-| ------------------------- | ------------------------------------------------------------ |
-| Add a button              | `examples/hardware/tang_nano_20k/ws2812_demo/ws2812_demo.ts` |
-| WS2812 LED strip          | Same file + `docs/guides/ws2812-protocol-and-brightness.md`  |
-| Combinational logic       | `examples/adder/adder.ts`, `examples/mux/mux.ts`             |
-| ALU with UVM verification | `examples/alu/alu.ts` + `testbenches/uvm/alu.uvm-spec.ts`    |
-| nibble4 soft-CPU          | `examples/cpu/nibble4/nibble4_soc.ts`                        |
-| Add a new board           | `docs/guides/board-definition-authoring.md`                  |
-| Full delivery workflow    | `docs/guides/end-to-end-delivery.md`                         |
+| Topic                                 | Where to look                                                                       |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| Button + WS2812 strip (flagship demo) | `~/tools/ts2v/examples/hardware/tang_nano_20k/ws2812_demo/`                         |
+| Combinational logic examples          | `~/tools/ts2v/examples/adder/adder.ts`, `~/tools/ts2v/examples/mux/mux.ts`          |
+| ALU with UVM verification             | `~/tools/ts2v/examples/alu/alu.ts` + `~/tools/ts2v/testbenches/uvm/alu.uvm-spec.ts` |
+| nibble4 soft-CPU                      | `~/tools/ts2v/examples/cpu/nibble4/nibble4_soc.ts`                                  |
+| Multi-file project structure          | See the ws2812_demo directory — 3 TypeScript files compiled as one unit             |
+| Add a new board                       | `~/tools/ts2v/docs/guides/board-definition-authoring.md`                            |
+| Full delivery workflow                | `~/tools/ts2v/docs/guides/end-to-end-delivery.md`                                   |

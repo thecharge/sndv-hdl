@@ -21,6 +21,7 @@ export {
   Sequential,
   Combinational,
   Assert,
+  ModuleConfig,
 } from './decorators';
 
 export { HardwareModule } from './module';
