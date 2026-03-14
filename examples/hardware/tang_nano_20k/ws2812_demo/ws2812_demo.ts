@@ -59,7 +59,6 @@ class Ws2812Demo extends HardwareModule {
     // Intermediate wires auto-connected to submodule ports by matching name.
     private enable: Bit       = 0;
     private frame:  Logic<24> = 0;
-    private load:   Bit       = 0;
 
     @Submodule rainbow    = new RainbowGen();
     @Submodule serialiser = new Ws2812Serialiser();
