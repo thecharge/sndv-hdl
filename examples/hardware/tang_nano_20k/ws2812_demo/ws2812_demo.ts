@@ -50,21 +50,21 @@ const LED_WALK_5 = 0x1F;
 @Module
 @ModuleConfig('resetSignal: "no_rst"')
 class Ws2812Demo extends HardwareModule {
-    @Input  clk:    Bit      = 0;
-    @Input  rst_n:  Bit      = 0;  // S1, active-high (pull-down, rest = 0)
-    @Input  btn:    Bit      = 0;  // S2, active-high (pull-down, rest = 0)
-    @Output ws2812: Bit      = 0;
-    @Output led:    Logic<6> = ALL_LEDS_OFF;
+    @Input clk: Bit = 0;
+    @Input rst_n: Bit = 0;  // S1, active-high (pull-down, rest = 0)
+    @Input btn: Bit = 0;  // S2, active-high (pull-down, rest = 0)
+    @Output ws2812: Bit = 0;
+    @Output led: Logic<6> = ALL_LEDS_OFF;
 
     // Intermediate wires auto-connected to submodule ports by matching name.
-    private enable: Bit       = 0;
-    private frame:  Logic<24> = 0;
+    private enable: Bit = 0;
+    private frame: Logic<24> = 0;
 
-    @Submodule rainbow    = new RainbowGen();
+    @Submodule rainbow = new RainbowGen();
     @Submodule serialiser = new Ws2812Serialiser();
 
     private walkTick: Logic<24> = 0;
-    private ledPhase: Logic<3>  = 0;
+    private ledPhase: Logic<3> = 0;
 
     @Sequential('clk')
     tick(): void {
@@ -100,7 +100,7 @@ class Ws2812Demo extends HardwareModule {
             }
         } else {
             // S1 released: all LEDs off, reset walk state
-            this.led      = ALL_LEDS_OFF;
+            this.led = ALL_LEDS_OFF;
             this.walkTick = 0;
             this.ledPhase = 0;
         }
