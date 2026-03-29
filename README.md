@@ -87,6 +87,60 @@ bun run apps/cli/src/index.ts compile \
 
 This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 
+## Quickstart: Aurora Wave - 8-Pixel Rainbow Demo
+
+Drives an 8-LED WS2812 strip with a slowly rotating rainbow. Every pixel is always on,
+each showing a different colour, so the strip looks like a full rainbow at once.
+Hold S2 (pin 87) for 8x speed.
+
+WS2812 data line: pin 79. No external strip? The onboard WS2812C-2020 shows pixel 0.
+
+```bash
+bun run apps/cli/src/index.ts compile \
+  examples/hardware/tang_nano_20k/aurora_wave \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/aurora_wave \
+  --flash
+```
+
+## Quickstart: Aurora UART - Rainbow You Can Control Over Serial
+
+Same rainbow as aurora_wave, but you can change colours and speed live from your PC
+over USB serial. Flash and run with the included scripts:
+
+```bash
+./examples/hardware/tang_nano_20k/aurora_uart/flash.sh
+./examples/hardware/tang_nano_20k/aurora_uart/run.sh
+```
+
+Commands: `a`=aurora `r`=red `g`=green `b`=blue `f`=faster `s`=slower `x`=freeze `q`=quit.
+The FPGA replies `K` after every command it understands.
+
+See [examples/hardware/tang_nano_20k/aurora_uart/README.md](examples/hardware/tang_nano_20k/aurora_uart/README.md) for full details.
+
+## Quickstart: Calc UART - Calculator Running on the FPGA
+
+Send two numbers and an operation to the FPGA over USB serial. The FPGA computes
+the result in hardware and sends it back. The client uses JSON.
+
+```bash
+./examples/hardware/tang_nano_20k/calc_uart/flash.sh
+./examples/hardware/tang_nano_20k/calc_uart/run.sh
+```
+
+```
+> {"op": "add", "a": 42, "b": 13}
+{"op":"add","a":42,"b":13,"result":55,"hex":"0x0037","ms":2}
+```
+
+Operations: `add`, `sub`, `mul`. Operands: 0-255. Result: 16-bit.
+
+See [examples/hardware/tang_nano_20k/calc_uart/README.md](examples/hardware/tang_nano_20k/calc_uart/README.md) for full details.
+
+---
+
+See [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md) for the full examples list.
+
 ## Core Commands
 - `bun run quality`: typecheck + lint + test + build.
 - `bun run test:root`: run focused root regression suite (`tests/class-compiler.test.ts`).
@@ -107,6 +161,7 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - [docs/production-readiness.md](docs/production-readiness.md): **production analysis** - compiler status, WS2812 timing verification, known limitations, disclaimers.
 - [docs/guides/programmer-profiles-and-usb-permissions.md](docs/guides/programmer-profiles-and-usb-permissions.md): profile and permission model.
 - [docs/guides/user-usb-debugger-onboarding.md](docs/guides/user-usb-debugger-onboarding.md): practical USB probe onboarding.
+- [docs/guides/uart-serial-debugging.md](docs/guides/uart-serial-debugging.md): **UART and serial port debugging** - find correct ttyUSB port, test hardware with Python, stty configuration, Bun serial I/O patterns, Tang Nano board references.
 - [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md): examples, intent, and expected hardware behavior.
 - [docs/guides/uvm-simulation-with-podman.md](docs/guides/uvm-simulation-with-podman.md): containerized simple UVM-style simulation flow.
 - [docs/guides/uvm-suite-authoring.md](docs/guides/uvm-suite-authoring.md): how to add future UVM-style verification suites and reports.
@@ -122,6 +177,8 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - [docs/security-compliance.md](docs/security-compliance.md): repository compliance and security posture.
 - [docs/append-only-engineering-log.md](docs/append-only-engineering-log.md): append-only operational log.
 - [cpu/README_ASSEMBLY.md](cpu/README_ASSEMBLY.md): nibble4 CPU architecture and assembly guide.
+- [CLAUDE.md](CLAUDE.md): **AI/LLM project context** - supported TypeScript subset, compiler limitations, workarounds, DX guidance for human and AI contributors.
+- [docs/release-notes-aurora-wave.md](docs/release-notes-aurora-wave.md): Aurora wave demo release notes - design patterns, compiler fix, gap list, social caption.
 
 ## Repository Layout
 - `apps/cli`: CLI argument parsing and command handlers.
@@ -132,10 +189,15 @@ This demo has been confirmed flashed to a Tang Nano 20K (Winbond W25Q64).
 - `packages/process`: process runtime abstraction.
 - `packages/types`: shared interfaces/contracts.
 - `boards`: board definitions used by compile/flash flow.
-- `examples/`: hardware examples organized by name, each subfolder contains its TypeScript source and a SystemVerilog testbench.
-  - `examples/hardware/tang_nano_20k/blinker/`: 6-LED chaser (hardware baseline)
-  - `examples/hardware/tang_nano_20k/ws2812_demo/`: WS2812 rainbow demo (flagship, confirmed flashed) - see [ws2812-debug-guide.md](docs/guides/ws2812-debug-guide.md) for troubleshooting
-  - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`, etc.: simulation examples
+- `examples/`: hardware examples for Tang Nano 20K and simulation.
+  - `examples/hardware/tang_nano_20k/blinker/`: 6-LED chaser (good first test)
+  - `examples/hardware/tang_nano_20k/ws2812_demo/`: WS2812 rainbow - see [ws2812-debug-guide.md](docs/guides/ws2812-debug-guide.md)
+  - `examples/hardware/tang_nano_20k/aurora_wave/`: 8-pixel smooth rainbow, no PC needed
+  - `examples/hardware/tang_nano_20k/aurora_uart/hw/`: Aurora rainbow with live serial control - see [README](examples/hardware/tang_nano_20k/aurora_uart/README.md)
+  - `examples/hardware/tang_nano_20k/calc_uart/hw/`: FPGA calculator over serial (JSON in, JSON out) - see [README](examples/hardware/tang_nano_20k/calc_uart/README.md)
+  - `examples/hardware/tang_nano_20k/knight_rider/`: Knight Rider LED scanner
+  - `examples/hardware/tang_nano_20k/breathe/`: Breathing LED (PWM submodule demo)
+  - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`: simulation examples
 - `testbenches/uvm/`: UVM-style testbench specs (TypeScript) compiled to SV for simulation.
 
 ## Hardware Warnings

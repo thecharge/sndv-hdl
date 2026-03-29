@@ -801,3 +801,58 @@ bun run apps/cli/src/index.ts compile \
 - S2 released: WS2812 dark, rainbow resets
 
 **Cable/profile:** FTDI2232 SIPEED USB Debugger serial 2025012315, `board-autodetect` profile, `--external-flash --write-flash --verify -r -b tangnano20k`.
+
+## 2026-03-29T00:00:00Z - Aurora Wave Demo + CLAUDE.md + Compiler Gap Documentation
+
+### aurora_wave example added
+- New three-file demo: `examples/hardware/tang_nano_20k/aurora_wave/`
+  - `aurora_serialiser.ts`: 8-pixel WS2812 chain serialiser (extends single-pixel design to 8 chained pixels using pixelIdx counter and loadNextPixel helper)
+  - `aurora_gen.ts`: rainbow wave colour generator; 16-entry HSV palette (GRB), 8 pixels each offset by 2/16 of the hue wheel, 28-bit phase counter (~9.9 s per revolution at normal speed); btn=1 enables 8x speed mode; board LEDs show ping-pong bounce in sync with wave
+  - `aurora_wave.ts`: top-level port wiring module; no sequential logic; uses auto-wiring of pixel0..pixel7 between gen and serialiser
+- Multi-pixel design pattern: LogicArray workaround using explicit pixel0..pixel7 registers + loadNextPixel() helper that selects pixel[old_idx+1] using non-blocking assignment semantics
+- Testbench spec added: `testbenches/aurora_wave.tb-spec.ts`
+- README.md updated: aurora_wave quickstart section, examples list, docs index reference to CLAUDE.md
+
+### CLAUDE.md added to repo root
+- Comprehensive project context for AI assistants and new contributors
+- Covers: supported TypeScript subset, confirmed/forbidden patterns, Tang Nano 20K board reference, compiler gap list with workarounds, DX guidance, file layout rules
+
+### Compiler gap list documented (from USB PD implementation feedback)
+Priority gaps identified:
+1. LogicArray indexed access in sequential logic (21 workaround sites in USB PD code) - HIGHEST priority
+2. Cross-module combinational function calls (3 table duplications) - needs shared @Submodule wrapper or inlining
+3. Parameterised modules - constants currently shared via _constants.ts files
+4. @InOut / tristate I/O - no bidirectional ports; workaround: split cc_in/cc_out
+5. Bit-slice intrinsics - shift-and-mask workaround
+6. Enum for FSM states - ALREADY WORKS (typedef enum logic emitted correctly)
+7. Multiple @Submodule instances of same class - not yet verified
+All gaps documented in CLAUDE.md with workarounds.
+
+### Flash status
+- aurora_wave: pending flash confirmation (board attached, flash attempted on 2026-03-29)
+
+## 2026-03-29T12:00:00Z - Smooth Aurora + UART Serial Interface
+
+### aurora_wave: smooth piecewise-linear HSV (16x more gradual)
+- Replaced 16-entry discrete palette with piecewise-linear HSV (256-step per revolution)
+- 8-bit hue extracted from phase bits [27:20]; pixel spacing 32 hue units (1/8 of 256)
+- Three-segment formula: each colour channel ramps linearly at 3 counts/step, max 252
+- Full revolution time unchanged (~9.9 s at 1x, ~1.2 s at 8x); 16x smoother appearance
+- Confirmed compiles to valid IEEE 1800-2017 SystemVerilog
+- Helper methods have no let locals to avoid module-level name collision when inlined
+
+### aurora_uart: new example with UART serial control
+- New directory: examples/hardware/tang_nano_20k/aurora_uart/
+- AuroraUartRx: 115200 8N1 receiver (BIT_PERIOD=234 clocks, IDLE->START->DATA->STOP FSM)
+- AuroraUartTx: 115200 8N1 transmitter (IDLE->STARTB->DATA->STOPB FSM)
+- AuroraGenUart: smooth HSV generator + UART command processing (a/r/g/b/f/s/x commands)
+- AuroraUartTop: pure structural wiring (no @Sequential); 4 submodules auto-wired by name
+- Pin notes: uart_tx=pin15, uart_rx=pin16; these are shared with led[0]/led[1] - no board LEDs in this demo
+- Client: client/aurora.py (pyserial), client/aurora.ts (Bun + serialport)
+- Connect: /dev/ttyUSB1 (FTDI2232H interface 1 on Sipeed debugger), 115200 baud
+
+### CLAUDE.md updated
+- Added confirmed pattern: complex arithmetic expressions with * << | compile cleanly
+- Added UART protocol section (baud rate, pin mapping, port notes)
+- Added smooth HSV colour model section
+- Noted let-in-helper collision risk (use this.X references in helpers, no let locals)

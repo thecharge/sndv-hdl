@@ -178,7 +178,11 @@ export class ClassModuleEmitter extends SequentialEmitter {
 
         if (sig) {
             const bindings: string[] = [];
-            const parent_clk = parent.methods.find(m => m.type === 'sequential')?.clock;
+            // Derive clock name from sequential method or from an explicit @Input clk port.
+            // This allows pure wiring modules (no @Sequential) to still propagate clk.
+            const seq_clk = parent.methods.find(m => m.type === 'sequential')?.clock;
+            const input_clk = parent.properties.find(p => p.direction === 'input' && (p.name === 'clk' || p.name === seq_clk))?.name;
+            const parent_clk = seq_clk ?? input_clk;
             const parent_rst = parent.config.reset_signal;
             if (parent_clk) {
                 const child_needs_clk = sig.inputs.some(i => i.name === parent_clk || i.name === 'clk');

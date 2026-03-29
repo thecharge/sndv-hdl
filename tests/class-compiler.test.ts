@@ -389,4 +389,30 @@ describe('ClassModuleCompiler', () => {
       assert.ok(result.systemverilog.includes('endcase'));
     });
   });
+
+  describe('submodule clk propagation', () => {
+    it('wires clk to submodules even when parent has no @Sequential method', () => {
+      const result = compileClassModule(`
+        class Inner extends Module {
+          @Input clk: Logic<1>;
+          @Input data: Logic<8>;
+          @Output out: Logic<8> = 0;
+          @Sequential(clk)
+          tick() { this.out = this.data; }
+        }
+        class Wrapper extends Module {
+          @Input clk: Logic<1>;
+          @Input data: Logic<8>;
+          @Output out: Logic<8> = 0;
+          @Submodule inner = new Inner();
+        }
+      `);
+      assert.ok(result.success, result.errors.join(', '));
+      // The Wrapper has no @Sequential but has @Input clk.
+      // clk must be propagated to the Inner submodule instance.
+      assert.ok(result.systemverilog.includes('.clk(clk)'), 'clk must be wired to inner submodule');
+      assert.ok(result.systemverilog.includes('.data(data)'));
+      assert.ok(result.systemverilog.includes('.out(out)'));
+    });
+  });
 });

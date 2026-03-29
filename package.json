@@ -33,5 +33,8 @@
     "husky": "^9.1.7",
     "turbo": "^2.1.3",
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "serialport": "13.0.0"
   }
 }
