@@ -2,8 +2,8 @@
 """
 aurora.py - Aurora UART control client for Tang Nano 20K.
 
-Connects to the FTDI2232H UART bridge on /dev/ttyUSB1 (interface 1 of the
-Sipeed debugger) at 115200 8N1 and sends single-byte commands to the FPGA.
+Connects to the BL616 UART bridge on /dev/ttyUSB1 (or auto-detected highest
+ttyUSB port) at 115200 8N1 and sends single-byte commands to the FPGA.
 
 Requirements:
     pip install pyserial
@@ -38,7 +38,17 @@ except ImportError:
     print("ERROR: pyserial not installed.  Run: pip install pyserial")
     sys.exit(1)
 
-PORT = sys.argv[1] if len(sys.argv) > 1 else "/dev/ttyUSB1"
+def _auto_detect_port() -> str:
+    """Return the highest-numbered /dev/ttyUSBN (Tang Nano UART is always the
+    higher of the two Tang Nano ttyUSB ports; JTAG is the lower one)."""
+    import glob as _glob
+    ports = sorted(_glob.glob("/dev/ttyUSB*"))
+    if not ports:
+        print("ERROR: no /dev/ttyUSB* found — check USB cable and board power.")
+        sys.exit(1)
+    return ports[-1]
+
+PORT = sys.argv[1] if len(sys.argv) > 1 else _auto_detect_port()
 BAUD = 115200
 VALID_CMDS = set("argbfsx")
 

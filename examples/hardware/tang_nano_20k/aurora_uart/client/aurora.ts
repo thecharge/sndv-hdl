@@ -1,7 +1,7 @@
 /**
  * aurora.ts - Aurora UART interactive client (Bun).
  *
- * Usage:  bun aurora.ts [port]       default port: /dev/ttyUSB1
+ * Usage:  bun aurora.ts [port]       default port: auto-detected (highest /dev/ttyUSB*)
  *
  * Commands:
  *   a  aurora  - smooth rainbow wave (default)
@@ -25,9 +25,22 @@ import * as readline from "readline";
 import { openSync, writeSync, readSync, closeSync, constants } from "fs";
 import { spawnSync } from "child_process";
 
-const PORT     = process.argv[2] ?? "/dev/ttyUSB1";
-const BAUD     = 115_200;
-const NB_FLAG  = 0o4000; // O_NONBLOCK on Linux
+const O_NOCTTY  = 0o400;  // prevent port from becoming controlling terminal
+const NB_FLAG   = 0o4000; // O_NONBLOCK on Linux
+const BAUD      = 115_200;
+
+// Auto-detect: Tang Nano UART is always the highest-numbered ttyUSB port.
+function resolvePort(arg: string | undefined): string {
+  if (arg) return arg;
+  const glob = Bun.spawnSync(["bash", "-c", "ls /dev/ttyUSB* 2>/dev/null | sort -V | tail -1"]);
+  const p = glob.stdout.toString().trim();
+  if (!p) {
+    console.error("No /dev/ttyUSB* found — check USB cable and board power.");
+    process.exit(1);
+  }
+  return p;
+}
+const PORT = resolvePort(process.argv[2]);
 
 const CMDS: Record<string, { byte: string; label: string }> = {
   a: { byte: "a", label: "aurora (rainbow wave)" },
@@ -46,21 +59,23 @@ const CMDS: Record<string, { byte: string; label: string }> = {
   freeze: { byte: "x", label: "freeze" },
 };
 
-// Configure port.
-const stty = spawnSync("stty", [
-  "-F", PORT, `${BAUD}`, "raw", "cs8", "-cstopb", "-parenb", "clocal", "cread", "-echo",
-]);
-if (stty.status !== 0) {
-  console.error(`Cannot configure ${PORT}: ${stty.stderr?.toString().trim()}`);
-  console.error("  sudo chmod a+rw /dev/ttyUSB1  or  sudo usermod -aG dialout $USER");
+// IMPORTANT: open FIRST, then stty.
+// USB-serial drivers (BL616, FTDI) reinitialize baud rate on open.
+// Running stty before openSync means the driver resets to 9600 on open.
+let fd: number;
+try {
+  fd = openSync(PORT, constants.O_RDWR | O_NOCTTY | NB_FLAG);
+} catch (e: any) {
+  console.error(`Cannot open ${PORT}: ${e.message}`);
+  console.error(`  sudo chmod a+rw ${PORT}  or  sudo usermod -aG dialout $USER`);
   process.exit(1);
 }
 
-let fd: number;
-try {
-  fd = openSync(PORT, constants.O_RDWR | NB_FLAG);
-} catch (e: any) {
-  console.error(`Cannot open ${PORT}: ${e.message}`);
+const stty = spawnSync("stty", [
+  "-F", PORT, `${BAUD}`, "raw", "cs8", "-cstopb", "-parenb", "clocal", "cread", "-echo", "-crtscts",
+]);
+if (stty.status !== 0) {
+  console.error(`Cannot configure ${PORT}: ${stty.stderr?.toString().trim()}`);
   process.exit(1);
 }
 

@@ -1,20 +1,17 @@
 // aurora_uart_top.ts - Aurora wave top-level with UART control for Tang Nano 20K.
 //
 // Combines:
-//   AuroraUartRx   - UART RX (pin 16, uart_rx) at 115200 baud 8N1
-//   AuroraUartTx   - UART TX (pin 15, uart_tx) at 115200 baud 8N1
+//   AuroraUartRx   - UART RX (pin 70, uart_rx) at 115200 baud 8N1
+//   AuroraUartTx   - UART TX (pin 69, uart_tx) at 115200 baud 8N1
 //   AuroraGenUart  - Smooth-HSV rainbow generator + UART command processor
 //   AuroraSerialiser - 8-pixel WS2812 chain serialiser (pin 79)
 //
 // Board connections (tang_nano_20k.board.json):
 //   clk      -> pin 4   (27 MHz oscillator)
 //   btn      -> pin 87  (S2: hold for fast mode, active-high)
-//   uart_rx  -> pin 16  (FTDI2232H UART bridge RX, /dev/ttyUSB1)
-//   uart_tx  -> pin 15  (FTDI2232H UART bridge TX, /dev/ttyUSB1)
+//   uart_rx  -> pin 70  (BL616 UART TX -> FPGA input, /dev/ttyUSB1)
+//   uart_tx  -> pin 69  (FPGA output -> BL616 UART RX, /dev/ttyUSB1)
 //   ws2812   -> pin 79  (WS2812 data line)
-//
-// NOTE: pins 15/16 are shared with board LEDs led[0]/led[1].  This design
-// uses them as UART — do not instantiate led[0..1] in the same design.
 //
 // UART commands via /dev/ttyUSB1 at 115200 8N1:
 //   'a' -> aurora mode (smooth rainbow wave, default)
@@ -48,8 +45,8 @@ class AuroraUartTop extends HardwareModule {
     // Board-level ports.
     @Input  clk:     Bit  = 0;
     @Input  btn:     Bit  = 0;    // S2: hardware fast mode
-    @Input  uart_rx: Bit  = 1;    // from FTDI2232H bridge, idle=1
-    @Output uart_tx: Bit  = 1;    // to   FTDI2232H bridge, idle=1
+    @Input  uart_rx: Bit  = 1;    // from BL616 UART TX (pin 70), idle=1
+    @Output uart_tx: Bit  = 1;    // to   BL616 UART RX (pin 69), idle=1
     @Output ws2812:  Bit  = 0;    // WS2812 data line
 
     // Intermediate wires — auto-wired by name matching:

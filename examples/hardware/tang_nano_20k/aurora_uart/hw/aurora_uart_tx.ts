@@ -1,6 +1,6 @@
 // aurora_uart_tx.ts - UART 8N1 transmitter at 115200 baud for Tang Nano 20K.
 //
-// Sends bytes to the FTDI2232H USB-UART bridge on FPGA pin 15
+// Sends bytes to the BL616 USB-UART bridge on FPGA pin 69
 // (uart_tx in tang_nano_20k.board.json).  One byte is queued via the
 // tx_data + tx_valid handshake; tx_ready = 1 when IDLE (ready to accept).
 //

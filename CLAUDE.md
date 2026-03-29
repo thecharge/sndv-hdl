@@ -229,8 +229,8 @@ property is often USEFUL (e.g. "load pixel[old_index + 1]").
 | `btn` | 87 | S2 button, active-HIGH (pull-down at rest; press = 1) |
 | `led[0..5]` | 15-20 | Active-LOW (0 = ON, 1 = OFF); all-off = `0x3F` |
 | `ws2812` | 79 | WS2812 data line (3.3V LVCMOS) |
-| `uart_tx` | 15 | UART transmit |
-| `uart_rx` | 16 | UART receive |
+| `uart_tx` | 69 | UART transmit (BL616 UART RX) |
+| `uart_rx` | 70 | UART receive (BL616 UART TX) |
 
 **Active-low LED values (6 bits):**
 ```
@@ -414,9 +414,10 @@ Full rainbow revolution at PHASE_NORMAL=1: 256 steps * 2^20 clocks = ~9.9 s at 2
 
 ## UART on Tang Nano 20K
 
-The FTDI2232H on the Sipeed debugger board provides a UART bridge.
-- RX pin: 16 (`uart_rx` in board JSON) -- also `led[1]` -- cannot use both
-- TX pin: 15 (`uart_tx` in board JSON) -- also `led[0]` -- cannot use both
+The Tang Nano 20K uses a **BL616** (Bouffalo Lab RISC-V chip) as the USB bridge.
+It provides both JTAG programming and a UART data channel.
+- TX pin: **69** (`uart_tx` in board JSON) -- FPGA → BL616 UART RX -- dedicated, no LED conflict
+- RX pin: **70** (`uart_rx` in board JSON) -- BL616 UART TX → FPGA -- dedicated, no LED conflict
 - Baud rate: 115200 8N1 (BIT_PERIOD = 234 clocks at 27 MHz, <0.2% error)
 - `/dev/ttyUSB0` is the JTAG port (for programming only, not for data)
 - `/dev/ttyUSB1` is the UART data port **when Tang Nano is the only USB serial device**
@@ -436,7 +437,15 @@ The `serialport` npm package crashes in Bun. Use raw `fs` calls with this patter
 
 ### Hardware test (Python)
 ```bash
-python3 -c "import serial; s=serial.Serial('/dev/ttyUSB1',115200,timeout=2); s.write(bytes([0,42,13])); r=s.read(2); print((r[0]<<8|r[1]) if len(r)==2 else 'TIMEOUT'); s.close()"
+python3 -c "
+import serial, glob
+port = sorted(glob.glob('/dev/ttyUSB*'))[-1]
+s = serial.Serial(port, 115200, timeout=2)
+s.write(bytes([0,42,13]))
+r = s.read(2)
+print((r[0]<<8|r[1]) if len(r)==2 else 'TIMEOUT')
+s.close()
+"
 ```
 Expected for calc_uart add(42,13): `55`. Use this to confirm the FPGA responds before
 debugging the Bun client.
@@ -459,6 +468,16 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/aurora_uar
 # Wrong - includes client scripts in the hardware compilation:
 bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/aurora_uart ...
 ```
+
+## GW2AR-18C Power-Cycle Requirement After Flash
+
+The GW2AR-18C does NOT reliably reload from external flash after a JTAG reset (the `-r`
+flag in openFPGALoader).  After `flash.sh` completes, **unplug and replug the USB cable**
+to power-cycle the board.  The chip loads the bitstream from external flash automatically
+on power-on.  Without this step the FPGA's SRAM is empty (erased by the flash programmer)
+and the chip is unconfigured — all IOs float, UART does not respond.
+
+This affects all examples.  The `flash.sh` scripts now print a reminder.
 
 ## Confirmed Flash History
 

@@ -856,3 +856,61 @@ All gaps documented in CLAUDE.md with workarounds.
 - Added UART protocol section (baud rate, pin mapping, port notes)
 - Added smooth HSV colour model section
 - Noted let-in-helper collision risk (use this.X references in helpers, no let locals)
+
+## 2026-03-29 - UART debugging investigation and port detection fix
+
+### Root cause identified: wrong serial port number in Python tests
+- Investigated why both calc_uart and aurora_uart appeared not to respond
+- Full logic trace of calc_uart firmware confirmed it is correct (traced add(42,13) → [0x00, 0x37])
+- The Python one-liner tests hardcoded /dev/ttyUSB1, but another USB serial device was
+  present during testing, shifting Tang Nano UART to /dev/ttyUSB2
+- SRAM programming test also used /dev/ttyUSB1 (wrong port)
+- Firmware is NOT buggy; port auto-detection was the fix needed
+
+### Port detection fixes applied
+- aurora_uart/run.sh: added auto-detect (highest-numbered ttyUSB), matching calc_uart/run.sh
+- aurora.py: added _auto_detect_port() using glob, falls back when no explicit arg
+- uart-serial-debugging.md: updated Python one-liners to auto-detect port; rewrote
+  troubleshooting checklist with "wrong port" as step 1 (was unlisted)
+
+### uart_echo: new UART loopback diagnostic example
+- New directory: examples/hardware/tang_nano_20k/uart_echo/
+- Receives any byte on uart_rx (pin 16), echoes it back on uart_tx (pin 15)
+- Has a one-byte pending buffer so RX completing while TX is busy doesn't deadlock
+- Use this before debugging calc_uart/aurora_uart protocols to verify pins + port
+- Test: python3 sends b'Hello', expects b'Hello' back
+- Compiled successfully; 3 modules (UartEchoRx, UartEchoTx, UartEchoTop)
+
+## 2026-03-29 - ACTUAL root cause: wrong board JSON pin numbers for uart_tx/uart_rx
+
+### Critical fix: uart_tx=69, uart_rx=70 (was 15, 16)
+- Tang Nano 20K uses BL616 (Bouffalo Lab RISC-V) as USB bridge, NOT FTDI2232H
+- BL616 UART channel connects to FPGA pins 69 (TX from FPGA) and 70 (RX to FPGA)
+- Pins 15 and 16 are LED[0] and LED[1] — not UART
+- Previous uart_tx=15/uart_rx=16 entries in board JSON were wrong from the start
+- All UART examples were silently transmitting/receiving on LED pins for months
+- Fix: boards/tang_nano_20k.board.json updated; all UART examples recompiled
+- Confirmed by: Sipeed official uart/src/top.cst, nestang, C64Nano, MISRC repositories
+
+### All UART example source comments updated
+- aurora_uart_top.ts, aurora_uart_rx.ts, aurora_uart_tx.ts: pin 15/16 → 69/70, FTDI → BL616
+- calc_top.ts: pin 15/16 → 69/70, FTDI → BL616
+- uart_echo_top.ts: pin 15/16 → 69/70, FTDI → BL616
+
+### Documentation updates
+- CLAUDE.md: UART board reference table, UART section updated
+- docs/guides/uart-serial-debugging.md: pin table updated, hardware reference updated
+- docs/guides/podman-and-toolchain.md: new comprehensive guide for all Podman commands,
+  Python diagnostics, Bash diagnostics, USB troubleshooting, board pin reference
+- docs/social-posts.md: new file with LinkedIn, X (Twitter), Reddit post drafts
+
+### aurora.ts client fixed
+- Was: stty ran before openSync (causes BL616 driver to reset to 9600 baud on open)
+- Now: openSync first, then stty — correct open-before-configure order
+- Added O_NOCTTY flag
+- Added -crtscts flag to stty (disable hardware flow control)
+- Added port auto-detection (resolvePort function, same pattern as calc.ts)
+
+### aurora.py client updated
+- Added _auto_detect_port() using glob, eliminates hardcoded /dev/ttyUSB1
+- Updated docstring to reference BL616 instead of FTDI2232H

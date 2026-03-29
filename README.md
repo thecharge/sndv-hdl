@@ -195,6 +195,7 @@ See [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md) for the ful
   - `examples/hardware/tang_nano_20k/aurora_wave/`: 8-pixel smooth rainbow, no PC needed
   - `examples/hardware/tang_nano_20k/aurora_uart/hw/`: Aurora rainbow with live serial control - see [README](examples/hardware/tang_nano_20k/aurora_uart/README.md)
   - `examples/hardware/tang_nano_20k/calc_uart/hw/`: FPGA calculator over serial (JSON in, JSON out) - see [README](examples/hardware/tang_nano_20k/calc_uart/README.md)
+  - `examples/hardware/tang_nano_20k/uart_echo/`: UART loopback diagnostic - echoes received bytes back (use this to verify TX/RX pins and port number)
   - `examples/hardware/tang_nano_20k/knight_rider/`: Knight Rider LED scanner
   - `examples/hardware/tang_nano_20k/breathe/`: Breathing LED (PWM submodule demo)
   - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`: simulation examples

@@ -1,7 +1,7 @@
 /**
  * calc.ts - FPGA Calculator UART client (Bun).
  *
- * Usage:  bun calc.ts [port]       default port: /dev/ttyUSB1
+ * Usage:  bun calc.ts [port]       default port: auto-detected
  *         echo '{"op":"add","a":42,"b":13}' | bun calc.ts
  *
  * Interactive:
@@ -15,9 +15,8 @@
  *     a, b  unsigned 0-255
  *   FPGA -> Host : 2 bytes  [hi, lo]  big-endian 16-bit result
  *
- * Notes:
- *   - add/sub results are 16-bit (sub may underflow and wrap)
- *   - mul results up to 255*255=65025 fit in 16 bits
+ * Serial I/O is delegated to a persistent Python co-process using pyserial,
+ * which handles all termios configuration reliably.
  *
  * Compile hw:
  *   bun run apps/cli/src/index.ts compile \
@@ -26,15 +25,9 @@
  */
 
 import * as readline from "readline";
-import { openSync, writeSync, readSync, closeSync, constants } from "fs";
-import { spawnSync } from "child_process";
 
-const PORT       = process.argv[2] ?? "/dev/ttyUSB1";
-const BAUD       = 115_200;
-const NB_FLAG    = 0o4000;  // O_NONBLOCK
-const NOCTTY     = 0o400;   // O_NOCTTY - don't become controlling terminal
-const TIMEOUT_MS = 2_000;
-const POLL_MS    = 10;
+const PORT = process.argv[2] ?? "auto";
+const BAUD = 115_200;
 
 const OP: Record<string, number> = { add: 0, sub: 1, mul: 2 };
 
@@ -42,45 +35,93 @@ function emit(obj: Record<string, unknown>) {
   process.stdout.write(JSON.stringify(obj) + "\n");
 }
 
-// Open FIRST so the FTDI driver doesn't reinitialize the UART on our open.
-// O_NOCTTY: don't attach as controlling terminal.
-let fd: number;
-try {
-  fd = openSync(PORT, constants.O_RDWR | NB_FLAG | NOCTTY);
-} catch (e: any) {
-  emit({ error: `cannot open ${PORT}: ${e.message}` });
-  process.exit(1);
-}
+// ---------------------------------------------------------------------------
+// Python co-process: handles all serial I/O using pyserial.
+// Communicates via stdin/stdout using a simple text protocol:
+//   request:  "<op> <a> <b>\n"
+//   response: "<result>\n"  (decimal integer, or -1 on timeout)
+// ---------------------------------------------------------------------------
+const PYTHON_BRIDGE = `
+import sys, serial
 
-// Configure AFTER opening: stty applies settings to the live device while our
-// fd holds it open, so the FTDI driver cannot reset baud rate between calls.
-const stty = spawnSync("stty", [
-  "-F", PORT, `${BAUD}`, "raw", "cs8", "-cstopb", "-parenb",
-  "clocal", "cread", "-echo", "-crtscts",
-]);
-if (stty.status !== 0) {
-  emit({ error: `cannot configure ${PORT}: ${stty.stderr?.toString().trim()}` });
-  process.exit(1);
-}
+port = sys.argv[1]
+try:
+    s = serial.Serial(port, 115200, timeout=2)
+except Exception as e:
+    sys.stdout.write("ERR " + str(e) + "\\n")
+    sys.stdout.flush()
+    sys.exit(1)
 
-// Read exactly `n` bytes. Returns null on timeout.
-// Uses O_NONBLOCK fd + Bun.sleepSync so each retry actually waits.
-function readExact(n: number): Buffer | null {
-  const buf  = Buffer.alloc(n);
-  let got    = 0;
-  const dead = Date.now() + TIMEOUT_MS;
-  while (got < n) {
-    if (Date.now() > dead) return null;
-    try {
-      const k = readSync(fd, buf, got, n - got, null);
-      if (k > 0) { got += k; continue; }
-    } catch (e: any) {
-      if (e.code !== "EAGAIN" && e.code !== "EWOULDBLOCK") throw e;
-    }
-    // No bytes yet - sleep before retrying so we don't spin-burn the CPU.
-    Bun.sleepSync(POLL_MS);
+sys.stdout.write("READY\\n")
+sys.stdout.flush()
+
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    parts = line.split()
+    op, a, b = int(parts[0]), int(parts[1]), int(parts[2])
+    s.write(bytes([op, a, b]))
+    r = s.read(2)
+    if len(r) == 2:
+        sys.stdout.write(str(r[0] * 256 + r[1]) + "\\n")
+    else:
+        sys.stdout.write("-1\\n")
+    sys.stdout.flush()
+
+s.close()
+`;
+
+// Resolve "auto" to the highest ttyUSB port (Tang Nano UART is always the
+// higher-numbered of the two Tang Nano ttyUSB ports).
+function resolvePort(port: string): string {
+  if (port !== "auto") return port;
+  const glob = Bun.spawnSync(["bash", "-c", "ls /dev/ttyUSB* 2>/dev/null | sort -V | tail -1"]);
+  const p = glob.stdout.toString().trim();
+  if (!p) {
+    emit({ error: "no /dev/ttyUSB* found - check USB cable and board power" });
+    process.exit(1);
   }
-  return buf;
+  return p;
+}
+
+const resolvedPort = resolvePort(PORT);
+
+const py = Bun.spawn(["python3", "-u", "-c", PYTHON_BRIDGE, resolvedPort], {
+  stdin: "pipe",
+  stdout: "pipe",
+  stderr: "pipe",
+});
+
+// Persistent reader + line buffer — never re-acquire the lock between calls.
+const pyReader = py.stdout.getReader();
+const pyDec    = new TextDecoder();
+let   pyBuf    = "";
+
+async function pyReadLine(): Promise<string> {
+  while (true) {
+    const nl = pyBuf.indexOf("\n");
+    if (nl !== -1) {
+      const line = pyBuf.slice(0, nl).trim();
+      pyBuf = pyBuf.slice(nl + 1);
+      return line;
+    }
+    const { value, done } = await pyReader.read();
+    if (done) return pyBuf.trim();
+    pyBuf += pyDec.decode(value);
+  }
+}
+
+// Wait for READY handshake.
+const handshake = await pyReadLine();
+if (!handshake.startsWith("READY")) {
+  emit({ error: `cannot open serial port: ${handshake.replace(/^ERR /, "")}` });
+  process.exit(1);
+}
+
+if (process.stdin.isTTY) {
+  process.stderr.write(`FPGA Calculator  |  ${resolvedPort} @ ${BAUD} baud\n`);
+  process.stderr.write(`Input: {"op":"add|sub|mul","a":0-255,"b":0-255}  |  q = quit\n\n`);
 }
 
 // Parse and validate an operand value (accepts number or numeric string).
@@ -92,30 +133,22 @@ function parseOp(v: unknown, name: string): number | string {
   return n;
 }
 
-if (process.stdin.isTTY) {
-  process.stderr.write(`FPGA Calculator  |  ${PORT} @ ${BAUD} baud\n`);
-  process.stderr.write(`Input: {"op":"add|sub|mul","a":0-255,"b":0-255}  |  q = quit\n\n`);
-}
-
 const rl = readline.createInterface({
   input: process.stdin, output: process.stdout,
   prompt: "> ", terminal: process.stdin.isTTY,
 });
 if (process.stdin.isTTY) rl.prompt();
 
-rl.on("line", (line) => {
+rl.on("line", async (line) => {
   const s = line.trim();
   if (!s) { if (process.stdin.isTTY) rl.prompt(); return; }
 
-  // Plain quit command (not JSON).
-  if (s === "q" || s === "quit") { closeSync(fd); process.exit(0); }
+  if (s === "q" || s === "quit") { py.kill(); process.exit(0); }
 
-  // Parse JSON.
   let req: Record<string, unknown>;
   try { req = JSON.parse(s); }
   catch { emit({ error: `invalid JSON: ${s}` }); if (process.stdin.isTTY) rl.prompt(); return; }
 
-  // Validate fields.
   const opStr = String(req.op ?? "").toLowerCase();
   if (!(opStr in OP)) {
     emit({ error: `"op" must be add|sub|mul, got ${JSON.stringify(req.op)}` });
@@ -126,21 +159,20 @@ rl.on("line", (line) => {
   const bVal = parseOp(req.b, "b");
   if (typeof bVal === "string") { emit({ error: bVal }); if (process.stdin.isTTY) rl.prompt(); return; }
 
-  // Send packet and wait for response.
-  writeSync(fd, Buffer.from([OP[opStr], aVal, bVal]));
-  const t0  = Date.now();
-  const rsp = readExact(2);
-  const ms  = Date.now() - t0;
+  const t0 = Date.now();
+  py.stdin.write(`${OP[opStr]} ${aVal} ${bVal}\n`);
+  const resp = await pyReadLine();
+  const ms = Date.now() - t0;
 
-  if (!rsp) {
+  const val = parseInt(resp);
+  if (isNaN(val) || val < 0) {
     emit({ error: "timeout - no response from FPGA", op: opStr, a: aVal, b: bVal });
     if (process.stdin.isTTY) rl.prompt(); return;
   }
 
-  const result = (rsp[0] << 8) | rsp[1];
-  const hex    = "0x" + result.toString(16).padStart(4, "0");
+  const result = val;
+  const hex = "0x" + result.toString(16).padStart(4, "0");
   const out: Record<string, unknown> = { op: opStr, a: aVal, b: bVal, result, hex, ms };
-
   if (opStr === "sub" && bVal > aVal) out.note = "underflow (16-bit wrap)";
   else if (result > 255)              out.note = "result > 8-bit";
 
@@ -148,4 +180,4 @@ rl.on("line", (line) => {
   if (process.stdin.isTTY) rl.prompt();
 });
 
-rl.on("close", () => { closeSync(fd); process.exit(0); });
+rl.on("close", () => { py.kill(); process.exit(0); });

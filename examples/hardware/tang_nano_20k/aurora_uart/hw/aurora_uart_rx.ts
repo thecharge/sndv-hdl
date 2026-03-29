@@ -1,6 +1,6 @@
 // aurora_uart_rx.ts - UART 8N1 receiver at 115200 baud for Tang Nano 20K.
 //
-// Receives bytes from the FTDI2232H USB-UART bridge connected to FPGA pin 16
+// Receives bytes from the BL616 USB-UART bridge connected to FPGA pin 70
 // (uart_rx in tang_nano_20k.board.json).  Outputs one byte per received frame
 // as a 1-clock pulse on rx_valid together with the byte on rx_data.
 //

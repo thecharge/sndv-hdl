@@ -8,8 +8,8 @@ independently of any client code, and how to debug when things do not work.
 
 ## Hardware Reference
 
-The Tang Nano 20K ships with a Sipeed USB debugger board that contains an FTDI2232H chip.
-The FTDI2232H provides two independent USB-to-serial interfaces on a single USB connector:
+The Tang Nano 20K uses a **BL616** (Bouffalo Lab RISC-V MCU) as the onboard USB bridge
+chip.  The BL616 provides two independent interfaces over a single USB-C connector:
 
 | Interface | Linux device | Purpose |
 |-----------|-------------|---------|
@@ -45,8 +45,8 @@ All examples in this repo use 115200 8N1:
 | Parity | None |
 | Stop bits | 1 |
 | Flow control | None |
-| FPGA TX pin | 15 (`uart_tx`) |
-| FPGA RX pin | 16 (`uart_rx`) |
+| FPGA TX pin | 69 (`uart_tx`) |
+| FPGA RX pin | 70 (`uart_rx`) |
 
 ---
 
@@ -78,8 +78,12 @@ the most reliable way to do a raw hardware test.
 
 ```bash
 python3 -c "
-import serial
-s = serial.Serial('/dev/ttyUSB1', 115200, timeout=2)
+import serial, glob
+# Auto-detect: Tang Nano UART is always the highest-numbered ttyUSB port.
+ports = sorted(glob.glob('/dev/ttyUSB*'))
+port = ports[-1] if ports else '/dev/ttyUSB1'
+print('Using port:', port)
+s = serial.Serial(port, 115200, timeout=2)
 s.write(bytes([0, 42, 13]))   # op=add(0), a=42, b=13
 r = s.read(2)
 print('result:', (r[0]<<8|r[1]) if len(r)==2 else 'TIMEOUT - FPGA not responding')
@@ -95,12 +99,20 @@ If pyserial is not installed:
 pip install pyserial
 ```
 
+**IMPORTANT – port number:** If another USB serial device is connected, the Tang Nano
+UART may be `/dev/ttyUSB2` rather than `/dev/ttyUSB1`.  The one-liner above
+auto-detects the highest port.  If it still times out, run `ls /dev/ttyUSB*` and try
+each port manually.
+
 **Test aurora_uart (send 'a' command, expect 'K' ACK):**
 
 ```bash
 python3 -c "
-import serial, time
-s = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)
+import serial, glob, time
+ports = sorted(glob.glob('/dev/ttyUSB*'))
+port = ports[-1] if ports else '/dev/ttyUSB1'
+print('Using port:', port)
+s = serial.Serial(port, 115200, timeout=1)
 s.write(b'a')
 time.sleep(0.1)
 r = s.read(s.in_waiting or 1)
@@ -271,12 +283,20 @@ For maximum reliability, use Python's pyserial for the serial I/O layer
 
 **Timeout / no response from FPGA:**
 
-1. Run `ls /dev/ttyUSB*` to confirm which port is the UART (see Hardware Reference above).
-2. Confirm the board was flashed with the correct example.  Re-run `flash.sh` and watch
+1. **Verify you are on the right port.**  If any other USB serial device is connected,
+   the Tang Nano UART shifts to a higher number (e.g. `/dev/ttyUSB2` instead of
+   `/dev/ttyUSB1`).  Run `ls /dev/ttyUSB*` — the UART is always the highest-numbered
+   of the Tang Nano pair.  Try all listed ports if unsure.
+3. **Power-cycle the board** (unplug and replug USB).  The GW2AR-18C does not always
+   reload from external flash after a JTAG-triggered reset (`-r` flag in openFPGALoader).
+   The chip reliably loads the bitstream only on a true power-on.  This is the most
+   common cause of "flashed successfully but FPGA does not respond."
+4. Confirm the board was flashed with the correct example.  Re-run `flash.sh` and watch
    for errors in the synthesis/flash output.
-3. Run the Python one-liner above to confirm the FPGA responds independently of client code.
-4. Make sure you are on the UART port, not the JTAG port (ttyUSBN, not ttyUSBN-1).
-5. Wait 1-2 seconds after power-on before running the client - the FPGA takes a moment
+5. Run the Python one-liner above (with auto-port detection) to confirm the FPGA responds
+   independently of client code.
+6. Make sure you are on the UART port, not the JTAG port (ttyUSBN, not ttyUSBN-1).
+7. Wait 1-2 seconds after power-on before running the client - the FPGA takes a moment
    to load the design from flash.
 
 **`cannot open /dev/ttyUSBN: ENOENT`:**

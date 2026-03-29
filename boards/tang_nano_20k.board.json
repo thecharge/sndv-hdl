@@ -43,12 +43,12 @@
       "std": "LVCMOS33"
     },
     "uart_tx": {
-      "pin": "15",
+      "pin": "69",
       "std": "LVCMOS33",
       "drive": "8"
     },
     "uart_rx": {
-      "pin": "16",
+      "pin": "70",
       "std": "LVCMOS33"
     },
     "ws2812": {

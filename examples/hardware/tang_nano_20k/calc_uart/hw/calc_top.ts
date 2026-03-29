@@ -7,11 +7,8 @@
 //
 // Board connections (tang_nano_20k.board.json):
 //   clk      -> pin 4   (27 MHz oscillator)
-//   uart_rx  -> pin 16  (FTDI2232H UART bridge RX, /dev/ttyUSB1)
-//   uart_tx  -> pin 15  (FTDI2232H UART bridge TX, /dev/ttyUSB1)
-//
-// NOTE: pins 15/16 conflict with led[0]/led[1].  Only UART signals are used
-// in this design.
+//   uart_rx  -> pin 70  (BL616 UART TX -> FPGA input, /dev/ttyUSB1)
+//   uart_tx  -> pin 69  (FPGA output -> BL616 UART RX, /dev/ttyUSB1)
 //
 // Protocol (from client/calc.ts):
 //   Host -> FPGA:  3 bytes  [op, a, b]
