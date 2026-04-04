@@ -8,6 +8,14 @@ build/
 .turbo/
 coverage/
 
+# tsc in-source emit artifacts - guard against leakage out of dist/
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+apps/*/src/**/*.js
+apps/*/src/**/*.js.map
+apps/*/src/**/*.d.ts
+
 # Toolchain workspace
 .toolchain/
 

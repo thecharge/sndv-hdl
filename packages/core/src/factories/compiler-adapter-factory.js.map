@@ -1,1 +1,0 @@
-{"version":3,"file":"compiler-adapter-factory.js","sourceRoot":"","sources":["compiler-adapter-factory.ts"],"names":[],"mappings":";;;AACA,iFAA4E;AAC5E,mFAA8E;AAE9E,MAAa,sBAAsB;IACjC,MAAM;QACJ,MAAM,oBAAoB,GAAG,IAAI,6CAAoB,EAAE,CAAC;QACxD,OAAO,IAAI,+CAAqB,CAAC,oBAAoB,CAAC,CAAC;IACzD,CAAC;CACF;AALD,wDAKC"}

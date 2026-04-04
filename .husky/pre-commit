@@ -3,6 +3,7 @@ set -eu
 
 bun run format:check
 bun run format
-git add -A
+bun run typecheck
 bun run lint
 bun run test
+bun run test:root

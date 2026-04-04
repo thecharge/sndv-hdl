@@ -7,7 +7,7 @@
       "outputs": ["dist/**", "build/**", ".artifacts/**"]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "lint": {
