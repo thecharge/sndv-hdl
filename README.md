@@ -151,6 +151,7 @@ See [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md) for the ful
 
 ## Documentation Index
 - [docs/guides/getting-started.md](docs/guides/getting-started.md): **newcomer onboarding, from empty folder to flashed blinker with testbench** (start here if you are new).
+- [docs/guides/runtime-api.md](docs/guides/runtime-api.md): **runtime API reference** - all decorators, hardware types (`Logic`, `Bit`, `LogicArray`), `HardwareModule`, `Bits` namespace, recommended tsconfig, multi-file patterns.
 - [docs/quickstart.md](docs/quickstart.md): WS2812-first end-to-end quickstart with explicit pass/fail checks.
 - [docs/guides/end-to-end-delivery.md](docs/guides/end-to-end-delivery.md): **step-by-step compile-to-flash delivery guide** (reference for new hardware modules).
 - [docs/guides/board-definition-authoring.md](docs/guides/board-definition-authoring.md): complete board definition guide.

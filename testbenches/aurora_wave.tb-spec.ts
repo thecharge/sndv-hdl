@@ -19,7 +19,7 @@
 //   - btn = 0: phase increments by 1 per clock (normal mode)
 //   - board LED reflects ledCyc = (phase >> 23) & 0xF
 
-import type { SeqTestSpec } from './tb-spec-types';
+import type { SeqTestSpec } from '@ts2v/types';
 
 // Testbench for the 8-pixel serialiser in isolation.
 export const auroraSerialiserSpec: SeqTestSpec = {

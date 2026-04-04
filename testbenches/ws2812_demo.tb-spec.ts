@@ -15,7 +15,7 @@
 //   step 2 → 0xCC0000 GREEN   step 3 → 0xCC00CC CYAN
 //   step 4 → 0x0000CC BLUE    step 5 → 0x00CCCC MAGENTA
 
-import type { SeqTestSpec } from './tb-spec-types';
+import type { SeqTestSpec } from '@ts2v/types';
 
 export const ws2812DemoSpec: SeqTestSpec = {
     kind: 'sequential',

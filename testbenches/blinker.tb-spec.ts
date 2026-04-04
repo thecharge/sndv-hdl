@@ -2,7 +2,7 @@
 // Source: examples/blinker/blinker.ts
 // Tests: software-model blinker using direct register forcing
 
-import type { SeqTestSpec } from './tb-spec-types';
+import type { SeqTestSpec } from '@ts2v/types';
 
 export const blinkerSpec: SeqTestSpec = {
     kind: 'sequential',

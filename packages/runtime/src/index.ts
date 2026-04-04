@@ -13,11 +13,14 @@ export type {
   LogicArray,
 } from './types';
 
+export { Bits } from './types';
+
 export {
   Module,
   Input,
   Output,
   Submodule,
+  Param,
   Sequential,
   Combinational,
   Assert,

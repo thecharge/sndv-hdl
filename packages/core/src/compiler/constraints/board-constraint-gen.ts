@@ -3,6 +3,8 @@
 // Supports: Gowin (.cst), Xilinx/Vivado (.xdc), Intel/Quartus (.qsf), Lattice (.lpf)
 
 export interface BoardDefinition {
+  /** Board identifier used as the constraint filename stem (e.g. "tang_nano_9k" -> "tang_nano_9k.cst"). */
+  id?: string;
   vendor: 'gowin' | 'xilinx' | 'intel' | 'lattice';
   family: string;
   part: string;
@@ -77,7 +79,7 @@ function generateGowin(board: BoardDefinition): ConstraintOutput {
     lines.push(`IO_PORT "${svName}" ${attrs};`);
   }
 
-  return { filename: `${board.family}.cst`, content: lines.join('\n') };
+  return { filename: `${board.id ?? board.family}.cst`, content: lines.join('\n') };
 }
 
 // ============================================================

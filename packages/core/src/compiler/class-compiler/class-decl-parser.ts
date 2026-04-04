@@ -3,7 +3,7 @@
 
 import { Token, TokenKind } from '../lexer/token';
 import {
-    DecoratorAST, EnumAST, PropertyAST, SubmoduleAST, PortMapEntry,
+    DecoratorAST, EnumAST, PropertyAST, SubmoduleAST, PortMapEntry, ParamOverrideEntry,
 } from './class-module-ast';
 import { ParserBase } from './class-module-parser-base';
 
@@ -121,7 +121,27 @@ export class ClassDeclParser extends ParserBase {
         const type_token = this.advance();
         const type_name = type_token.value;
 
-        if (type_name === 'Logic' || type_name === 'Int') {
+        if (type_name === 'LogicArray') {
+            if (this.check(TokenKind.LessThan)) {
+                this.advance();
+                const w_token = this.advance();
+                width = this.parsePositiveInteger(w_token, 'bit width (LogicArray first generic)');
+                if (this.check(TokenKind.Comma)) {
+                    this.advance();
+                    array_size = this.parsePositiveInteger(this.advance(), 'array size (LogicArray second generic)');
+                } else {
+                    throw new Error(
+                        `LogicArray requires two generic arguments <W, SIZE> but only one was supplied at line ${w_token.line}, col ${w_token.column}`
+                    );
+                }
+                this.expect(TokenKind.GreaterThan);
+            } else {
+                throw new Error(
+                    `LogicArray requires two generic arguments <W, SIZE> at line ${type_token.line}, col ${type_token.column}`
+                );
+            }
+            is_array = true;
+        } else if (type_name === 'Logic' || type_name === 'Int') {
             if (this.check(TokenKind.LessThan)) {
                 this.advance();
                 width = this.parsePositiveInteger(this.advance(), 'bit width');
@@ -182,6 +202,7 @@ export class ClassDeclParser extends ParserBase {
         const prop = this.parseProperty(dec);
         let module_type = '';
         const port_map: PortMapEntry[] = [];
+        const param_map: ParamOverrideEntry[] = [];
 
         if (prop.initial_value) {
             const m = prop.initial_value.match(/^new\s+(\w+)/);
@@ -192,13 +213,20 @@ export class ClassDeclParser extends ParserBase {
             const args_str = dec.args[0];
             const bindings = args_str.split(',').map(s => s.trim()).filter(Boolean);
             for (const b of bindings) {
-                const parts = b.split(':').map(s => s.trim().replace(/['"]/g, ''));
-                if (parts.length === 2) {
-                    port_map.push({ port_name: parts[0], wire_name: parts[1] });
+                if (b.includes('=')) {
+                    const parts = b.split('=').map(s => s.trim().replace(/['"]/g, ''));
+                    if (parts.length === 2) {
+                        param_map.push({ param_name: parts[0], value: parts[1] });
+                    }
+                } else {
+                    const parts = b.split(':').map(s => s.trim().replace(/['"]/g, ''));
+                    if (parts.length === 2) {
+                        port_map.push({ port_name: parts[0], wire_name: parts[1] });
+                    }
                 }
             }
         }
 
-        return { instance_name: prop.name, module_type, port_map };
+        return { instance_name: prop.name, module_type, port_map, param_map };
     }
 }

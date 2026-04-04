@@ -25,6 +25,8 @@ export function renderExpression(expression: ExpressionNode): string {
       return renderExpression(expression.value);
     case AstNodeKind.ArrayAccess:
       return `${sanitizeIdentifier(expression.array.name)}[${renderExpression(expression.index)}]`;
+    case AstNodeKind.SliceAccess:
+      return `${renderExpression(expression.source)}[${renderExpression(expression.msb)}:${renderExpression(expression.lsb)}]`;
     case AstNodeKind.ArrayLiteral:
       throw codegenError('Array literals in expressions not supported in Verilog', expression.location);
   }

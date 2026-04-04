@@ -40,11 +40,11 @@ export const DEFAULT_WORKSPACE_CONFIGURATION: WorkspaceConfiguration = {
     {
       id: SupportedBoardId.TangNano9k,
       vendor: SupportedBoardVendor.Gowin,
-      family: 'GW1NR',
+      family: 'GW1N',
       part: 'GW1NR-LV9QN88PC6/I5',
       package: 'QN88',
       programmer: SupportedBoardProgrammer.OpenFPGALoader,
-      pnrDevice: 'GW1NR-9C',
+      pnrDevice: 'GW1N-9C',
       constraintFileExtension: '.cst',
       programmerProfiles: [
         {

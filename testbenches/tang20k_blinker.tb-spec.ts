@@ -4,7 +4,7 @@
 // The blinker has no reset — registers initialise to 0 on FPGA power-up.
 // Tests verify the active-low LED pattern emitted for each phase value.
 
-import type { SeqTestSpec } from './tb-spec-types';
+import type { SeqTestSpec } from '@ts2v/types';
 
 export const tang20kBlinkerSpec: SeqTestSpec = {
     kind: 'sequential',

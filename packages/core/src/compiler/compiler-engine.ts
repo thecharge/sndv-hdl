@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { compileClassModule } from './class-compiler/class-module-compiler';
 import { VerilogEmitter } from './codegen/verilog-emitter';
+import { CompilerError } from './errors/compiler-error';
 import { Lexer } from './lexer/lexer';
 import { Parser } from './parser/parser';
 import { TypeChecker } from './typechecker/typechecker';
@@ -16,10 +17,14 @@ function detectMode(source: string): 'class' | 'function' {
   return hasClass && hasHardwareDecorators ? 'class' : 'function';
 }
 
-export function buildFile(inputPath: string, outDir: string): {
+export function buildFile(
+  inputPath: string,
+  outDir: string,
+): {
   success: boolean;
   outPath: string;
   lines: number;
+  compilerError?: CompilerError;
 } {
   const source = readFileSync(inputPath, 'utf-8');
   const baseName = basename(inputPath, '.ts');
@@ -48,14 +53,21 @@ export function buildFile(inputPath: string, outDir: string): {
     const outputPath = join(outDir, `${baseName}.sv`);
     writeFileSync(outputPath, verilog);
     return { success: true, outPath: outputPath, lines: verilog.split('\n').length };
-  } catch {
+  } catch (error) {
+    if (error instanceof CompilerError) {
+      return { success: false, outPath: '', lines: 0, compilerError: error };
+    }
     return { success: false, outPath: '', lines: 0 };
   }
 }
 
 // Compile a pre-assembled multi-file source string as one class-mode unit.
 // outName is used as the .sv output basename (no extension).
-export function buildClassSource(source: string, outName: string, outDir: string): {
+export function buildClassSource(
+  source: string,
+  outName: string,
+  outDir: string,
+): {
   success: boolean;
   outPath: string;
   lines: number;
@@ -66,9 +78,14 @@ export function buildClassSource(source: string, outName: string, outDir: string
   }
   const outputPath = join(outDir, `${outName}.sv`);
   writeFileSync(outputPath, classCompileResult.systemverilog);
-  return { success: true, outPath: outputPath, lines: classCompileResult.systemverilog.split('\n').length };
+  return {
+    success: true,
+    outPath: outputPath,
+    lines: classCompileResult.systemverilog.split('\n').length,
+  };
 }
 
+/** @deprecated Use `generateBoardConstraints` from `packages/core/src/compiler/constraints/generate-board-constraints.ts` instead. */
 export function generateConstraints(boardJsonPath: string, outDir: string): string {
   const raw = JSON.parse(readFileSync(boardJsonPath, 'utf-8')) as Record<string, unknown>;
   const board = (raw.board as Record<string, unknown> | undefined) ?? raw;
@@ -76,7 +93,10 @@ export function generateConstraints(boardJsonPath: string, outDir: string): stri
   const lines: string[] = [];
   let extension = '.cst';
 
-  const pins: Record<string, { pin: string; std: string; freq?: string; drive?: string; pull?: string }> = {};
+  const pins: Record<
+    string,
+    { pin: string; std: string; freq?: string; drive?: string; pull?: string }
+  > = {};
   const boardPins = board.pins as Record<string, string> | undefined;
   if (boardPins) {
     const ioStandard = String(board.io_standard ?? 'LVCMOS33');
@@ -98,7 +118,10 @@ export function generateConstraints(boardJsonPath: string, outDir: string): stri
     }
   }
 
-  const boardIo = board.io as Record<string, { pin: string; std?: string; drive?: string; pull?: string }> | null;
+  const boardIo = board.io as Record<
+    string,
+    { pin: string; std?: string; drive?: string; pull?: string }
+  > | null;
   if (boardIo) {
     for (const [name, config] of Object.entries(boardIo)) {
       pins[name] = {

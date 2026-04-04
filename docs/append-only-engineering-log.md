@@ -914,3 +914,38 @@ All gaps documented in CLAUDE.md with workarounds.
 ### aurora.py client updated
 - Added _auto_detect_port() using glob, eliminates hardcoded /dev/ttyUSB1
 - Updated docstring to reference BL616 instead of FTDI2232H
+
+## 2026-04-04 - board-abstraction-layer change: real-board verification (Tang Nano 20K)
+
+### Scope redefinition
+- Physical hardware available: Tang Nano 20K only (no Tang Nano 9K connected).
+- Tang Nano 9K adapter code is complete and compile-verified but hardware flash deferred.
+- Task 6.1 verification performed against Tang Nano 20K via the new board registry abstraction path.
+
+### Verification command
+```
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/blinker \
+  --board boards/tang_nano_20k.board.json \
+  --out .artifacts/bal_20k_verify \
+  --flash
+```
+
+### Route taken (board registry abstraction layer)
+- CLI parsed `boards/tang_nano_20k.board.json`, extracted `id: "tang_nano_20k"`
+- `BoardRegistry` resolved `SupportedBoardId.TangNano20k` -> `TangNano20kToolchainFactory`
+- Synthesis: `yosys synth_gowin -family gw2a` -> `nextpnr-himbaechel --device GW2AR-LV18QN88C8/I7 --vopt family=GW2A-18C` -> `gowin_pack -d GW2A-18C`
+- Flash: `openFPGALoader --external-flash --write-flash --verify -r -b tangnano20k`
+
+### Result: SUCCESS
+- Erase: 100% Done
+- Write: 100% Done
+- Verify: 100% Done (Reading 100%)
+- Board: Tang Nano 20K (GW2AR-18, Winbond W25Q64)
+- Programmer: SIPEED USB Debugger (FTDI2232, 0x0403:0x6010, serial 2025012315)
+
+### Tang Nano 9K adapter status
+- Adapter code complete: `packages/toolchain/src/adapters/tang-nano-9k-toolchain-adapter.ts`
+- Factory: `packages/toolchain/src/factories/tang-nano-9k-toolchain-factory.ts`
+- Board config: `boards/tang_nano_9k.board.json`, `pnrDevice: GW1N-9C`, `part: GW1NR-LV9QN88PC6/I5`
+- Compile-path tested: SV generation + CST generation (`tang_nano_9k.cst`) confirmed correct
+- Hardware flash: deferred (no physical 9K available)

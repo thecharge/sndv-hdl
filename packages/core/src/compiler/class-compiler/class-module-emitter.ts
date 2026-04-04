@@ -6,6 +6,7 @@ import {
 } from './class-module-ast';
 import { sanitize, formatWidth, enumBits } from './class-sv-helpers';
 import { SequentialEmitter } from './class-sequential-emitter';
+import { codegenError } from '../errors/compiler-error';
 
 export class ClassModuleEmitter extends SequentialEmitter {
     private module_signatures: Map<string, ModuleSignature> = new Map();
@@ -54,7 +55,7 @@ export class ClassModuleEmitter extends SequentialEmitter {
                 inputs.push({ name: mod.config.reset_signal, bit_width: 1 });
             }
         }
-        this.module_signatures.set(mod.name, { name: mod.name, inputs, outputs });
+        this.module_signatures.set(mod.name, { name: mod.name, inputs, outputs, parameters: mod.parameters ?? [] });
     }
 
     private emitEnum(e: EnumAST): void {
@@ -80,7 +81,19 @@ export class ClassModuleEmitter extends SequentialEmitter {
         const pw = new Map<string, number>();
         for (const p of mod.properties) pw.set(p.name, p.bit_width);
 
-        this.line(`module ${mod.name} (`);
+        if (mod.parameters.length > 0) {
+            this.line(`module ${mod.name} #(`);
+            this.indent++;
+            for (let i = 0; i < mod.parameters.length; i++) {
+                const param = mod.parameters[i];
+                const comma = i < mod.parameters.length - 1 ? ',' : '';
+                this.line(`parameter logic [${param.bit_width - 1}:0] ${sanitize(param.name)} = ${param.default_value}${comma}`);
+            }
+            this.indent--;
+            this.line(`) (`);
+        } else {
+            this.line(`module ${mod.name} (`);
+        }
         this.indent++;
         const ports: string[] = [];
 
@@ -117,8 +130,14 @@ export class ClassModuleEmitter extends SequentialEmitter {
                 const n = sanitize(p.name);
                 if (p.is_const) {
                     this.line(`    localparam ${w ? 'logic ' + w : ''} ${n} = ${this.translateExpr(p.initial_value || '0', all_enums, mod)};`);
-                } else if (p.is_array && p.array_size > 0) {
-                    this.line(`    logic ${w} ${n} [0:${p.array_size - 1}];`);
+                } else if (p.is_array) {
+                    if (p.array_size <= 0) {
+                        throw codegenError(
+                            `Fixed array size required for hardware synthesis: '${p.name}' declared as array but array_size is 0. Use LogicArray<W, SIZE> with both generic arguments.`,
+                            { line: 0, column: 0 }
+                        );
+                    }
+                    this.line(`    logic [${p.bit_width - 1}:0] ${n} [0:${p.array_size - 1}];`);
                 } else {
                     this.line(`    logic ${w} ${n};`);
                 }
@@ -166,9 +185,19 @@ export class ClassModuleEmitter extends SequentialEmitter {
         const sig = this.module_signatures.get(sub.module_type);
         const inst = sanitize(sub.instance_name);
 
-        if (sub.port_map.length > 0) {
+        if (sub.port_map.length > 0 || sub.param_map.length > 0) {
+            if (sub.param_map.length > 0) {
+                this.line(`    ${sub.module_type} #(`);
+                for (let i = 0; i < sub.param_map.length; i++) {
+                    const p = sub.param_map[i];
+                    const comma = i < sub.param_map.length - 1 ? ',' : '';
+                    this.line(`        .${sanitize(p.param_name)}(${p.value})${comma}`);
+                }
+                this.line(`    ) ${inst} (`);
+            } else {
+                this.line(`    ${sub.module_type} ${inst} (`);
+            }
             const bindings = sub.port_map.map(b => `.${sanitize(b.port_name)}(${sanitize(b.wire_name)})`);
-            this.line(`    ${sub.module_type} ${inst} (`);
             for (let i = 0; i < bindings.length; i++) {
                 this.line(`        ${bindings[i]}${i < bindings.length - 1 ? ',' : ''}`);
             }

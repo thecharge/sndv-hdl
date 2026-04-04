@@ -2,7 +2,7 @@
 // Source: examples/adder/adder.ts
 // Tests: 32-bit combinational adder — result = a + b
 
-import type { CombTestSpec } from './tb-spec-types';
+import type { CombTestSpec } from '@ts2v/types';
 
 export const adderSpec: CombTestSpec = {
     kind: 'combinational',

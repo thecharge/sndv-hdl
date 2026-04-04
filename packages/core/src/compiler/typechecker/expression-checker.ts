@@ -64,6 +64,22 @@ export function checkExpression(expression: ExpressionNode, environment: TypeEnv
       result_type = { ...array_entry.hardware_type, array_size: undefined };
       break;
     }
+    case AstNodeKind.SliceAccess: {
+      const source_type = checkExpression(expression.source, environment);
+      if (source_type.array_size !== undefined) {
+        throw typeError('Bits.slice() source must be a logic type, not an array', expression.location);
+      }
+      checkExpression(expression.msb, environment);
+      checkExpression(expression.lsb, environment);
+      const msb_node = expression.msb;
+      const lsb_node = expression.lsb;
+      if (msb_node.kind === AstNodeKind.NumberLiteral && lsb_node.kind === AstNodeKind.NumberLiteral) {
+        result_type = { ...HARDWARE_TYPE_NUMBER, bit_width: msb_node.value - lsb_node.value + 1 };
+      } else {
+        result_type = { ...HARDWARE_TYPE_NUMBER, bit_width: 1 };
+      }
+      break;
+    }
   }
 
   TYPE_MAP.set(expression, result_type!);

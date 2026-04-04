@@ -8,6 +8,7 @@ export interface ClassModuleAST {
     config: ModuleConfig;
     enums: EnumAST[];
     properties: PropertyAST[];
+    parameters: ModuleParameterAST[];
     methods: MethodAST[];
     submodules: SubmoduleAST[];
     assertions: AssertionAST[];
@@ -56,11 +57,17 @@ export interface SubmoduleAST {
     instance_name: string;
     module_type: string;
     port_map: PortMapEntry[];
+    param_map: ParamOverrideEntry[];
 }
 
 export interface PortMapEntry {
     port_name: string;
     wire_name: string;
+}
+
+export interface ParamOverrideEntry {
+    param_name: string;
+    value: string;
 }
 
 export interface AssertionAST {
@@ -90,11 +97,19 @@ export interface AwaitAST { kind: 'await'; signal: string; }
 // Inlined helper method call: this.methodName() inside @Sequential body.
 export interface CallStmtAST { kind: 'call'; method: string; }
 
+// Module parameter (SV #(parameter ...) port list entry).
+export interface ModuleParameterAST {
+    name: string;
+    bit_width: number;
+    default_value: number;
+}
+
 // Module signature for hierarchy support (two-pass compilation).
 export interface ModuleSignature {
     name: string;
     inputs: { name: string; bit_width: number }[];
     outputs: { name: string; bit_width: number }[];
+    parameters: ModuleParameterAST[];
 }
 
 // Top-level const declaration (e.g. `const FOO = 0x7FFFFF;`).

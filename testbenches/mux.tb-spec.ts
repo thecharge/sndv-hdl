@@ -2,7 +2,7 @@
 // Source: examples/mux/mux.ts
 // Tests: 2-to-1 multiplexer — sel=0 → a, sel=1 → b
 
-import type { CombTestSpec } from './tb-spec-types';
+import type { CombTestSpec } from '@ts2v/types';
 
 export const muxSpec: CombTestSpec = {
     kind: 'combinational',

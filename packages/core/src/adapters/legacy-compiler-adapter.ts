@@ -7,7 +7,11 @@ import type {
   CompileResult,
   CompilerAdapter,
 } from '@ts2v/types';
-import { buildClassSource, buildFile, generateConstraints } from '../compiler/compiler-engine';
+import { buildClassSource, buildFile } from '../compiler/compiler-engine';
+import {
+  type BoardDefinition,
+  generateBoardConstraints,
+} from '../compiler/constraints/generate-board-constraints';
 import type { FileSystemRepository } from '../repositories/file-system-repository';
 
 export class LegacyCompilerAdapter implements CompilerAdapter {
@@ -55,6 +59,13 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
               severity: 'error',
               code: 'LEGACY_BUILD_FAILED',
               message: `Failed to compile source: ${sourceFilePath}`,
+              ...(buildResult.compilerError && {
+                location: {
+                  filePath: buildResult.compilerError.location.file_path ?? sourceFilePath,
+                  line: buildResult.compilerError.location.line,
+                  column: buildResult.compilerError.location.column,
+                },
+              }),
             });
             continue;
           }
@@ -73,6 +84,13 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
           severity: 'error',
           code: 'LEGACY_BUILD_FAILED',
           message: `Failed to compile source: ${request.inputPath}`,
+          ...(buildResult.compilerError && {
+            location: {
+              filePath: buildResult.compilerError.location.file_path ?? request.inputPath,
+              line: buildResult.compilerError.location.line,
+              column: buildResult.compilerError.location.column,
+            },
+          }),
         });
       } else {
         artifacts.push({
@@ -84,10 +102,10 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
     }
 
     if (request.boardConfigPath) {
-      const constraintOutputPath = generateConstraints(
-        request.boardConfigPath,
-        request.outputDirectoryPath,
-      );
+      const boardDef = JSON.parse(
+        readFileSync(request.boardConfigPath, 'utf-8'),
+      ) as BoardDefinition;
+      const constraintOutputPath = generateBoardConstraints(boardDef, request.outputDirectoryPath);
       artifacts.push({
         filePath: constraintOutputPath,
         lineCount: 0,

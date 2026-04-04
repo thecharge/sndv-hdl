@@ -1,11 +1,11 @@
 // Expression parser: precedence climbing for all TS expression types.
 
 import { TokenKind } from '../lexer/token';
-import { parserError } from '../errors/compiler-error';
+import { parserError, SourceLocation } from '../errors/compiler-error';
 import {
   ExpressionNode, BinaryExpressionNode, IdentifierNode,
   ArrayLiteralNode, ArrayAccessNode, AssignmentExpressionNode,
-  AstNodeKind, BinaryOperator,
+  SliceAccessNode, AstNodeKind, BinaryOperator,
 } from './ast';
 import { TokenReader } from './token-reader';
 
@@ -155,6 +155,9 @@ export class ExpressionParser extends TokenReader {
       }
       case TokenKind.Identifier: {
         this.advance();
+        if (token.value === 'Bits' && this.check(TokenKind.Dot)) {
+          return this.parseBitsIntrinsic(location);
+        }
         return this.wrapArrayAccess({ kind: AstNodeKind.Identifier, name: token.value, location });
       }
       case TokenKind.LeftParen: {
@@ -167,6 +170,33 @@ export class ExpressionParser extends TokenReader {
         return this.parseArrayLiteral();
       default:
         throw parserError(`Unexpected token "${token.value}"`, location);
+    }
+  }
+
+  private parseBitsIntrinsic(location: SourceLocation): ExpressionNode {
+    this.advance();
+    if (!this.check(TokenKind.Identifier)) {
+      throw parserError('Expected "slice" or "bit" after Bits.', location);
+    }
+    const method_name = this.advance().value;
+    this.expect(TokenKind.LeftParen, '(');
+    const source = this.parseExpression();
+    this.expect(TokenKind.Comma, ',');
+    if (method_name === 'slice') {
+      const msb = this.parseExpression();
+      this.expect(TokenKind.Comma, ',');
+      const lsb = this.parseExpression();
+      this.expect(TokenKind.RightParen, ')');
+      return { kind: AstNodeKind.SliceAccess, source, msb, lsb, location } satisfies SliceAccessNode;
+    } else if (method_name === 'bit') {
+      const idx = this.parseExpression();
+      this.expect(TokenKind.RightParen, ')');
+      if (source.kind !== AstNodeKind.Identifier) {
+        throw parserError('Bits.bit() source must be a simple identifier', location);
+      }
+      return { kind: AstNodeKind.ArrayAccess, array: source as IdentifierNode, index: idx, location } satisfies ArrayAccessNode;
+    } else {
+      throw parserError(`Unknown Bits intrinsic "${method_name}". Use Bits.slice or Bits.bit.`, location);
     }
   }
 

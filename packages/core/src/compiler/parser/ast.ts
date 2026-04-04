@@ -27,6 +27,7 @@ export enum AstNodeKind {
   BooleanLiteral = 'BooleanLiteral',
   ArrayLiteral = 'ArrayLiteral',
   ArrayAccess = 'ArrayAccess',
+  SliceAccess = 'SliceAccess',
   TypeAnnotation = 'TypeAnnotation',
 }
 
@@ -172,6 +173,13 @@ export interface ArrayAccessNode extends AstNodeBase {
   index: ExpressionNode;
 }
 
+export interface SliceAccessNode extends AstNodeBase {
+  kind: AstNodeKind.SliceAccess;
+  source: ExpressionNode;
+  msb: ExpressionNode;
+  lsb: ExpressionNode;
+}
+
 export type ExpressionNode =
   | AssignmentExpressionNode
   | BinaryExpressionNode
@@ -182,4 +190,5 @@ export type ExpressionNode =
   | BinaryLiteralNode
   | BooleanLiteralNode
   | ArrayLiteralNode
-  | ArrayAccessNode;
+  | ArrayAccessNode
+  | SliceAccessNode;

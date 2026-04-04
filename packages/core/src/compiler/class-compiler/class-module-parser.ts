@@ -5,7 +5,7 @@ import { Lexer } from '../lexer/lexer';
 import { TokenKind } from '../lexer/token';
 import {
     ClassModuleAST, DecoratorAST, ModuleConfig, MethodAST, StatementAST,
-    EnumAST, AssertionAST, TopLevelConstAST,
+    EnumAST, AssertionAST, TopLevelConstAST, ModuleParameterAST,
 } from './class-module-ast';
 import { ClassStmtParser } from './class-stmt-parser';
 
@@ -107,6 +107,7 @@ export class ClassModuleParser extends ClassStmtParser {
         }
 
         const properties = [];
+        const parameters: ModuleParameterAST[] = [];
         const methods = [];
         const submodules = [];
         const assertions: AssertionAST[] = [];
@@ -118,6 +119,18 @@ export class ClassModuleParser extends ClassStmtParser {
 
                 if (dec.name === 'Submodule') {
                     submodules.push(this.parseSubmoduleDecl(dec));
+                    continue;
+                }
+
+                if (dec.name === 'Param') {
+                    const prop = this.parseProperty(dec);
+                    const default_value = Number(prop.initial_value?.trim() ?? '');
+                    if (!Number.isFinite(default_value)) {
+                        throw new Error(
+                            `@Param '${prop.name}' requires a numeric literal initialiser (got "${prop.initial_value ?? ''}")`
+                        );
+                    }
+                    parameters.push({ name: prop.name, bit_width: prop.bit_width, default_value });
                     continue;
                 }
 
@@ -177,7 +190,19 @@ export class ClassModuleParser extends ClassStmtParser {
         }
         this.expect(TokenKind.RightBrace);
 
-        return { name, base_class, decorators, config, enums, properties, methods, submodules, assertions, helpers };
+        if (properties.some(p => p.name === 'Bits')) {
+            console.warn(`[ts2v warning] Class '${name}' declares a property named 'Bits' which shadows the Bits compiler intrinsic namespace.`);
+        }
+
+        for (const param of parameters) {
+            if (properties.some(p => p.name === param.name)) {
+                throw new Error(
+                    `@Param '${param.name}' collides with an existing property of the same name in module '${name}'`
+                );
+            }
+        }
+
+        return { name, base_class, decorators, config, enums, properties, parameters, methods, submodules, assertions, helpers };
     }
 
     private parseMethod(decorator: DecoratorAST | null): MethodAST {

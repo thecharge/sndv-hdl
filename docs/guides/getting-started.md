@@ -124,8 +124,6 @@ cd ~/projects/my-fpga-project
 Create `blinker.ts`:
 
 ```typescript
-
-```typescript
 import {
   HardwareModule,
   Module,

@@ -4,6 +4,7 @@ export interface CliArguments {
   readonly outputDirectoryPath: string;
   readonly boardConfigPath?: string;
   readonly synthesizeAndFlash: boolean;
+  readonly diagnosticsFormat?: 'json';
 }
 
 export class CliArgumentsParser {
@@ -11,7 +12,7 @@ export class CliArgumentsParser {
     const command = argv[2];
     if (command !== 'compile') {
       throw new Error(
-        'Usage: ts2v compile <input.ts|input-dir> [--out <dir>] [--board <board.json>] [--flash]',
+        'Usage: ts2v compile <input.ts|input-dir> [--out <dir>] [--board <board.json>] [--flash] [--diagnostics=json]',
       );
     }
 
@@ -23,6 +24,7 @@ export class CliArgumentsParser {
     let outputDirectoryPath = '.artifacts/tang20k';
     let boardConfigPath: string | undefined;
     let synthesizeAndFlash = false;
+    let diagnosticsFormat: 'json' | undefined;
 
     for (let index = 4; index < argv.length; index += 1) {
       const currentArgument = argv[index];
@@ -40,6 +42,11 @@ export class CliArgumentsParser {
 
       if (currentArgument === '--flash') {
         synthesizeAndFlash = true;
+        continue;
+      }
+
+      if (currentArgument === '--diagnostics=json') {
+        diagnosticsFormat = 'json';
       }
     }
 
@@ -49,6 +56,7 @@ export class CliArgumentsParser {
       outputDirectoryPath,
       boardConfigPath,
       synthesizeAndFlash,
+      diagnosticsFormat,
     };
   }
 }

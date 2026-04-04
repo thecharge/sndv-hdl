@@ -61,6 +61,11 @@ export class EmitterBase {
         result = result.replace(/&&/g, '&&');
         result = result.replace(/\|\|/g, '||');
 
+        result = result.replace(/Bits\.slice\(\s*([^,]+?)\s*,\s*([^,]+?)\s*,\s*([^)]+?)\s*\)/g,
+            (_, src, msb, lsb) => `${src.trim()}[${msb.trim()}:${lsb.trim()}]`);
+        result = result.replace(/Bits\.bit\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)/g,
+            (_, src, idx) => `${src.trim()}[${idx.trim()}]`);
+
         result = result.replace(/0x([0-9a-fA-F]+)/g, (_, hex) => {
             const bits = hex.length * 4;
             return `${bits}'h${hex}`;

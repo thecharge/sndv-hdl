@@ -2,7 +2,7 @@
 // Source: examples/comparator/comparator.ts
 // Tests: combinational comparator — is_greater, is_equal, shifts, bitwise mask
 
-import type { CombTestSpec } from './tb-spec-types';
+import type { CombTestSpec } from '@ts2v/types';
 
 export const comparatorSpec: CombTestSpec = {
     kind: 'combinational',
