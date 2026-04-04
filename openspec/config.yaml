@@ -1,0 +1,93 @@
+schema: spec-driven
+
+context: |
+  Project: ts2v — TypeScript-to-SystemVerilog compiler and FPGA toolchain
+  Author: Radoslav Sandov
+  License: MIT
+
+  WHAT THIS PROJECT IS
+  ts2v lets developers write synthesisable FPGA hardware in modern, type-safe
+  TypeScript using decorators (@Module, @Sequential, @Combinational, etc.).
+  The compiler translates a strict TypeScript subset to IEEE 1800-2017 SystemVerilog.
+  A containerised open-source toolchain (Yosys + nextpnr + gowin_pack + openFPGALoader)
+  synthesises, place-and-routes, packs, and flashes the result to real FPGA hardware.
+
+  PRIMARY TARGET BOARD
+  Tang Nano 20K (Gowin GW2AR-18C, 27 MHz clock, 6 onboard LEDs, WS2812 pin 79).
+  All tooling is open-source - no Vivado/Quartus/proprietary Gowin EDA required.
+
+  MONOREPO LAYOUT (Bun + Turborepo)
+  - apps/cli/        CLI argument parsing and command dispatch
+  - packages/core/   Compiler facade, class compiler, functional compiler
+  - packages/runtime/ Decorators and hardware types (no-ops + types)
+  - packages/toolchain/ Synthesis and flash adapters
+  - packages/config/ Board and workspace config services
+  - packages/process/ Process execution abstraction
+  - packages/types/  Shared interfaces
+  - boards/          JSON board definitions
+  - examples/        Hardware and simulation examples
+  - testbenches/     TypeScript UVM-style testbench specs
+  - docs/            All documentation
+
+  CRITICAL RULES (must be enforced in every proposal and task)
+  1. OSS-ONLY toolchain — no proprietary EDA tools ever.
+  2. Every new board needs verified Yosys -> nextpnr -> pack -> openFPGALoader path.
+  3. TypeScript subset restrictions: no ternary (?:), no module-level let/var,
+     no LogicArray indexed sequential access, no 'ts2sv' import alias.
+  4. Generated SV must be IEEE 1800-2017 strict: use logic (not wire),
+     input logic (not input wire logic), always_ff / always_comb blocks.
+  5. All testbenches are TypeScript specs (SeqTestSpec / CombTestSpec) — never raw .sv.
+  6. Examples: hardware under examples/hardware/<board>/<name>/, simulation under examples/<name>/.
+  7. Multi-file designs: compile the directory, not a single .ts file.
+  8. Quality gate: bun run quality must pass before any delivery.
+  9. Hardware delivery requires real-board flash with logged output.
+  10. Enum member names must be globally unique across all enums in a multi-file design.
+
+  AGENT ROLES (from AGENTS.md)
+  - Build Agent: Bun/Turbo scripts, package boundaries
+  - Compiler Agent: TypeScript parser/typechecker/codegen behavior
+  - Toolchain Agent: board synthesis/programming adapters
+  - QA Agent: test matrix, linting, production readiness
+  - Documentation Agent: operational docs, compliance notes, append-only logs
+
+  DELIVERY GATES (from AGENTS.md)
+  - bun run quality passes
+  - bun run compile:example generates artifacts
+  - bun run test:uvm passes for verification-flow changes
+  - Hardware steps have logged commands and outputs
+  - All new examples added to README.md and append-only-engineering-log.md
+
+  FORBIDDEN PATTERNS (from AGENTS.md)
+  - '// -- Label -----' separator comments
+  - Unicode arrows (use -> not →)
+  - Em-dash (use - not — or --)
+  - 'ts2v compile ...' or 'ts2v build ...' in docs (use 'bun run apps/cli/src/index.ts compile ...')
+  - Ternary operator ?: in hardware source
+  - let or var at module level
+  - Magic numbers (always use named const)
+  - wire in SV output (use logic)
+  - 'ts2sv' import alias (use '@ts2v/runtime')
+  - Flat examples/*.ts files
+  - Raw .sv testbench files
+
+rules:
+  proposal:
+    - Include a "Non-goals" section explicitly ruling out proprietary EDA tools
+    - Include a "OSS toolchain impact" section for any board or toolchain change
+    - Specify which agent role (Build/Compiler/Toolchain/QA/Documentation) owns each task
+    - State which AGENTS.md delivery gates apply
+    - Include known compiler limitations that affect the proposal scope
+  design:
+    - Include a "TS subset used" section listing every decorator and type used
+    - Include a "Generated SV sketch" section showing expected SystemVerilog output shape
+    - Reference the relevant spec capability under openspec/specs/
+    - State IEEE 1800-2017 sections relied upon
+  tasks:
+    - Each task must have a validation command (bun run quality, bun run compile:example, etc.)
+    - Tasks touching packages/core/ must include 'bun run build' before compile steps
+    - Hardware tasks must include real-board flash command and expected output pattern
+    - Each task must name the responsible agent role
+  scenarios:
+    - Use GIVEN-WHEN-THEN format strictly
+    - Include acceptance criteria as measurable assertions
+    - Reference the TypeScript source pattern and expected SV output where relevant

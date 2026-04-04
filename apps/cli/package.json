@@ -1,17 +1,32 @@
 {
   "name": "@ts2v/cli",
   "version": "2.0.0",
-  "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/apps/cli/src/index.js",
+  "types": "dist/apps/cli/src/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/apps/cli/src/index.js",
+      "import": "./dist/apps/cli/src/index.js",
+      "types": "./dist/apps/cli/src/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
-    "ts2v": "dist/index.js"
+    "ts2v": "dist/apps/cli/src/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
     "dev": "bun run src/index.ts compile examples/blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/tang20k",
     "lint": "bunx biome check src",
+    "prepack": "bun run build",
     "test": "rm -rf dist && bun test src --pass-with-no-tests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

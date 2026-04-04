@@ -3,10 +3,44 @@
 This guide is for someone who has never used ts2v before.
 You will go from a completely empty folder to a blinking LED running on a Tang Nano 20K, with a passing TypeScript testbench spec.
 
-**Your project lives in ITS OWN folder. You never put your source files inside the ts2v repository.**
-The ts2v repository is a tool: you clone it once, install it, and call it from your project.
-
 No prior knowledge of Verilog, SystemVerilog, or FPGA toolchains is required.
+
+---
+
+## Installation Options
+
+### Option A: npm (writing hardware modules only)
+
+If you just want to write TypeScript hardware modules and compile them, install the runtime package:
+
+```bash
+npm install @ts2v/runtime
+# or
+bun add @ts2v/runtime
+```
+
+Then use the compiler via the CLI:
+
+```bash
+npm install -g @ts2v/cli
+# or
+bun add -g @ts2v/cli
+```
+
+> **Note**: The CLI requires the OSS synthesis toolchain container (Yosys + nextpnr + gowin_pack + openFPGALoader) for synthesis and flashing. See [Container Setup](#part-2-set-up-the-ts2v-toolchain-once) below.
+
+### Option B: Clone the repository (full toolchain + contributing)
+
+Clone when you want the full development environment, want to contribute, or need the complete hardware toolchain integration:
+
+```bash
+git clone https://github.com/thecharge/sndv-hdl.git ~/tools/ts2v
+cd ~/tools/ts2v
+bun install
+bun run toolchain:image:build
+```
+
+**This guide continues with the clone path (Option B).** The npm path (Option A) is sufficient for writing and compiling hardware modules.
 
 ---
 

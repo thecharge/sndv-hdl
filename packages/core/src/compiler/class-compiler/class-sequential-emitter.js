@@ -1,0 +1,279 @@
+"use strict";
+// Sequential and combinational logic emission for ClassModuleEmitter.
+// Handles always_ff, always_comb, var decls, and statement translation.
+// Supports helper method inlining and early-return -> else-clause transformation.
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SequentialEmitter = void 0;
+const class_sv_helpers_1 = require("./class-sv-helpers");
+const class_emitter_base_1 = require("./class-emitter-base");
+class SequentialEmitter extends class_emitter_base_1.EmitterBase {
+    // --------------------------------------------------------------------------
+    // Body preprocessing: inline helper calls then eliminate early returns.
+    // These transforms run once on the compiled body before any SV is emitted.
+    // --------------------------------------------------------------------------
+    inlineHelpers(stmts, helpers) {
+        return stmts.flatMap(stmt => {
+            if (stmt.kind === 'call') {
+                const body = helpers[stmt.method];
+                if (!body)
+                    return [{ kind: 'expr', text: `/* unknown helper: ${stmt.method} */` }];
+                return this.inlineHelpers(body, helpers);
+            }
+            if (stmt.kind === 'if')
+                return [{
+                        ...stmt,
+                        then_body: this.inlineHelpers(stmt.then_body, helpers),
+                        else_body: stmt.else_body ? this.inlineHelpers(stmt.else_body, helpers) : null,
+                    }];
+            if (stmt.kind === 'switch')
+                return [{
+                        ...stmt,
+                        cases: stmt.cases.map(c => ({ ...c, body: this.inlineHelpers(c.body, helpers) })),
+                        default_body: stmt.default_body ? this.inlineHelpers(stmt.default_body, helpers) : null,
+                    }];
+            return [stmt];
+        });
+    }
+    // Convert early returns into else clauses:
+    //   if (cond) { ...; return; }   rest...
+    //   ->  if (cond) { ... } else { rest... }
+    // Works recursively so nested guards are handled bottom-up.
+    eliminateReturns(stmts) {
+        const result = [];
+        for (let i = 0; i < stmts.length; i++) {
+            const stmt = stmts[i];
+            if (stmt.kind === 'if') {
+                const newThen = this.eliminateReturns(stmt.then_body);
+                const newElse = stmt.else_body ? this.eliminateReturns(stmt.else_body) : null;
+                const lastThen = newThen[newThen.length - 1];
+                if (lastThen?.kind === 'return' && newElse === null) {
+                    // Guard pattern: move remaining stmts into else
+                    const thenNoReturn = newThen.slice(0, -1);
+                    const remaining = this.eliminateReturns(stmts.slice(i + 1));
+                    result.push({
+                        ...stmt,
+                        then_body: thenNoReturn,
+                        else_body: remaining.length > 0 ? remaining : null,
+                    });
+                    break;
+                }
+                result.push({ ...stmt, then_body: newThen, else_body: newElse });
+            }
+            else {
+                result.push(stmt);
+            }
+        }
+        return result;
+    }
+    preprocessBody(stmts, helpers) {
+        return this.eliminateReturns(this.inlineHelpers(stmts, helpers));
+    }
+    emitSequential(method, mod, enums, pw) {
+        const clk = (0, class_sv_helpers_1.sanitize)(method.clock);
+        const rst = (0, class_sv_helpers_1.sanitize)(mod.config.reset_signal);
+        const has_declared_reset = mod.properties.some(p => p.direction === 'input' && p.name === mod.config.reset_signal) ||
+            (mod.config.reset_type === 'async' && mod.config.reset_signal !== 'no_rst');
+        const is_async = mod.config.reset_type === 'async';
+        const is_active_low = mod.config.reset_polarity === 'active_low';
+        const body = this.preprocessBody(method.body, mod.helpers ?? {});
+        const localVars = this.collectVarDecls(body);
+        const emittedLocalNames = new Set();
+        if (localVars.length > 0) {
+            this.line('    // Method-local registers (synthesized at module scope)');
+            for (const v of localVars) {
+                const vname = (0, class_sv_helpers_1.sanitize)(v.name);
+                if (emittedLocalNames.has(vname))
+                    continue;
+                emittedLocalNames.add(vname);
+                const width = this.resolveLocalVarWidth(v, pw);
+                this.line(`    logic ${(0, class_sv_helpers_1.formatWidth)(width)} ${vname};`);
+                pw.set(v.name, width);
+            }
+            this.line('');
+        }
+        const sens = is_async && has_declared_reset
+            ? `posedge ${clk} or ${is_active_low ? 'negedge' : 'posedge'} ${rst}`
+            : `posedge ${clk}`;
+        this.line(`    // Sequential Logic (${method.name})`);
+        this.line(`    always_ff @(${sens}) begin`);
+        const reset_props = mod.properties.filter(p => p.initial_value !== null && p.direction !== 'input');
+        if (has_declared_reset && reset_props.length > 0) {
+            const rst_cond = is_active_low ? `!${rst}` : rst;
+            this.line(`        if (${rst_cond}) begin`);
+            for (const p of reset_props) {
+                if (!p.is_const) {
+                    const raw = this.translateExpr(p.initial_value, enums, mod);
+                    const sized = this.sizeLiteral(raw, p.bit_width);
+                    this.line(`            ${(0, class_sv_helpers_1.sanitize)(p.name)} <= ${sized};`);
+                }
+            }
+            this.line('        end else begin');
+            this.indent += 3;
+            this.emitStatements(body, enums, mod, true, pw);
+            this.indent -= 3;
+            this.line('        end');
+        }
+        else {
+            this.indent += 2;
+            this.emitStatements(body, enums, mod, true, pw);
+            this.indent -= 2;
+        }
+        this.line('    end');
+    }
+    emitCombinational(method, mod, enums, pw) {
+        const body = this.preprocessBody(method.body, mod.helpers ?? {});
+        this.line(`    // Combinational Logic (${method.name})`);
+        this.line(`    always_comb begin`);
+        this.indent += 2;
+        this.emitStatements(body, enums, mod, false, pw);
+        this.indent -= 2;
+        this.line('    end');
+    }
+    collectVarDecls(stmts) {
+        const decls = [];
+        for (const stmt of stmts) {
+            if (stmt.kind === 'var')
+                decls.push(stmt);
+            if (stmt.kind === 'if') {
+                decls.push(...this.collectVarDecls(stmt.then_body));
+                if (stmt.else_body)
+                    decls.push(...this.collectVarDecls(stmt.else_body));
+            }
+            if (stmt.kind === 'switch') {
+                for (const c of stmt.cases)
+                    decls.push(...this.collectVarDecls(c.body));
+                if (stmt.default_body)
+                    decls.push(...this.collectVarDecls(stmt.default_body));
+            }
+            if (stmt.kind === 'while')
+                decls.push(...this.collectVarDecls(stmt.body));
+            if (stmt.kind === 'for')
+                decls.push(...this.collectVarDecls(stmt.body));
+        }
+        return decls;
+    }
+    resolveLocalVarWidth(varDecl, pw) {
+        if (varDecl.type) {
+            const logicM = varDecl.type.match(/[Ll]ogic\s*<\s*(\d+)\s*>/);
+            if (logicM)
+                return parseInt(logicM[1], 10);
+            const uintM = varDecl.type.match(/[Uu][Ii]nt(\d+)/);
+            if (uintM)
+                return parseInt(uintM[1], 10);
+            if (varDecl.type.trim() === 'Bit' || varDecl.type.trim() === 'boolean')
+                return 1;
+        }
+        const propRef = varDecl.value.match(/^this\.(\w+)$/);
+        if (propRef) {
+            const w = pw.get(propRef[1]);
+            if (w !== undefined)
+                return w;
+        }
+        if (/&\s*1\s*$/.test(varDecl.value.trim()))
+            return 1;
+        return 32;
+    }
+    emitStatements(stmts, enums, mod, is_seq, pw) {
+        for (const stmt of stmts) {
+            this.emitStatement(stmt, enums, mod, is_seq, pw);
+        }
+    }
+    emitStatement(stmt, enums, mod, is_seq, pw) {
+        const assign_op = is_seq ? '<=' : '=';
+        switch (stmt.kind) {
+            case 'assign': {
+                const target_name = stmt.target.replace(/^this\./, '').replace(/\[.*\]$/, '');
+                const target_width = pw.get(target_name);
+                const target = this.translateExpr(stmt.target, enums, mod);
+                const raw_value = this.translateExpr(stmt.value, enums, mod);
+                const value = target_width !== undefined ? this.sizeLiteral(raw_value, target_width) : raw_value;
+                this.line(`${target} ${assign_op} ${value};`);
+                break;
+            }
+            case 'if': {
+                const cond = this.translateExpr(stmt.condition, enums, mod);
+                this.line(`if (${cond}) begin`);
+                this.indent++;
+                this.emitStatements(stmt.then_body, enums, mod, is_seq, pw);
+                this.indent--;
+                if (stmt.else_body) {
+                    this.line('end else begin');
+                    this.indent++;
+                    this.emitStatements(stmt.else_body, enums, mod, is_seq, pw);
+                    this.indent--;
+                }
+                this.line('end');
+                break;
+            }
+            case 'switch': {
+                const expr = this.translateExpr(stmt.expr, enums, mod);
+                this.line(`case (${expr})`);
+                this.indent++;
+                for (const c of stmt.cases) {
+                    const label = this.translateExpr(c.label, enums, mod);
+                    this.line(`${label}: begin`);
+                    this.indent++;
+                    this.emitStatements(c.body, enums, mod, is_seq, pw);
+                    this.indent--;
+                    this.line('end');
+                }
+                if (stmt.default_body) {
+                    this.line('default: begin');
+                    this.indent++;
+                    this.emitStatements(stmt.default_body, enums, mod, is_seq, pw);
+                    this.indent--;
+                    this.line('end');
+                }
+                this.indent--;
+                this.line('endcase');
+                break;
+            }
+            case 'var': {
+                const name = (0, class_sv_helpers_1.sanitize)(stmt.name);
+                const raw_value = this.translateExpr(stmt.value, enums, mod);
+                const var_width = pw.get(stmt.name);
+                const value = var_width !== undefined ? this.sizeLiteral(raw_value, var_width) : raw_value;
+                if (is_seq) {
+                    this.line(`${name} ${assign_op} ${value};`);
+                }
+                else {
+                    this.line(`logic ${(0, class_sv_helpers_1.formatWidth)(var_width ?? 0)} ${name} = ${value};`);
+                }
+                break;
+            }
+            case 'while':
+                this.line(`// while: ${this.translateExpr(stmt.condition, enums, mod)}`);
+                this.emitStatements(stmt.body, enums, mod, is_seq, pw);
+                break;
+            case 'for':
+                this.line('// for loop (unrolled by synthesis)');
+                this.emitStatements(stmt.body, enums, mod, is_seq, pw);
+                break;
+            case 'assert': {
+                const cond = this.translateExpr(stmt.condition, enums, mod);
+                this.line(stmt.message
+                    ? `assert (${cond}) else $error("${stmt.message}");`
+                    : `assert (${cond});`);
+                break;
+            }
+            case 'await':
+                this.line(`// await ${this.translateExpr(stmt.signal, enums, mod)} (clock cycle boundary)`);
+                break;
+            case 'return':
+                if (stmt.value)
+                    this.line(`// return ${this.translateExpr(stmt.value, enums, mod)}`);
+                break;
+            case 'expr':
+                if (stmt.text.trim())
+                    this.line(`// ${stmt.text}`);
+                break;
+            case 'call':
+                // Inlining should have resolved all calls before emission.
+                // If a call survives here, the helper was not found.
+                this.line(`/* unresolved call: ${stmt.method}() */`);
+                break;
+        }
+    }
+}
+exports.SequentialEmitter = SequentialEmitter;
+//# sourceMappingURL=class-sequential-emitter.js.map

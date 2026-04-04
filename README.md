@@ -13,6 +13,28 @@ Author: Radoslav Sandov
 - Persistent FPGA programming using `openFPGALoader --external-flash --write-flash --verify`.
 - TypeScript-native UVM-style verification: write testbench specs in TypeScript, simulate in-container.
 
+## Installation
+
+Install the runtime package to write synthesisable TypeScript hardware modules:
+
+```bash
+npm install @ts2v/runtime
+# or
+bun add @ts2v/runtime
+```
+
+Install the CLI to compile TypeScript to SystemVerilog:
+
+```bash
+npm install -g @ts2v/cli
+# or
+bun add -g @ts2v/cli
+```
+
+> For the full hardware toolchain (synthesis, place-and-route, and FPGA flashing), clone the repository and follow the [getting started guide](docs/guides/getting-started.md).
+
+---
+
 ## Quickstart From Zero To Blinky
 Use this exact sequence on Linux.
 
