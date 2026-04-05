@@ -15,21 +15,7 @@ Author: Radoslav Sandov
 
 ## Installation
 
-Install the runtime package to write synthesisable TypeScript hardware modules:
-
-```bash
-npm install @ts2v/runtime
-# or
-bun add @ts2v/runtime
-```
-
-Install the CLI to compile TypeScript to SystemVerilog:
-
-```bash
-npm install -g @ts2v/cli
-# or
-bun add -g @ts2v/cli
-```
+Install the runtime package to write synthesisable TypeScript hardware modules by cloning this repository
 
 > For the full hardware toolchain (synthesis, place-and-route, and FPGA flashing), clone the repository and follow the [getting started guide](docs/guides/getting-started.md).
 
