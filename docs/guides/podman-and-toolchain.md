@@ -10,12 +10,12 @@ all available Podman commands, and one-liner Python/Bash diagnostics.
 The `ts2v-gowin-oss` Docker/Podman image packages the entire open-source FPGA synthesis
 chain for Gowin FPGAs:
 
-| Tool | Purpose | Version |
-|------|---------|---------|
-| `yosys` | RTL synthesis (SystemVerilog → netlist) | latest |
-| `nextpnr-gowin` | Place and route (netlist → bitstream) | latest |
-| `gowin_pack` | Pack nextpnr output to Gowin `.fs` file | latest |
-| `openFPGALoader` | Flash bitstream to FPGA via USB/JTAG | latest |
+| Tool             | Purpose                                 | Version |
+| ---------------- | --------------------------------------- | ------- |
+| `yosys`          | RTL synthesis (SystemVerilog → netlist) | latest  |
+| `nextpnr-gowin`  | Place and route (netlist → bitstream)   | latest  |
+| `gowin_pack`     | Pack nextpnr output to Gowin `.fs` file | latest  |
+| `openFPGALoader` | Flash bitstream to FPGA via USB/JTAG    | latest  |
 
 All tools are open-source and fully vendor-independent — no Vivado, Quartus, or Gowin EDA
 IDE required.
@@ -68,8 +68,6 @@ For serial port access on the host (outside the container), add your user to `di
 ```bash
 sudo usermod -aG dialout $USER
 # Log out and back in for this to take effect.
-# For a single session without re-login:
-sudo chmod a+rw /dev/ttyUSB1
 ```
 
 ---
@@ -155,14 +153,14 @@ podman run --rm \
 
 After compilation, `.artifacts/<example>/` contains:
 
-| File | Description |
-|------|-------------|
-| `hw.sv` | Generated IEEE 1800-2017 SystemVerilog |
-| `tang_nano_20k.cst` | Pin constraint file (.cst format) |
-| `hw.json` | Yosys synthesised netlist (JSON) |
-| `hw_pnr.json` | nextpnr placed-and-routed netlist |
-| `hw.fs` | Final Gowin bitstream |
-| `sim.f` | Filelist for simulator |
+| File                | Description                            |
+| ------------------- | -------------------------------------- |
+| `hw.sv`             | Generated IEEE 1800-2017 SystemVerilog |
+| `tang_nano_20k.cst` | Pin constraint file (.cst format)      |
+| `hw.json`           | Yosys synthesised netlist (JSON)       |
+| `hw_pnr.json`       | nextpnr placed-and-routed netlist      |
+| `hw.fs`             | Final Gowin bitstream                  |
+| `sim.f`             | Filelist for simulator                 |
 
 To inspect the generated SV before synthesis:
 
@@ -352,9 +350,6 @@ udevadm monitor --kernel --udev --property
 ### Permission fixes
 
 ```bash
-# One-shot (current session only)
-sudo chmod a+rw /dev/ttyUSB1
-
 # Permanent (takes effect after next login)
 sudo usermod -aG dialout $USER
 
@@ -432,20 +427,20 @@ After flashing to **SRAM** (no flags): no power-cycle needed — the FPGA runs i
 
 ## Board Pin Reference (Tang Nano 20K)
 
-| Signal | Pin | Notes |
-|--------|-----|-------|
-| `clk` | 4 | 27 MHz oscillator |
-| `rst_n` | 88 | S1 button, active-HIGH |
-| `btn` | 87 | S2 button, active-HIGH |
-| `led[0]` | 15 | Active-LOW |
-| `led[1]` | 16 | Active-LOW |
-| `led[2]` | 17 | Active-LOW |
-| `led[3]` | 18 | Active-LOW |
-| `led[4]` | 19 | Active-LOW |
-| `led[5]` | 20 | Active-LOW |
+| Signal    | Pin    | Notes                   |
+| --------- | ------ | ----------------------- |
+| `clk`     | 4      | 27 MHz oscillator       |
+| `rst_n`   | 88     | S1 button, active-HIGH  |
+| `btn`     | 87     | S2 button, active-HIGH  |
+| `led[0]`  | 15     | Active-LOW              |
+| `led[1]`  | 16     | Active-LOW              |
+| `led[2]`  | 17     | Active-LOW              |
+| `led[3]`  | 18     | Active-LOW              |
+| `led[4]`  | 19     | Active-LOW              |
+| `led[5]`  | 20     | Active-LOW              |
 | `uart_tx` | **69** | FPGA TX → BL616 UART RX |
 | `uart_rx` | **70** | BL616 UART TX → FPGA RX |
-| `ws2812` | 79 | WS2812 data line |
+| `ws2812`  | 79     | WS2812 data line        |
 
 **USB bridge chip:** BL616 (Bouffalo Lab), not FTDI2232H.
 

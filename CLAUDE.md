@@ -73,25 +73,25 @@ bun run test:uvm
 
 ### Decorators
 
-| Decorator | Purpose | Notes |
-|-----------|---------|-------|
-| `@Module` | Marks a synthesisable hardware class | Required on every module |
-| `@ModuleConfig(str)` | Compiler config string | e.g. `'resetSignal: "no_rst"'` |
-| `@Input` | Declares an input port | `@Input clk: Bit = 0;` |
-| `@Output` | Declares an output port | `@Output led: Logic<6> = 0x3F;` |
-| `@Sequential('clk')` | `always_ff @(posedge clk)` block | Non-blocking assignments |
-| `@Combinational` | `always_comb` block | Blocking assignments |
-| `@Submodule` | Instantiates a child module | Auto-wired by name matching |
-| `@Assert(cond, msg)` | Concurrent SVA assertion | Emits `assert property` |
+| Decorator            | Purpose                              | Notes                           |
+| -------------------- | ------------------------------------ | ------------------------------- |
+| `@Module`            | Marks a synthesisable hardware class | Required on every module        |
+| `@ModuleConfig(str)` | Compiler config string               | e.g. `'resetSignal: "no_rst"'`  |
+| `@Input`             | Declares an input port               | `@Input clk: Bit = 0;`          |
+| `@Output`            | Declares an output port              | `@Output led: Logic<6> = 0x3F;` |
+| `@Sequential('clk')` | `always_ff @(posedge clk)` block     | Non-blocking assignments        |
+| `@Combinational`     | `always_comb` block                  | Blocking assignments            |
+| `@Submodule`         | Instantiates a child module          | Auto-wired by name matching     |
+| `@Assert(cond, msg)` | Concurrent SVA assertion             | Emits `assert property`         |
 
 ### Types
 
-| TypeScript | SystemVerilog | Notes |
-|------------|--------------|-------|
-| `Logic<N>` | `logic [N-1:0]` | N-bit signal - primary type |
-| `Bit` | `logic` | 1-bit alias |
-| `UintN` / `UIntN` | `logic [N-1:0]` | Tested up to >64 bits |
-| `LogicArray<W,S>` | Register file | Declared OK; indexed sequential access is a KNOWN LIMITATION (see below) |
+| TypeScript        | SystemVerilog   | Notes                                                                    |
+| ----------------- | --------------- | ------------------------------------------------------------------------ |
+| `Logic<N>`        | `logic [N-1:0]` | N-bit signal - primary type                                              |
+| `Bit`             | `logic`         | 1-bit alias                                                              |
+| `UintN` / `UIntN` | `logic [N-1:0]` | Tested up to >64 bits                                                    |
+| `LogicArray<W,S>` | Register file   | Declared OK; indexed sequential access is a KNOWN LIMITATION (see below) |
 
 ### Module Structure Pattern
 
@@ -222,15 +222,15 @@ property is often USEFUL (e.g. "load pixel[old_index + 1]").
 
 **File:** `boards/tang_nano_20k.board.json`
 
-| Signal | Pin | Notes |
-|--------|-----|-------|
-| `clk` | 4 | 27 MHz oscillator |
-| `rst_n` | 88 | S1 button, active-HIGH (pull-down at rest; press = 1) |
-| `btn` | 87 | S2 button, active-HIGH (pull-down at rest; press = 1) |
-| `led[0..5]` | 15-20 | Active-LOW (0 = ON, 1 = OFF); all-off = `0x3F` |
-| `ws2812` | 79 | WS2812 data line (3.3V LVCMOS) |
-| `uart_tx` | 69 | UART transmit (BL616 UART RX) |
-| `uart_rx` | 70 | UART receive (BL616 UART TX) |
+| Signal      | Pin   | Notes                                                 |
+| ----------- | ----- | ----------------------------------------------------- |
+| `clk`       | 4     | 27 MHz oscillator                                     |
+| `rst_n`     | 88    | S1 button, active-HIGH (pull-down at rest; press = 1) |
+| `btn`       | 87    | S2 button, active-HIGH (pull-down at rest; press = 1) |
+| `led[0..5]` | 15-20 | Active-LOW (0 = ON, 1 = OFF); all-off = `0x3F`        |
+| `ws2812`    | 79    | WS2812 data line (3.3V LVCMOS)                        |
+| `uart_tx`   | 69    | UART transmit (BL616 UART RX)                         |
+| `uart_rx`   | 70    | UART receive (BL616 UART TX)                          |
 
 **Active-low LED values (6 bits):**
 ```
@@ -404,11 +404,11 @@ When asked to write a new hardware example:
 Piecewise-linear HSV maps an 8-bit hue (0..255) to GRB using 3 segments of 85 steps.
 Channel ramp = hue_offset * 3 (max 252). GRB format: G=[23:16] R=[15:8] B=[7:0].
 
-| Segment | Condition | G | R | B |
-|---------|-----------|---|---|---|
-| 0 | h < 85   | h*3 (up)      | (84-h)*3 (down) | 0          |
-| 1 | h < 170  | (169-h)*3 (dn)| 0               | (h-85)*3 (up) |
-| 2 | h >= 170 | 0             | (h-170)*3 (up)  | (254-h)*3 (dn)|
+| Segment | Condition | G              | R               | B              |
+| ------- | --------- | -------------- | --------------- | -------------- |
+| 0       | h < 85    | h*3 (up)       | (84-h)*3 (down) | 0              |
+| 1       | h < 170   | (169-h)*3 (dn) | 0               | (h-85)*3 (up)  |
+| 2       | h >= 170  | 0              | (h-170)*3 (up)  | (254-h)*3 (dn) |
 
 Full rainbow revolution at PHASE_NORMAL=1: 256 steps * 2^20 clocks = ~9.9 s at 27 MHz.
 
@@ -423,7 +423,7 @@ It provides both JTAG programming and a UART data channel.
 - `/dev/ttyUSB1` is the UART data port **when Tang Nano is the only USB serial device**
 - **If another USB serial device is present**, the UART port may be `/dev/ttyUSB2` or higher.
   Always run `ls /dev/ttyUSB*` first -- the JTAG port is the lower number, UART is the higher.
-- Port access: `sudo chmod a+rw /dev/ttyUSBN` for one session, or `sudo usermod -aG dialout $USER` permanently (takes effect after next login)
+- Port access: prefer `sudo usermod -aG dialout $USER` permanently (takes effect after next login) rather than broad one-shot device permission changes.
 - No sudo needed for flashing (only for port access if not in the dialout group)
 - Reference implementations: `examples/hardware/tang_nano_20k/aurora_uart/hw/` and `examples/hardware/tang_nano_20k/calc_uart/hw/`
 - Full serial debugging guide: `docs/guides/uart-serial-debugging.md`
@@ -489,12 +489,12 @@ This affects all examples.  The `flash.sh` scripts now print a reminder.
 
 ## Package Responsibilities
 
-| Package | Owns |
-|---------|------|
-| `packages/core` | TypeScript->SV compiler, constraint generator |
-| `packages/runtime` | `@Module`, `@Input`, `@Output`, `Logic<N>` etc. (decorator no-ops + types) |
-| `packages/toolchain` | Yosys / nextpnr / gowin_pack / openFPGALoader adapters |
-| `packages/config` | Board definition loading, workspace config |
-| `packages/process` | Process execution abstraction |
-| `packages/types` | Shared interfaces between packages |
-| `apps/cli` | CLI argument parsing + command dispatch |
+| Package              | Owns                                                                       |
+| -------------------- | -------------------------------------------------------------------------- |
+| `packages/core`      | TypeScript->SV compiler, constraint generator                              |
+| `packages/runtime`   | `@Module`, `@Input`, `@Output`, `Logic<N>` etc. (decorator no-ops + types) |
+| `packages/toolchain` | Yosys / nextpnr / gowin_pack / openFPGALoader adapters                     |
+| `packages/config`    | Board definition loading, workspace config                                 |
+| `packages/process`   | Process execution abstraction                                              |
+| `packages/types`     | Shared interfaces between packages                                         |
+| `apps/cli`           | CLI argument parsing + command dispatch                                    |

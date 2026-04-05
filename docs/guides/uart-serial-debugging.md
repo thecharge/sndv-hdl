@@ -11,10 +11,10 @@ independently of any client code, and how to debug when things do not work.
 The Tang Nano 20K uses a **BL616** (Bouffalo Lab RISC-V MCU) as the onboard USB bridge
 chip.  The BL616 provides two independent interfaces over a single USB-C connector:
 
-| Interface | Linux device | Purpose |
-|-----------|-------------|---------|
-| 0 | `/dev/ttyUSB0` | JTAG (programming only) |
-| 1 | `/dev/ttyUSB1` | UART data (for calc_uart, aurora_uart) |
+| Interface | Linux device   | Purpose                                |
+| --------- | -------------- | -------------------------------------- |
+| 0         | `/dev/ttyUSB0` | JTAG (programming only)                |
+| 1         | `/dev/ttyUSB1` | UART data (for calc_uart, aurora_uart) |
 
 **If another USB serial device is connected to the PC**, Linux assigns device numbers in
 enumeration order.  The FPGA UART may appear as `/dev/ttyUSB2` or higher instead of
@@ -38,27 +38,21 @@ The UART port (`ttyUSB1` or `ttyUSBN`) is always the higher-numbered one.
 
 All examples in this repo use 115200 8N1:
 
-| Parameter | Value |
-|-----------|-------|
-| Baud rate | 115200 |
-| Data bits | 8 |
-| Parity | None |
-| Stop bits | 1 |
-| Flow control | None |
-| FPGA TX pin | 69 (`uart_tx`) |
-| FPGA RX pin | 70 (`uart_rx`) |
+| Parameter    | Value          |
+| ------------ | -------------- |
+| Baud rate    | 115200         |
+| Data bits    | 8              |
+| Parity       | None           |
+| Stop bits    | 1              |
+| Flow control | None           |
+| FPGA TX pin  | 69 (`uart_tx`) |
+| FPGA RX pin  | 70 (`uart_rx`) |
 
 ---
 
 ## Port Permissions
 
-The dialout group owns `/dev/ttyUSB*`.  One-shot permission fix:
-
-```bash
-sudo chmod a+rw /dev/ttyUSB1   # adjust number as needed
-```
-
-Permanent fix (takes effect after next login):
+The dialout group owns `/dev/ttyUSB*`. Prefer the permanent group-based fix:
 
 ```bash
 sudo usermod -aG dialout $USER
@@ -79,9 +73,10 @@ the most reliable way to do a raw hardware test.
 ```bash
 python3 -c "
 import serial, glob
-# Auto-detect: Tang Nano UART is always the highest-numbered ttyUSB port.
 ports = sorted(glob.glob('/dev/ttyUSB*'))
-port = ports[-1] if ports else '/dev/ttyUSB1'
+if len(ports) != 2:
+   raise SystemExit(f'Expected exactly 2 ttyUSB devices for auto-detect, found {len(ports)}: {ports}')
+port = ports[1]
 print('Using port:', port)
 s = serial.Serial(port, 115200, timeout=2)
 s.write(bytes([0, 42, 13]))   # op=add(0), a=42, b=13
@@ -187,17 +182,17 @@ stty -F /dev/ttyUSB1 -a
 
 Key flags:
 
-| Flag | Meaning |
-|------|---------|
-| `115200` | baud rate |
-| `raw` | disable all processing (canonical mode, echo, signals) |
-| `cs8` | 8 data bits |
-| `-cstopb` | 1 stop bit (not 2) |
-| `-parenb` | no parity |
-| `clocal` | ignore modem status (CD), required for USB serial |
-| `cread` | enable receiver |
-| `-echo` | disable echo |
-| `-crtscts` | disable hardware flow control (RTS/CTS) |
+| Flag       | Meaning                                                |
+| ---------- | ------------------------------------------------------ |
+| `115200`   | baud rate                                              |
+| `raw`      | disable all processing (canonical mode, echo, signals) |
+| `cs8`      | 8 data bits                                            |
+| `-cstopb`  | 1 stop bit (not 2)                                     |
+| `-parenb`  | no parity                                              |
+| `clocal`   | ignore modem status (CD), required for USB serial      |
+| `cread`    | enable receiver                                        |
+| `-echo`    | disable echo                                           |
+| `-crtscts` | disable hardware flow control (RTS/CTS)                |
 
 Reference: [Linux Serial Ports Using C/C++](https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/)
 
@@ -269,13 +264,13 @@ For maximum reliability, use Python's pyserial for the serial I/O layer
 
 ## Tang Nano 20K Board Resources
 
-| Resource | Link |
-|----------|------|
-| Official Sipeed wiki | https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html |
-| Official hardware examples (UART, SDRAM, etc.) | https://github.com/sipeed/TangNano-20K-example |
-| Tang Nano 9K UART debugging walkthrough (same FTDI setup) | https://learn.lushaylabs.com/tang-nano-9k-debugging/ |
-| FTDI2232H datasheet (USB bridge chip) | https://ftdichip.com/products/ft2232h/ |
-| ArchWiki serial console guide | https://wiki.archlinux.org/title/Working_with_the_serial_console |
+| Resource                                                  | Link                                                                 |
+| --------------------------------------------------------- | -------------------------------------------------------------------- |
+| Official Sipeed wiki                                      | https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html |
+| Official hardware examples (UART, SDRAM, etc.)            | https://github.com/sipeed/TangNano-20K-example                       |
+| Tang Nano 9K UART debugging walkthrough (same FTDI setup) | https://learn.lushaylabs.com/tang-nano-9k-debugging/                 |
+| FTDI2232H datasheet (USB bridge chip)                     | https://ftdichip.com/products/ft2232h/                               |
+| ArchWiki serial console guide                             | https://wiki.archlinux.org/title/Working_with_the_serial_console     |
 
 ---
 
@@ -306,8 +301,10 @@ The port does not exist.  Check USB cable, board power, and `lsusb` output.
 **`cannot open /dev/ttyUSBN: EACCES` / `Permission denied`:**
 
 ```bash
-sudo chmod a+rw /dev/ttyUSBN
+sudo usermod -aG dialout $USER
 ```
+
+Then log out and back in before retrying the client.
 
 **`stty: invalid argument 'vmin'`:**
 
@@ -324,9 +321,9 @@ See the code example in the section above.
 
 ## Examples Using UART in This Repo
 
-| Example | Description | Client |
-|---------|-------------|--------|
-| `examples/hardware/tang_nano_20k/aurora_uart/` | WS2812 rainbow with live colour control | TypeScript (Bun), Python |
-| `examples/hardware/tang_nano_20k/calc_uart/` | FPGA arithmetic calculator (JSON protocol) | TypeScript (Bun) |
+| Example                                        | Description                                | Client                   |
+| ---------------------------------------------- | ------------------------------------------ | ------------------------ |
+| `examples/hardware/tang_nano_20k/aurora_uart/` | WS2812 rainbow with live colour control    | TypeScript (Bun), Python |
+| `examples/hardware/tang_nano_20k/calc_uart/`   | FPGA arithmetic calculator (JSON protocol) | TypeScript (Bun)         |
 
 See the README in each example folder for full usage instructions.

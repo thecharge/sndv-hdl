@@ -2,19 +2,15 @@
 """
 aurora.py - Aurora UART control client for Tang Nano 20K.
 
-Connects to the BL616 UART bridge on /dev/ttyUSB1 (or auto-detected highest
-ttyUSB port) at 115200 8N1 and sends single-byte commands to the FPGA.
+Connects to the BL616 UART bridge on /dev/ttyUSB1 (or auto-detected when the
+expected two-port Tang Nano bridge is the only ttyUSB device pair present) at
+115200 8N1 and sends single-byte commands to the FPGA.
 
 Requirements:
     pip install pyserial
 
 Usage:
     python3 aurora.py [/dev/ttyUSB1]
-
-    If the port is not accessible:
-        sudo chmod a+rw /dev/ttyUSB1
-    or permanently:
-        sudo usermod -aG dialout $USER && logout
 
 Commands:
     a - aurora mode: smooth rainbow wave (default)
@@ -39,14 +35,20 @@ except ImportError:
     sys.exit(1)
 
 def _auto_detect_port() -> str:
-    """Return the highest-numbered /dev/ttyUSBN (Tang Nano UART is always the
-    higher of the two Tang Nano ttyUSB ports; JTAG is the lower one)."""
+    """Return the higher of the two Tang Nano ttyUSB ports when unambiguous."""
     import glob as _glob
-    ports = sorted(_glob.glob("/dev/ttyUSB*"))
+    ports = sorted(_glob.glob("/dev/ttyUSB*"), key=lambda port: int(port.removeprefix("/dev/ttyUSB")))
     if not ports:
         print("ERROR: no /dev/ttyUSB* found — check USB cable and board power.")
         sys.exit(1)
-    return ports[-1]
+    if len(ports) != 2:
+        print(f"ERROR: refusing to auto-select a UART port from {len(ports)} ttyUSB devices.")
+        print("  Pass the intended UART device explicitly, for example: python3 aurora.py /dev/ttyUSB1")
+        print("  Available ports:")
+        for port in ports:
+            print(f"    {port}")
+        sys.exit(1)
+    return ports[1]
 
 PORT = sys.argv[1] if len(sys.argv) > 1 else _auto_detect_port()
 BAUD = 115200
@@ -59,8 +61,8 @@ def open_port(port: str) -> serial.Serial:
         return ser
     except serial.SerialException as e:
         print(f"ERROR: cannot open {port}: {e}")
-        print(f"  Try: sudo chmod a+rw {port}")
-        print(f"  Or:  sudo usermod -aG dialout $USER  (then log out and in)")
+        print("  Check group access for the device.")
+        print("  Prefer: sudo usermod -aG dialout $USER  (then log out and back in)")
         sys.exit(1)
 
 

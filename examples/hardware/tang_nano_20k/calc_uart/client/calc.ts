@@ -25,11 +25,19 @@
  */
 
 import * as readline from "readline";
+import { readdirSync } from "fs";
 
 const PORT = process.argv[2] ?? "auto";
 const BAUD = 115_200;
 
 const OP: Record<string, number> = { add: 0, sub: 1, mul: 2 };
+
+function listTtyUsbPorts(): string[] {
+  return readdirSync("/dev")
+    .filter((entry) => /^ttyUSB\d+$/.test(entry))
+    .sort((left, right) => Number(left.slice(6)) - Number(right.slice(6)))
+    .map((entry) => `/dev/${entry}`);
+}
 
 function emit(obj: Record<string, unknown>) {
   process.stdout.write(JSON.stringify(obj) + "\n");
@@ -72,17 +80,23 @@ for line in sys.stdin:
 s.close()
 `;
 
-// Resolve "auto" to the highest ttyUSB port (Tang Nano UART is always the
-// higher-numbered of the two Tang Nano ttyUSB ports).
+// Resolve "auto" only when the expected two-port Tang Nano bridge is present.
 function resolvePort(port: string): string {
   if (port !== "auto") return port;
-  const glob = Bun.spawnSync(["bash", "-c", "ls /dev/ttyUSB* 2>/dev/null | sort -V | tail -1"]);
-  const p = glob.stdout.toString().trim();
-  if (!p) {
+  const ports = listTtyUsbPorts();
+  if (ports.length === 0) {
     emit({ error: "no /dev/ttyUSB* found - check USB cable and board power" });
     process.exit(1);
   }
-  return p;
+  if (ports.length !== 2) {
+    emit({
+      error: `refusing to auto-select a UART port from ${ports.length} ttyUSB devices`,
+      ports,
+      hint: "pass the intended UART device explicitly, for example /dev/ttyUSB1",
+    });
+    process.exit(1);
+  }
+  return ports[1];
 }
 
 const resolvedPort = resolvePort(PORT);
@@ -95,8 +109,8 @@ const py = Bun.spawn(["python3", "-u", "-c", PYTHON_BRIDGE, resolvedPort], {
 
 // Persistent reader + line buffer — never re-acquire the lock between calls.
 const pyReader = py.stdout.getReader();
-const pyDec    = new TextDecoder();
-let   pyBuf    = "";
+const pyDec = new TextDecoder();
+let pyBuf = "";
 
 async function pyReadLine(): Promise<string> {
   while (true) {
@@ -174,7 +188,7 @@ rl.on("line", async (line) => {
   const hex = "0x" + result.toString(16).padStart(4, "0");
   const out: Record<string, unknown> = { op: opStr, a: aVal, b: bVal, result, hex, ms };
   if (opStr === "sub" && bVal > aVal) out.note = "underflow (16-bit wrap)";
-  else if (result > 255)              out.note = "result > 8-bit";
+  else if (result > 255) out.note = "result > 8-bit";
 
   emit(out);
   if (process.stdin.isTTY) rl.prompt();

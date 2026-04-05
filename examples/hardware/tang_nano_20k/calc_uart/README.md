@@ -32,7 +32,8 @@ No LEDs or external hardware required. All communication is over UART.
 ./examples/hardware/tang_nano_20k/calc_uart/run.sh
 ```
 
-Default port is `/dev/ttyUSB1`. Pass a different port as the first argument:
+The helper auto-detects the UART port only when exactly two `ttyUSB` devices are present.
+If you have additional USB serial devices attached, pass the port explicitly:
 
 ```bash
 ./examples/hardware/tang_nano_20k/calc_uart/run.sh /dev/ttyUSB2
@@ -82,11 +83,11 @@ FPGA, waits for the result, and prints it as JSON.
 {"op": "add", "a": 42, "b": 13}
 ```
 
-| Field | Values | Notes |
-|-------|--------|-------|
-| `op` | `"add"`, `"sub"`, `"mul"` | The operation to perform |
-| `a` | 0 - 255 | First operand (8-bit unsigned) |
-| `b` | 0 - 255 | Second operand (8-bit unsigned) |
+| Field | Values                    | Notes                           |
+| ----- | ------------------------- | ------------------------------- |
+| `op`  | `"add"`, `"sub"`, `"mul"` | The operation to perform        |
+| `a`   | 0 - 255                   | First operand (8-bit unsigned)  |
+| `b`   | 0 - 255                   | Second operand (8-bit unsigned) |
 
 Both `a` and `b` accept numbers or numeric strings (`"12"` and `12` both work).
 
@@ -98,14 +99,14 @@ Both `a` and `b` accept numbers or numeric strings (`"12"` and `12` both work).
 {"op":"add","a":42,"b":13,"result":55,"hex":"0x0037","ms":2}
 ```
 
-| Field | Meaning |
-|-------|---------|
-| `op` | The operation that was run |
-| `a`, `b` | The operands you sent |
-| `result` | The answer as a decimal number (16-bit unsigned) |
-| `hex` | The answer in hex (always 4 digits) |
-| `ms` | Round-trip time in milliseconds |
-| `note` | Only present when something interesting happened (underflow, overflow) |
+| Field    | Meaning                                                                |
+| -------- | ---------------------------------------------------------------------- |
+| `op`     | The operation that was run                                             |
+| `a`, `b` | The operands you sent                                                  |
+| `result` | The answer as a decimal number (16-bit unsigned)                       |
+| `hex`    | The answer in hex (always 4 digits)                                    |
+| `ms`     | Round-trip time in milliseconds                                        |
+| `note`   | Only present when something interesting happened (underflow, overflow) |
 
 ---
 
@@ -141,18 +142,18 @@ The client and FPGA communicate over UART at 115200 baud 8N1.
 
 **Request** - 3 bytes sent from PC to FPGA:
 
-| Byte | Content |
-|------|---------|
-| 0 | Operation code: `0`=add, `1`=sub, `2`=mul |
-| 1 | Operand A (0-255) |
-| 2 | Operand B (0-255) |
+| Byte | Content                                   |
+| ---- | ----------------------------------------- |
+| 0    | Operation code: `0`=add, `1`=sub, `2`=mul |
+| 1    | Operand A (0-255)                         |
+| 2    | Operand B (0-255)                         |
 
 **Response** - 2 bytes sent from FPGA to PC:
 
-| Byte | Content |
-|------|---------|
-| 0 | Result high byte (bits 15-8) |
-| 1 | Result low byte (bits 7-0) |
+| Byte | Content                      |
+| ---- | ---------------------------- |
+| 0    | Result high byte (bits 15-8) |
+| 1    | Result low byte (bits 7-0)   |
 
 The result is big-endian: `result = (byte0 << 8) | byte1`.
 
@@ -205,11 +206,11 @@ calc_uart/
 
 ## UART Details
 
-| Setting | Value |
-|---------|-------|
-| Port | `/dev/ttyUSB1` |
-| Baud rate | 115200 |
-| Format | 8N1 |
+| Setting     | Value          |
+| ----------- | -------------- |
+| Port        | `/dev/ttyUSB1` |
+| Baud rate   | 115200         |
+| Format      | 8N1            |
 | FPGA TX pin | 15 (`uart_tx`) |
 | FPGA RX pin | 16 (`uart_rx`) |
 
@@ -223,10 +224,10 @@ calc_uart/
 3. After flashing, wait a second before running the client - the board reloads the design on reset.
 
 **Permission denied on the port**
-```bash
-sudo chmod a+rw /dev/ttyUSB1
-```
-For a permanent fix (takes effect after next login):
+- Prefer adding your user to the `dialout` group rather than relaxing device permissions globally.
+- You can also pass the intended port explicitly to avoid selecting the wrong serial device.
+
+Permanent fix (takes effect after next login):
 ```bash
 sudo usermod -aG dialout $USER
 ```

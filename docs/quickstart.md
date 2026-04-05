@@ -29,11 +29,11 @@ This only needs to happen once.
 
 Connect your WS2812 strip to the board:
 
-| Strip wire | Board connection |
-|------------|-----------------|
-| Data in | Pin 79 (`PIN79_WS2812`) |
-| GND | Any GND pin on the board |
-| VCC | 5V from a separate supply (not the board's 3.3V) |
+| Strip wire | Board connection                                 |
+| ---------- | ------------------------------------------------ |
+| Data in    | Pin 79 (`PIN79_WS2812`)                          |
+| GND        | Any GND pin on the board                         |
+| VCC        | 5V from a separate supply (not the board's 3.3V) |
 
 > The onboard WS2812C-2020 is already wired to pin 79. If you only want to test with
 > that one LED you can skip the external strip entirely.
@@ -92,10 +92,10 @@ colours within a second.
 
 ## Step 6 - Check It Works
 
-| What you see | What it means |
-|-------------|---------------|
-| WS2812 cycling colours | Working |
-| WS2812 completely dark | See troubleshooting below |
+| What you see                    | What it means              |
+| ------------------------------- | -------------------------- |
+| WS2812 cycling colours          | Working                    |
+| WS2812 completely dark          | See troubleshooting below  |
 | Flash says `DONE` but no colour | Power cycle the board once |
 
 The design is written to external flash so it survives a power cycle.
@@ -124,19 +124,19 @@ podman run --rm --device /dev/bus/usb ts2v-gowin-oss:latest openFPGALoader --sca
 
 If you see `Access denied`, fix the permission:
 ```bash
-sudo chmod a+rw /dev/ttyUSB0   # JTAG port used for programming
+sudo usermod -aG dialout $USER
 ```
-For a permanent fix, see `docs/guides/user-usb-debugger-onboarding.md`.
+Then log out and back in. For more detail, see `docs/guides/user-usb-debugger-onboarding.md`.
 
 ---
 
 ## Next Steps
 
-| What you want to do | Where to go |
-|--------------------|-------------|
-| Control rainbow colours from your PC over serial | [aurora_uart README](../examples/hardware/tang_nano_20k/aurora_uart/README.md) |
-| Run a calculator on the FPGA | [calc_uart README](../examples/hardware/tang_nano_20k/calc_uart/README.md) |
-| Flash the basic blinker first | `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/blinker/blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/blinker --flash` |
-| Write your own hardware module | [docs/guides/end-to-end-delivery.md](guides/end-to-end-delivery.md) |
-| Understand WS2812 timing | [docs/guides/ws2812-protocol-and-brightness.md](guides/ws2812-protocol-and-brightness.md) |
-| Debug a WS2812 that won't light up | [docs/guides/ws2812-debug-guide.md](guides/ws2812-debug-guide.md) |
+| What you want to do                              | Where to go                                                                                                                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Control rainbow colours from your PC over serial | [aurora_uart README](../examples/hardware/tang_nano_20k/aurora_uart/README.md)                                                                                      |
+| Run a calculator on the FPGA                     | [calc_uart README](../examples/hardware/tang_nano_20k/calc_uart/README.md)                                                                                          |
+| Flash the basic blinker first                    | `bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/blinker/blinker.ts --board boards/tang_nano_20k.board.json --out .artifacts/blinker --flash` |
+| Write your own hardware module                   | [docs/guides/end-to-end-delivery.md](guides/end-to-end-delivery.md)                                                                                                 |
+| Understand WS2812 timing                         | [docs/guides/ws2812-protocol-and-brightness.md](guides/ws2812-protocol-and-brightness.md)                                                                           |
+| Debug a WS2812 that won't light up               | [docs/guides/ws2812-debug-guide.md](guides/ws2812-debug-guide.md)                                                                                                   |

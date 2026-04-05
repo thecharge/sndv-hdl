@@ -40,7 +40,8 @@ board's external flash. The board reloads the new design immediately.
 ./examples/hardware/tang_nano_20k/aurora_uart/run.sh
 ```
 
-Default port is `/dev/ttyUSB1`. Pass a different port as the first argument:
+The helper auto-detects the UART port only when exactly two `ttyUSB` devices are present.
+If you have additional USB serial devices attached, pass the port explicitly:
 
 ```bash
 ./examples/hardware/tang_nano_20k/aurora_uart/run.sh /dev/ttyUSB2
@@ -56,16 +57,16 @@ bun examples/hardware/tang_nano_20k/aurora_uart/client/aurora.ts
 
 ## Commands
 
-| Key | What it does |
-|-----|-------------|
+| Key             | What it does                                             |
+| --------------- | -------------------------------------------------------- |
 | `a` or `aurora` | Rainbow wave animation (this is the default on power-up) |
-| `r` or `red` | All 8 pixels solid red |
-| `g` or `green` | All 8 pixels solid green |
-| `b` or `blue` | All 8 pixels solid blue |
-| `f` or `faster` | 8x animation speed |
-| `s` or `slower` | Back to normal 1x speed |
-| `x` or `freeze` | Hold the current colours, stop animating |
-| `q` or `quit` | Exit the client (board keeps running) |
+| `r` or `red`    | All 8 pixels solid red                                   |
+| `g` or `green`  | All 8 pixels solid green                                 |
+| `b` or `blue`   | All 8 pixels solid blue                                  |
+| `f` or `faster` | 8x animation speed                                       |
+| `s` or `slower` | Back to normal 1x speed                                  |
+| `x` or `freeze` | Hold the current colours, stop animating                 |
+| `q` or `quit`   | Exit the client (board keeps running)                    |
 
 The FPGA echoes the letter `K` (ASCII 75) after every command it recognises.
 You will see `<< ACK 'K'` in the client when this happens.
@@ -115,11 +116,11 @@ at the current hue, and each next pixel is offset by 1/8 of the wheel (32 steps)
 The hue maps to RGB using three linear segments, giving a smooth gradient with no
 abrupt jumps:
 
-| Hue range | Green | Red | Blue |
-|-----------|-------|-----|------|
-| 0 - 84 | rises 0→252 | falls 252→0 | 0 |
-| 85 - 169 | falls 252→0 | 0 | rises 0→252 |
-| 170 - 255 | 0 | rises 0→252 | falls 252→0 |
+| Hue range | Green       | Red         | Blue        |
+| --------- | ----------- | ----------- | ----------- |
+| 0 - 84    | rises 0→252 | falls 252→0 | 0           |
+| 85 - 169  | falls 252→0 | 0           | rises 0→252 |
+| 170 - 255 | 0           | rises 0→252 | falls 252→0 |
 
 One full revolution at normal speed takes about 10 seconds. At fast speed it takes about 1.2 seconds.
 
@@ -127,14 +128,14 @@ One full revolution at normal speed takes about 10 seconds. At fast speed it tak
 
 ## UART Details
 
-| Setting | Value |
-|---------|-------|
-| Port | `/dev/ttyUSB1` |
-| Baud rate | 115200 |
-| Format | 8N1 (8 data bits, no parity, 1 stop bit) |
-| Direction | bidirectional |
-| FPGA TX pin | 15 (`uart_tx`) |
-| FPGA RX pin | 16 (`uart_rx`) |
+| Setting     | Value                                    |
+| ----------- | ---------------------------------------- |
+| Port        | `/dev/ttyUSB1`                           |
+| Baud rate   | 115200                                   |
+| Format      | 8N1 (8 data bits, no parity, 1 stop bit) |
+| Direction   | bidirectional                            |
+| FPGA TX pin | 15 (`uart_tx`)                           |
+| FPGA RX pin | 16 (`uart_rx`)                           |
 
 The FPGA samples the start bit at its centre (half a bit period after the falling edge) so
 it handles small timing differences on either end cleanly.
@@ -176,10 +177,10 @@ aurora_uart/
 - If the port does not exist, the USB cable may not be fully seated or the driver is not loaded.
 
 **Permission denied on the port**
-```bash
-sudo chmod a+rw /dev/ttyUSB1
-```
-For a permanent fix (takes effect after next login):
+- Prefer adding your user to the `dialout` group rather than relaxing device permissions globally.
+- You can also pass the intended port explicitly to avoid selecting the wrong serial device.
+
+Permanent fix (takes effect after next login):
 ```bash
 sudo usermod -aG dialout $USER
 ```

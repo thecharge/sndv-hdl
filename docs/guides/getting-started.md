@@ -58,11 +58,11 @@ bun run toolchain:image:build
 
 You need three tools on your host:
 
-| Tool       | Install                                     | Minimum Version |
-| ---------- | ------------------------------------------- | --------------- |
-| **Bun**    | `curl -fsSL https://bun.sh/install \| bash` | 1.3             |
-| **Podman** | `sudo apt install podman` (Debian/Ubuntu)   | any             |
-| **Git**    | `sudo apt install git`                      | any             |
+| Tool       | Install                                                                      | Minimum Version |
+| ---------- | ---------------------------------------------------------------------------- | --------------- |
+| **Bun**    | `curl -fsSL https://bun.sh/install -o bun-install.sh && bash bun-install.sh` | 1.3             |
+| **Podman** | `sudo apt install podman` (Debian/Ubuntu)                                    | any             |
+| **Git**    | `sudo apt install git`                                                       | any             |
 
 Verify:
 

@@ -22,23 +22,35 @@
  */
 
 import * as readline from "readline";
-import { openSync, writeSync, readSync, closeSync, constants } from "fs";
+import { openSync, writeSync, readSync, closeSync, constants, readdirSync } from "fs";
 import { spawnSync } from "child_process";
 
-const O_NOCTTY  = 0o400;  // prevent port from becoming controlling terminal
-const NB_FLAG   = 0o4000; // O_NONBLOCK on Linux
-const BAUD      = 115_200;
+const O_NOCTTY = 0o400;  // prevent port from becoming controlling terminal
+const NB_FLAG = 0o4000; // O_NONBLOCK on Linux
+const BAUD = 115_200;
 
-// Auto-detect: Tang Nano UART is always the highest-numbered ttyUSB port.
+function listTtyUsbPorts(): string[] {
+  return readdirSync("/dev")
+    .filter((entry) => /^ttyUSB\d+$/.test(entry))
+    .sort((left, right) => Number(left.slice(6)) - Number(right.slice(6)))
+    .map((entry) => `/dev/${entry}`);
+}
+
+// Auto-detect only when the expected two-port Tang Nano bridge is present.
 function resolvePort(arg: string | undefined): string {
   if (arg) return arg;
-  const glob = Bun.spawnSync(["bash", "-c", "ls /dev/ttyUSB* 2>/dev/null | sort -V | tail -1"]);
-  const p = glob.stdout.toString().trim();
-  if (!p) {
+  const ports = listTtyUsbPorts();
+  if (ports.length === 0) {
     console.error("No /dev/ttyUSB* found — check USB cable and board power.");
     process.exit(1);
   }
-  return p;
+  if (ports.length !== 2) {
+    console.error(`Refusing to auto-select a UART port from ${ports.length} ttyUSB devices.`);
+    console.error("Pass the intended UART device explicitly, for example: bun aurora.ts /dev/ttyUSB1");
+    console.error(`Available ports: ${ports.join(", ")}`);
+    process.exit(1);
+  }
+  return ports[1];
 }
 const PORT = resolvePort(process.argv[2]);
 
@@ -67,7 +79,7 @@ try {
   fd = openSync(PORT, constants.O_RDWR | O_NOCTTY | NB_FLAG);
 } catch (e: any) {
   console.error(`Cannot open ${PORT}: ${e.message}`);
-  console.error(`  sudo chmod a+rw ${PORT}  or  sudo usermod -aG dialout $USER`);
+  console.error("  Check group access for the device and prefer adding your user to the dialout group.");
   process.exit(1);
 }
 
