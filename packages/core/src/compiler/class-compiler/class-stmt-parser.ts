@@ -101,6 +101,8 @@ export class ClassStmtParser extends ClassDeclParser {
                 let label = '';
                 while (!this.check(TokenKind.Colon) && !this.isAtEnd()) { label += this.advance().value; }
                 this.expect(TokenKind.Colon);
+                const hasBraces = this.check(TokenKind.LeftBrace);
+                if (hasBraces) this.advance();
                 const body: StatementAST[] = [];
                 while (
                     !this.check(TokenKind.Case) && !this.check(TokenKind.Default) &&
@@ -109,15 +111,19 @@ export class ClassStmtParser extends ClassDeclParser {
                     const s = this.parseStatement();
                     if (s) body.push(s);
                 }
+                if (hasBraces && this.check(TokenKind.RightBrace)) this.advance();
                 cases.push({ label: label.trim(), body });
             } else if (this.check(TokenKind.Default)) {
                 this.advance();
                 this.expect(TokenKind.Colon);
+                const hasDefaultBraces = this.check(TokenKind.LeftBrace);
+                if (hasDefaultBraces) this.advance();
                 default_body = [];
                 while (!this.check(TokenKind.Case) && !this.check(TokenKind.RightBrace) && !this.isAtEnd()) {
                     const s = this.parseStatement();
                     if (s) default_body.push(s);
                 }
+                if (hasDefaultBraces && this.check(TokenKind.RightBrace)) this.advance();
             } else {
                 this.advance();
             }

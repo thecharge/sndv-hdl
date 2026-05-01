@@ -39,7 +39,7 @@ export class EmitterBase {
         return expr;
     }
 
-    protected translateExpr(expr: string, enums: EnumAST[], mod: ClassModuleAST): string {
+    protected translateExpr(expr: string, enums: EnumAST[], _mod: ClassModuleAST): string {
         let result = expr;
 
         result = result.replace(/this\.(\w+)/g, (_, name) => sanitize(name));
@@ -65,6 +65,11 @@ export class EmitterBase {
             (_, src, msb, lsb) => `${src.trim()}[${msb.trim()}:${lsb.trim()}]`);
         result = result.replace(/Bits\.bit\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)/g,
             (_, src, idx) => `${src.trim()}[${idx.trim()}]`);
+
+        // Edge detection intrinsics: rising(sig) -> (sig && !prev_sig)
+        //                            falling(sig) -> (!sig && prev_sig)
+        result = result.replace(/rising\(\s*(\w+)\s*\)/g, (_, sig) => `(${sig} && !prev_${sig})`);
+        result = result.replace(/falling\(\s*(\w+)\s*\)/g, (_, sig) => `(!${sig} && prev_${sig})`);
 
         result = result.replace(/0x([0-9a-fA-F]+)/g, (_, hex) => {
             const bits = hex.length * 4;

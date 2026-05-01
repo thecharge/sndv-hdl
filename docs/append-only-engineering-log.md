@@ -949,3 +949,65 @@ bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/blinker \
 - Board config: `boards/tang_nano_9k.board.json`, `pnrDevice: GW1N-9C`, `part: GW1NR-LV9QN88PC6/I5`
 - Compile-path tested: SV generation + CST generation (`tang_nano_9k.cst`) confirmed correct
 - Hardware flash: deferred (no physical 9K available)
+
+## 2026-05-01T00:00:00Z - platform-expansion-v1: stdlib + multiclock + new examples
+
+### Changes delivered
+- `packages/stdlib` created with protocol modules: I2cController, I2cPeripheral, I3cController, SpiController, SpiPeripheral, UartTx, UartRx, UsbFsDevice, CanController, PwmGenerator, OneWireController, Ws2812Serialiser, VgaTimingGenerator, HdmiDviOutput, ClockDomainCrossing, AsyncFifo.
+- Multiclock domain support: `@ClockDomain`, multi-domain always_ff emission, CDC warning pass, clock constraint generation.
+- Ergonomics API: `SignalBus<T>`, `Reg<T>`, `Edge`, `rising()`/`falling()`, `@Hardware` decorator; compiler translates to SV edge-detect shadow registers.
+- Parser fix: `switch/case` now supports `case X: { ... }` braced body blocks (previously only bare `case X:` worked).
+- File ordering fix: `FileSystemRepository.listTypeScriptFiles` now sorts alphabetically so multi-file compilation is deterministic regardless of filesystem inode order.
+- Seven new hardware examples all compile cleanly: uart-echo, pwm-fade, ws2812-stdlib, spi-loopback, i2c-scan, dual-clock-sync, dual-clock-fifo, hdmi-colour-bars.
+- New docs: `stdlib-protocol-library.md`, `multiclock-domain.md`, `ergonomics.md`; README updated.
+
+### Compiler regression status
+- 186/186 tests pass after all changes.
+
+### Hardware flash status
+- Examples 9.1-9.8 compile to valid SV; flash on real hardware deferred (no board connected at time of writing).
+
+## 2026-05-01T12:00:00Z - platform-expansion-v1: hardware flash verification
+
+### Hardware tested with Tang Nano 20K (GW2AR-18C, Winbond W25Q64)
+
+#### tpu_uart (task 14.6) - VERIFIED
+- Compiled, flashed to SRAM via `openFPGALoader -b tangnano20k hw.fs`
+- Protocol verified (115200 baud, /dev/ttyUSB1):
+  - dot([1,2,3,4],[4,3,2,1]) = 20 PASS
+  - dot([3,3,3,3],[1,1,1,1]) = 12 PASS
+  - reset_acc (op=3) = 0 PASS
+  - mac([1,0,0,0],[10,0,0,0]) -> acc=10 PASS
+  - mac([2,0,0,0],[5,0,0,0]) -> acc=20 PASS
+
+#### matrix_uart (task 13.6) - VERIFIED
+- Bug found and fixed: `txSent` guard added to `matrix_top.ts` MXT_SEND case to prevent double-firing of `tx_valid` before `tx_ready` drops. Root cause: with non-blocking assignment semantics, `tx_valid` was asserted for 2 consecutive clocks when `tx_ready=1`, causing the TX unit to skip every second byte (all high bytes were lost for values < 256, resulting in 16 bytes instead of 32).
+- Recompiled, flashed to SRAM. Verified:
+  - identity × identity = identity PASS
+  - A × identity = A PASS
+  - diag(2,3,5,7) × diag(4,6,8,9) = diag(8,18,40,63) PASS
+
+#### Protocol category flash verification (task 9.9)
+- **UART**: calc_uart verified working (add(42,13)=55) using /dev/ttyUSB1
+- **WS2812**: aurora_wave loaded to SRAM, openFPGALoader exits 0
+- **PWM**: pwm-fade synthesised and written to external flash, openFPGALoader exits 0
+- **SPI**: spi-loopback synthesised and written to external flash, openFPGALoader exits 0
+- **I2C**: i2c-scan synthesised after adding GPIO pins (25-29) to tang_nano_20k.board.json; written to external flash, openFPGALoader exits 0
+
+#### dual-clock-sync (task 9.10) - FLASHED
+- Synthesis bug fixed: local `ClockDomainCrossing.ts` removed from example directory; compiler was emitting both its hardcoded CDC primitive and the class-compiled version, causing `Re-definition of module ClockDomainCrossing` in Yosys. With local file removed, only one definition is generated.
+- Import updated to `@ts2v/stdlib/cdc`.
+- Synthesised and written to external flash + SRAM load confirmed: openFPGALoader exits 0.
+
+### uart-echo (unresolved)
+- Compiled and synthesised OK. SRAM load confirmed DONE. UART sends zero response to /dev/ttyUSB1. Root cause unclear; calc_uart running on the same hardware responds correctly. Noted as known issue requiring further investigation.
+
+## 2026-05-01T14:00:00Z - platform-expansion-v1: nibble4 synthesis and flash
+
+### nibble4 CPU (tasks 12.3, 12.4)
+- Two synthesis bugs fixed:
+  1. Signal `priority` renamed to `arbPrio` in `Nibble4Arbiter` — `priority` is a reserved SystemVerilog keyword, Yosys rejected it.
+  2. Enum members in `Opcode` (`ADD`, `SUB`, `AND`, `OR`, `XOR`, `NOT`, `SHL`, `SHR`) and `CoreState` (`FETCH_HI`, `FETCH_LO`, `DECODE`, `EXEC`, `MEM`, `HALT`) and `UartState` (`IDLE`, `START`, `DATA`, `STOP`, `WAIT_HI`) renamed with `N4_`, `CS_`, `US_` prefixes — Gowin cells_sim.v defines an `ALU` module with `ADD` enum member, causing a Yosys "enum item ADD already exists" error.
+- After fixes: Yosys + nextpnr + gowin_pack ran cleanly; nibble4.fs produced.
+- Flashed to external flash (W25Q64), verified. SRAM load confirmed: openFPGALoader exits 0.
+- Board: Tang Nano 20K (GW2AR-18C, Winbond W25Q64, SIPEED USB Debugger).

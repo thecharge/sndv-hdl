@@ -171,6 +171,9 @@ See [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md) for the ful
 - [docs/guides/programmer-profiles-and-usb-permissions.md](docs/guides/programmer-profiles-and-usb-permissions.md): profile and permission model.
 - [docs/guides/user-usb-debugger-onboarding.md](docs/guides/user-usb-debugger-onboarding.md): practical USB probe onboarding.
 - [docs/guides/uart-serial-debugging.md](docs/guides/uart-serial-debugging.md): **UART and serial port debugging** - find correct ttyUSB port, test hardware with Python, stty configuration, Bun serial I/O patterns, Tang Nano board references.
+- [docs/guides/stdlib-protocol-library.md](docs/guides/stdlib-protocol-library.md): **`@ts2v/stdlib` protocol modules** - I2C, SPI, UART, CAN, PWM, 1-Wire, WS2812, VGA, HDMI.
+- [docs/guides/multiclock-domain.md](docs/guides/multiclock-domain.md): multiclock domain design - `@ClockDomain`, `ClockDomainCrossing`, `AsyncFifo`, clock constraints.
+- [docs/guides/ergonomics.md](docs/guides/ergonomics.md): ergonomics API - `SignalBus`, `Reg`, `Edge`, `rising`/`falling`, `@Hardware`.
 - [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md): examples, intent, and expected hardware behavior.
 - [docs/guides/uvm-simulation-with-podman.md](docs/guides/uvm-simulation-with-podman.md): containerized simple UVM-style simulation flow.
 - [docs/guides/uvm-suite-authoring.md](docs/guides/uvm-suite-authoring.md): how to add future UVM-style verification suites and reports.
@@ -204,9 +207,19 @@ See [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md) for the ful
   - `examples/hardware/tang_nano_20k/aurora_wave/`: 8-pixel smooth rainbow, no PC needed
   - `examples/hardware/tang_nano_20k/aurora_uart/hw/`: Aurora rainbow with live serial control - see [README](examples/hardware/tang_nano_20k/aurora_uart/README.md)
   - `examples/hardware/tang_nano_20k/calc_uart/hw/`: FPGA calculator over serial (JSON in, JSON out) - see [README](examples/hardware/tang_nano_20k/calc_uart/README.md)
-  - `examples/hardware/tang_nano_20k/uart_echo/`: UART loopback diagnostic - echoes received bytes back (use this to verify TX/RX pins and port number)
+  - `examples/hardware/tang_nano_20k/uart-echo/`: UART loopback (UartTx + UartRx from stdlib)
+  - `examples/hardware/tang_nano_20k/pwm-fade/`: LED fade via PwmGenerator stdlib module
+  - `examples/hardware/tang_nano_20k/ws2812-stdlib/`: WS2812 rainbow importing Ws2812Serialiser from `@ts2v/stdlib`
+  - `examples/hardware/tang_nano_20k/spi-loopback/`: SPI controller-peripheral loopback (SpiController + SpiPeripheral)
+  - `examples/hardware/tang_nano_20k/i2c-scan/`: I2C bus scanner (address 0x08..0x77 via I2cController)
+  - `examples/hardware/tang_nano_20k/dual-clock-sync/`: CDC two-FF synchroniser (ClockDomainCrossing primitive)
+  - `examples/hardware/tang_nano_20k/dual-clock-fifo/`: Async FIFO CDC (AsyncFifo with gray-code pointers)
+  - `examples/hardware/tang_nano_20k/hdmi-colour-bars/`: HDMI colour bars via TMDS encoding (VgaTimingGenerator + HdmiDviOutput)
   - `examples/hardware/tang_nano_20k/knight_rider/`: Knight Rider LED scanner
   - `examples/hardware/tang_nano_20k/breathe/`: Breathing LED (PWM submodule demo)
+  - `examples/hardware/tang_nano_20k/matrix_uart/hw/`: 4x4 matrix multiply over UART (JSON matrices in, result out) - see [README](examples/hardware/tang_nano_20k/matrix_uart/README.md)
+  - `examples/hardware/tang_nano_20k/tpu_uart/hw/`: FPGA TPU (dot product, MAC, ReLU, reset_acc) over UART - see [README](examples/hardware/tang_nano_20k/tpu_uart/README.md)
+  - `examples/cpu/nibble4/`: nibble4 4-bit soft-CPU - 16-opcode core + SoC (UART, LEDs, dual-core arbiter)
   - `examples/adder/`, `examples/alu/`, `examples/uart_tx/`: simulation examples
 - `testbenches/uvm/`: UVM-style testbench specs (TypeScript) compiled to SV for simulation.
 

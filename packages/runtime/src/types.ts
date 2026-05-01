@@ -85,6 +85,75 @@ export type LogicArray<W extends number = 8, SIZE extends number = 0> = number[]
 };
 
 /**
+ * A named group of related signals exposed as a single bundle.
+ *
+ * At the TypeScript level this is a structural alias — the compiler expands
+ * each field to a separate port in the generated SV. This allows grouping
+ * logically related signals (e.g. a bus with addr, data, and valid) without
+ * requiring manual repetition in port declarations.
+ *
+ * @template T - An object type mapping signal names to `Logic<N>` or `Bit` types.
+ *
+ * @example
+ *   type AxiBus = SignalBus<{ addr: Logic<32>; data: Logic<32>; valid: Bit }>;
+ */
+export type SignalBus<T extends Record<string, Logic<number>>> = T;
+
+/**
+ * A registered (flip-flop backed) signal.
+ *
+ * Type alias equivalent to `Logic<N>` — serves as documentation to indicate
+ * intent: this variable is a D flip-flop register, not combinational logic.
+ *
+ * @template T - Signal type, typically `Logic<N>` or `Bit`.
+ *
+ * @example
+ *   private counter: Reg<Logic<8>> = 0;  // equivalent to Logic<8> with explicit register intent
+ */
+export type Reg<T> = T;
+
+/**
+ * A one-cycle wide edge pulse.
+ *
+ * Returned by `rising()` and `falling()`; equivalent to `Bit` (1-bit logic).
+ * When used in a `@Sequential` method condition, the compiler generates a
+ * shadow register `prev_X` and emits:
+ *   - `rising(X)`: `(X && !prev_X)`
+ *   - `falling(X)`: `(!X && prev_X)`
+ */
+export type Edge = Bit;
+
+/**
+ * Returns 1 for one clock cycle after the signal transitions 0->1.
+ *
+ * Runtime no-op; translated by the compiler to an edge-detect expression.
+ * Must be used inside a `@Sequential` method.
+ *
+ * @param _signal - The signal to detect a rising edge on.
+ *
+ * @example
+ *   if (rising(this.btn)) { this.counter = this.counter + 1; }
+ */
+export function rising(_signal: Logic<1>): Edge {
+  return 0;
+}
+
+/**
+ * Returns 1 for one clock cycle after the signal transitions 1->0.
+ *
+ * Runtime no-op; translated by the compiler to an edge-detect expression.
+ * Must be used inside a `@Sequential` method.
+ *
+ * @param _signal - The signal to detect a falling edge on.
+ *
+ * @example
+ *   if (falling(this.btn)) { this.counter = this.counter + 1; }
+ */
+export function falling(_signal: Logic<1>): Edge {
+  return 0;
+}
+
+/**
  * Compiler intrinsic bit-manipulation helpers.
  *
  * These functions are runtime no-ops; the class compiler translates them into

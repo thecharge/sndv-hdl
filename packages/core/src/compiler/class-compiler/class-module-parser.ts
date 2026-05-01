@@ -4,7 +4,7 @@
 import { Lexer } from '../lexer/lexer';
 import { TokenKind } from '../lexer/token';
 import {
-    ClassModuleAST, DecoratorAST, ModuleConfig, MethodAST, StatementAST,
+    ClassModuleAST, ClockDomainAST, DecoratorAST, ModuleConfig, MethodAST, StatementAST,
     EnumAST, AssertionAST, TopLevelConstAST, ModuleParameterAST,
 } from './class-module-ast';
 import { ClassStmtParser } from './class-stmt-parser';
@@ -106,6 +106,25 @@ export class ClassModuleParser extends ClassStmtParser {
             if (sig_match) config.reset_signal = sig_match[1];
         }
 
+        const clocks: ClockDomainAST[] = [];
+        for (const dec of decorators) {
+            if (dec.name === 'ClockDomain' && dec.args.length > 0) {
+                // args[0] is the entire content between parens, e.g. "'sys',{freq:27000000}"
+                const raw = dec.args[0];
+                // First token before comma is the domain name (quotes stripped by lexer)
+                const domainName = raw.split(',')[0].trim();
+                if (clocks.some(c => c.name === domainName)) {
+                    throw new Error(`Duplicate @ClockDomain name '${domainName}' in module '${name}'`);
+                }
+                const domain: ClockDomainAST = { name: domainName };
+                const freqMatch = raw.match(/freq\s*:\s*(\d[\d_]*)/);
+                if (freqMatch) domain.freq = parseInt(freqMatch[1].replace(/_/g, ''), 10);
+                const pinMatch = raw.match(/pin\s*:\s*['"]?([^'"}{,\s]+)['"]?/);
+                if (pinMatch) domain.pin = pinMatch[1];
+                clocks.push(domain);
+            }
+        }
+
         const properties = [];
         const parameters: ModuleParameterAST[] = [];
         const methods = [];
@@ -202,7 +221,7 @@ export class ClassModuleParser extends ClassStmtParser {
             }
         }
 
-        return { name, base_class, decorators, config, enums, properties, parameters, methods, submodules, assertions, helpers };
+        return { name, base_class, decorators, config, clocks, enums, properties, parameters, methods, submodules, assertions, helpers };
     }
 
     private parseMethod(decorator: DecoratorAST | null): MethodAST {
@@ -215,10 +234,19 @@ export class ClassModuleParser extends ClassStmtParser {
         let type: 'sequential' | 'combinational' = 'combinational';
         let clock = 'clk';
 
+        let clock_domain: string | undefined;
         if (decorator) {
             if (decorator.name === 'Sequential') {
                 type = 'sequential';
-                if (decorator.args.length > 0) clock = decorator.args[0].replace(/[()'"]/g, '').trim();
+                if (decorator.args.length > 0) {
+                    const raw = decorator.args[0];
+                    // First quoted token is the clock signal name
+                    const clkMatch = raw.match(/^['"]?([^'",{}\s]+)['"]?/);
+                    clock = clkMatch ? clkMatch[1].replace(/['"]/g, '') : 'clk';
+                    // Optional { clock: 'domainName' } object in the arg string
+                    const domainMatch = raw.match(/clock\s*:\s*['"]?([^'"}{,\s]+)['"]?/);
+                    if (domainMatch) clock_domain = domainMatch[1];
+                }
             }
         }
 
@@ -236,7 +264,7 @@ export class ClassModuleParser extends ClassStmtParser {
         this.expect(TokenKind.RightBrace);
         const has_await = this.bodyHasAwait(body);
 
-        return { name, type, clock, is_async, body, has_await };
+        return { name, type, clock, clock_domain, is_async, body, has_await };
     }
 
     private bodyHasAwait(stmts: StatementAST[]): boolean {

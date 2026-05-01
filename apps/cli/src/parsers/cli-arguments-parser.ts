@@ -5,6 +5,7 @@ export interface CliArguments {
   readonly boardConfigPath?: string;
   readonly synthesizeAndFlash: boolean;
   readonly diagnosticsFormat?: 'json';
+  readonly clockConstraintsPath?: string;
 }
 
 export class CliArgumentsParser {
@@ -25,6 +26,7 @@ export class CliArgumentsParser {
     let boardConfigPath: string | undefined;
     let synthesizeAndFlash = false;
     let diagnosticsFormat: 'json' | undefined;
+    let clockConstraintsPath: string | undefined;
 
     for (let index = 4; index < argv.length; index += 1) {
       const currentArgument = argv[index];
@@ -48,6 +50,11 @@ export class CliArgumentsParser {
       if (currentArgument === '--diagnostics=json') {
         diagnosticsFormat = 'json';
       }
+
+      if (currentArgument === '--clock-constraints') {
+        clockConstraintsPath = argv[index + 1];
+        index += 1;
+      }
     }
 
     return {
@@ -57,6 +64,7 @@ export class CliArgumentsParser {
       boardConfigPath,
       synthesizeAndFlash,
       diagnosticsFormat,
+      clockConstraintsPath,
     };
   }
 }

@@ -11,6 +11,7 @@ import { buildClassSource, buildFile } from '../compiler/compiler-engine';
 import {
   type BoardDefinition,
   generateBoardConstraints,
+  generateClockConstraints,
 } from '../compiler/constraints/generate-board-constraints';
 import type { FileSystemRepository } from '../repositories/file-system-repository';
 
@@ -48,6 +49,14 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
             lineCount: buildResult.lines,
             kind: 'systemverilog',
           });
+          if (request.clockConstraintsPath && buildResult.clockDomains?.length) {
+            generateClockConstraints(buildResult.clockDomains, request.clockConstraintsPath);
+            artifacts.push({
+              filePath: request.clockConstraintsPath,
+              lineCount: buildResult.clockDomains.length,
+              kind: 'constraints',
+            });
+          }
         }
         // Fall through to constraints + manifest below.
       } else {

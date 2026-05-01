@@ -56,6 +56,48 @@
       "pin": "79",
       "std": "LVCMOS33",
       "drive": "8"
+    },
+    "scl": {
+      "pin": "25",
+      "std": "LVCMOS33",
+      "drive": "8"
+    },
+    "scl_in": {
+      "pin": "27",
+      "std": "LVCMOS33"
+    },
+    "sda_out": {
+      "pin": "26",
+      "std": "LVCMOS33",
+      "drive": "8"
+    },
+    "sda_in": {
+      "pin": "28",
+      "std": "LVCMOS33"
+    },
+    "sda_oe": {
+      "pin": "29",
+      "std": "LVCMOS33",
+      "drive": "8"
+    },
+    "mosi": {
+      "pin": "30",
+      "std": "LVCMOS33",
+      "drive": "8"
+    },
+    "miso": {
+      "pin": "31",
+      "std": "LVCMOS33"
+    },
+    "sclk": {
+      "pin": "32",
+      "std": "LVCMOS33",
+      "drive": "8"
+    },
+    "cs_n": {
+      "pin": "33",
+      "std": "LVCMOS33",
+      "drive": "8"
     }
   }
 }

@@ -13,6 +13,7 @@ export class FileSystemRepository {
 
     return readdirSync(inputPath)
       .filter((entryName) => entryName.endsWith('.ts'))
+      .sort()
       .map((entryName) => join(inputPath, entryName));
   }
 

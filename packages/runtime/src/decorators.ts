@@ -133,6 +133,31 @@ export function Assert(_condition: boolean, _message?: string): void {
 }
 
 /**
+ * Auto-inferred hardware block decorator.
+ *
+ * Desugars to `@Sequential(clock)` when a clock argument is provided,
+ * or `@Combinational` when omitted. Lets the compiler infer the block
+ * type from the method body when no argument is supplied.
+ *
+ * @param _clock - Optional clock signal name. When present, behaves like
+ *                 `@Sequential(_clock)`; when absent, behaves like `@Combinational`.
+ *
+ * @example
+ *   \@Hardware('clk')
+ *   compute() { this.out = this.a + this.b; }
+ *
+ *   \@Hardware
+ *   decode() { this.result = this.opcode & 0xF; }
+ */
+export function Hardware(_clock?: string): MethodDecorator {
+  return (
+    _target: object,
+    _propertyKey: string | symbol,
+    descriptor: PropertyDescriptor,
+  ): PropertyDescriptor => descriptor;
+}
+
+/**
  * Overrides module-level compiler configuration.
  *
  * Accepted keys in the config string:

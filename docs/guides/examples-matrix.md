@@ -48,6 +48,27 @@ flowchart LR
 - Flash path is persistent by default: `--external-flash --write-flash --verify`.
 - Active-low LED behavior is accounted for in Tang Nano 20K examples.
 
+## New Protocol and Multi-Clock Examples (v2.0)
+
+| Directory | Module(s) | Purpose |
+|-----------|-----------|---------|
+| `examples/hardware/tang_nano_20k/uart-echo/` | UartTx, UartRx | UART loopback - echoes received bytes back |
+| `examples/hardware/tang_nano_20k/pwm-fade/` | PwmGenerator | LED fade with adjustable PWM duty cycle |
+| `examples/hardware/tang_nano_20k/ws2812-stdlib/` | Ws2812Serialiser | WS2812 rainbow via `@ts2v/stdlib` |
+| `examples/hardware/tang_nano_20k/spi-loopback/` | SpiController + SpiPeripheral | SPI controller-peripheral loopback on single board |
+| `examples/hardware/tang_nano_20k/i2c-scan/` | I2cController | Scans I2C bus addresses 0x08..0x77, shows found address on LEDs |
+| `examples/hardware/tang_nano_20k/dual-clock-sync/` | ClockDomainCrossing | Two-FF synchroniser: button signal from 27 MHz to ~105 kHz domain |
+| `examples/hardware/tang_nano_20k/dual-clock-fifo/` | AsyncFifo | Async FIFO: writes from fast clock, reads on slow clock, shows on LEDs |
+| `examples/hardware/tang_nano_20k/hdmi-colour-bars/` | VgaTimingGenerator + HdmiDviOutput | 640x480 TMDS colour bar pattern (encoding pipeline demo) |
+| `examples/hardware/tang_nano_20k/matrix_uart/hw/` | MatrixTop, MatrixEngine, MatrixUartRx, MatrixUartTx | 4x4 8-bit matrix multiply over UART (64-byte in, 32-byte result out) |
+| `examples/hardware/tang_nano_20k/tpu_uart/hw/` | TpuTop, TpuEngine, TpuUartRx, TpuUartTx | 4-element dot product, MAC accumulator, ReLU, reset_acc over UART |
+
+All v2.0 examples compile with:
+```bash
+bun run apps/cli/src/index.ts compile examples/hardware/tang_nano_20k/<name> \
+  --board boards/tang_nano_20k.board.json --out .artifacts/<name>
+```
+
 ## Non-Hardware Language Examples
 The following examples are useful for parser/type/codegen checks but are not complete hardware bring-up proofs by themselves:
 - `examples/adder.ts`

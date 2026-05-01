@@ -1,3 +1,103 @@
+import type { SeqTestSpec } from '@ts2v/types';
+
+// ---------------------------------------------------------------------------
+// Generic sequential module testbench generator (consumes SeqTestSpec).
+// Supports multi-clock designs via spec.clocks[]; backward-compatible with
+// single-clock designs that only set spec.clock / spec.clockHalfPeriodNs.
+// ---------------------------------------------------------------------------
+
+function buildClockList(spec: SeqTestSpec): { name: string; halfPeriodNs: number }[] {
+  const extra = spec.clocks ?? [];
+  const primaryAlreadyListed = extra.some(c => c.name === spec.clock);
+  if (primaryAlreadyListed) return extra;
+  return [{ name: spec.clock, halfPeriodNs: spec.clockHalfPeriodNs }, ...extra];
+}
+
+function emitClockToggle(clkName: string, halfPeriodNs: number): string[] {
+  return [
+    '  initial begin',
+    `    ${clkName} = 1\'b0;`,
+    `    forever #${halfPeriodNs} ${clkName} = ~${clkName};`,
+    '  end',
+  ];
+}
+
+function emitResetSequence(spec: SeqTestSpec, clocks: { name: string; halfPeriodNs: number }[]): string[] {
+  if (!spec.reset) return [];
+  const longestHalf = Math.max(...clocks.map(c => c.halfPeriodNs));
+  const deassertAfterNs = longestHalf * 4;
+  return [
+    '  initial begin',
+    `    ${spec.reset} = 1\'b0;`,
+    `    #${deassertAfterNs};`,
+    `    ${spec.reset} = 1\'b1;`,
+    '  end',
+  ];
+}
+
+/** Generate a UVM-lite sequential testbench from a `SeqTestSpec`. */
+export function generateSeqTestbench(spec: SeqTestSpec): string {
+  const clocks = buildClockList(spec);
+  const tbName = `tb_${spec.module.toLowerCase()}`;
+
+  const portDecls = clocks.map(c => `  logic ${c.name};`);
+  if (spec.reset) portDecls.push(`  logic ${spec.reset};`);
+
+  const dutPorts = clocks.map(c => `    .${c.name}(${c.name}),`);
+  if (spec.reset) dutPorts.push(`    .${spec.reset}(${spec.reset}),`);
+
+  const clockToggles = clocks.flatMap(c => emitClockToggle(c.name, c.halfPeriodNs));
+  const resetSeq = emitResetSequence(spec, clocks);
+
+  const checkLines = spec.checks.flatMap(ch => {
+    const lines: string[] = [`    // ${ch.label}`];
+    for (const [sig, val] of Object.entries(ch.forcedSignals)) {
+      lines.push(`    force dut.${sig} = ${val};`);
+    }
+    lines.push(`    @(posedge ${spec.clock});`);
+    lines.push('    #1;');
+    for (const [sig, expected] of Object.entries(ch.expectedSignals)) {
+      lines.push(`    if (dut.${sig} !== ${expected}) begin`);
+      lines.push(`      $display("FAIL ${ch.label}: ${sig} got %0h expected %0h", dut.${sig}, ${expected});`);
+      lines.push('      fail_count = fail_count + 1;');
+      lines.push('    end else begin');
+      lines.push('      pass_count = pass_count + 1;');
+      lines.push('    end');
+    }
+    for (const sig of Object.keys(ch.forcedSignals)) {
+      lines.push(`    release dut.${sig};`);
+    }
+    return lines;
+  });
+
+  return [
+    '`timescale 1ns / 1ps',
+    '',
+    `module ${tbName};`,
+    ...portDecls,
+    '',
+    `  ${spec.module} dut (`,
+    ...dutPorts.map((l, i) => i === dutPorts.length - 1 ? l.replace(/,$/, '') : l),
+    '  );',
+    '',
+    ...clockToggles,
+    '',
+    ...resetSeq,
+    '',
+    '  integer pass_count = 0;',
+    '  integer fail_count = 0;',
+    '',
+    '  initial begin',
+    ...checkLines,
+    `    $display("${spec.module} testbench: %0d passed, %0d failed", pass_count, fail_count);`,
+    '    if (fail_count > 0) $finish(1);',
+    '    $finish(0);',
+    '  end',
+    'endmodule',
+    '',
+  ].join('\n');
+}
+
 export interface UvmLiteOperationSpec {
   name: string;
   moduleName: string;

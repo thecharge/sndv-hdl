@@ -4,6 +4,13 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 image_name="${TS2V_TOOLCHAIN_IMAGE:-localhost/ts2v-gowin-oss:latest}"
 
+coverage=false
+for arg in "$@"; do
+  if [[ "${arg}" == "--coverage" ]]; then
+    coverage=true
+  fi
+done
+
 if [[ -n "${TS2V_CONTAINER_RUNTIME:-}" ]]; then
   runtime="${TS2V_CONTAINER_RUNTIME}"
 else
@@ -66,10 +73,21 @@ echo "=== Run simple UVM-style Blinky testbench in container (${runtime}) ==="
   -v "${repo_root}:/workspace${volume_suffix}" \
   -w /workspace \
   "${image_name}" \
-  sh -lc "iverilog -g2012 -s tb_blinky_uvm -I testbenches/uvm -o .artifacts/uvm/tb_blinky_uvm.out .artifacts/uvm/tang_nano_20k_blinker.sv testbenches/uvm/uvm_lite_pkg.sv .artifacts/uvm/tb_blinky_uvm.sv && vvp .artifacts/uvm/tb_blinky_uvm.out" \
+  sh -lc "iverilog -g2012 -s tb_blinky_uvm -I testbenches/uvm -o .artifacts/uvm/tb_blinky_uvm.out .artifacts/uvm/blinker.sv testbenches/uvm/uvm_lite_pkg.sv .artifacts/uvm/tb_blinky_uvm.sv && vvp .artifacts/uvm/tb_blinky_uvm.out" \
   | tee "${blinky_log_path}"
 
 echo "=== Generate Blinky machine-readable simulation report ==="
 bun run scripts/generate-uvm-report.ts "${blinky_log_path}" "blinky"
+
+if [[ "${coverage}" == "true" ]]; then
+  echo "=== Generating TypeScript coverage report ==="
+  mkdir -p "${repo_root}/.artifacts/coverage"
+  bunx c8 --reporter=lcov --report-dir="${repo_root}/.artifacts/coverage" \
+    --include="packages/*/src/**/*.ts" \
+    --exclude="**/*.test.ts" \
+    --output-file="${repo_root}/.artifacts/coverage/uvm-lcov.info" \
+    bun run scripts/generate-uvm-alu-testbench.ts 2>/dev/null || true
+  echo "[artifact] coverage: ${repo_root}/.artifacts/coverage/uvm-lcov.info"
+fi
 
 echo "UVM-style simulation suites completed successfully."

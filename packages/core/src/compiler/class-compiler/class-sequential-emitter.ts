@@ -67,6 +67,29 @@ export class SequentialEmitter extends EmitterBase {
     private preprocessBody(stmts: StatementAST[], helpers: Record<string, StatementAST[]>): StatementAST[] {
         return this.eliminateReturns(this.inlineHelpers(stmts, helpers));
     }
+    // Collect all signal names used in rising(this.X) or falling(this.X) calls
+    // across the entire method body (used for prev_X register generation).
+    private collectEdgeSignals(stmts: StatementAST[]): Set<string> {
+        const sigs = new Set<string>();
+        const pattern = /(?:rising|falling)\(\s*this\.(\w+)\s*\)/g;
+        const scanStr = (s: string) => {
+            let m: RegExpExecArray | null;
+            while ((m = pattern.exec(s)) !== null) sigs.add(m[1]);
+            pattern.lastIndex = 0;
+        };
+        const walk = (ss: StatementAST[]) => {
+            for (const s of ss) {
+                if (s.kind === 'assign') { scanStr(s.value); scanStr(s.target); }
+                if (s.kind === 'if') { scanStr(s.condition); walk(s.then_body); if (s.else_body) walk(s.else_body); }
+                if (s.kind === 'switch') { scanStr(s.expr); for (const c of s.cases) walk(c.body); if (s.default_body) walk(s.default_body); }
+                if (s.kind === 'var') scanStr(s.value);
+                if (s.kind === 'expr') scanStr(s.text);
+            }
+        };
+        walk(stmts);
+        return sigs;
+    }
+
     protected emitSequential(
         method: MethodAST,
         mod: ClassModuleAST,
@@ -98,6 +121,13 @@ export class SequentialEmitter extends EmitterBase {
             this.line('');
         }
 
+        const edgeSignals = this.collectEdgeSignals(body);
+        for (const sig of edgeSignals) {
+            const sname = sanitize(sig);
+            this.line(`    logic prev_${sname};`);
+        }
+        if (edgeSignals.size > 0) this.line('');
+
         const sens = is_async && has_declared_reset
             ? `posedge ${clk} or ${is_active_low ? 'negedge' : 'posedge'} ${rst}`
             : `posedge ${clk}`;
@@ -116,13 +146,22 @@ export class SequentialEmitter extends EmitterBase {
                     this.line(`            ${sanitize(p.name)} <= ${sized};`);
                 }
             }
+            for (const sig of edgeSignals) {
+                this.line(`            prev_${sanitize(sig)} <= 1'b0;`);
+            }
             this.line('        end else begin');
             this.indent += 3;
+            for (const sig of edgeSignals) {
+                this.line(`prev_${sanitize(sig)} <= ${sanitize(sig)};`);
+            }
             this.emitStatements(body, enums, mod, true, pw);
             this.indent -= 3;
             this.line('        end');
         } else {
             this.indent += 2;
+            for (const sig of edgeSignals) {
+                this.line(`prev_${sanitize(sig)} <= ${sanitize(sig)};`);
+            }
             this.emitStatements(body, enums, mod, true, pw);
             this.indent -= 2;
         }

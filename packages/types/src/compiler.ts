@@ -13,6 +13,8 @@ export interface CompileRequest {
   readonly boardConfigPath?: string;
   /** Board ID resolved from the board config, used for toolchain selection. */
   readonly resolvedBoardId?: SupportedBoardId;
+  /** Optional path to write nextpnr SDC clock constraints from @ClockDomain declarations. */
+  readonly clockConstraintsPath?: string;
 }
 
 /** A single generated output file produced by a compilation. */

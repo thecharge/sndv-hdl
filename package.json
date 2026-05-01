@@ -22,6 +22,7 @@
     "test": "turbo run test",
     "test:root": "bun test tests/class-compiler.test.ts tests/uvm-flow.test.ts tests/codegen.test.ts tests/integration.test.ts tests/lexer.test.ts tests/parser.test.ts tests/typechecker.test.ts",
     "test:uvm": "bash scripts/run-uvm-testbench.sh",
+    "test:coverage": "bunx c8 --reporter=lcov --reporter=text --report-dir=.artifacts/coverage --include='packages/*/src/**/*.ts' --exclude='**/*.test.ts' bun run test:root",
     "typecheck": "turbo run typecheck",
     "quality": "bun run typecheck && bun run lint && bun run test && bun run test:root && bun run build",
     "prepare": "husky",

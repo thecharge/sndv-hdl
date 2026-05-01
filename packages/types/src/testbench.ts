@@ -62,12 +62,19 @@ export interface SeqTestSpec {
   module: string;
   /** Path to the TypeScript source file. */
   sourceFile: string;
-  /** Clock signal name. */
+  /** Primary clock signal name (backward-compatible single-clock entry point). */
   clock: string;
   /** Optional active-low reset signal name. */
   reset?: string;
-  /** Clock half-period in nanoseconds (used by generated testbench). */
+  /** Clock half-period in nanoseconds for the primary clock. */
   clockHalfPeriodNs: number;
+  /**
+   * Additional clock domains for multi-clock designs.
+   * When present, the generator emits one `initial` toggle process per entry.
+   * Each entry must have a unique `name` matching an `@Input` port in the SV module.
+   * The primary `clock`/`clockHalfPeriodNs` fields are still used for the first domain.
+   */
+  clocks?: { name: string; halfPeriodNs: number }[];
   checks: SeqCheckSpec[];
 }
 

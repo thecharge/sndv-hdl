@@ -71,6 +71,7 @@ export function buildClassSource(
   success: boolean;
   outPath: string;
   lines: number;
+  clockDomains?: { name: string; freq?: number; pin?: string }[];
 } {
   const classCompileResult = compileClassModule(source);
   if (!classCompileResult.success) {
@@ -78,10 +79,26 @@ export function buildClassSource(
   }
   const outputPath = join(outDir, `${outName}.sv`);
   writeFileSync(outputPath, classCompileResult.systemverilog);
+
+  // Collect all unique clock domains from the parsed modules.
+  const clockDomains: { name: string; freq?: number; pin?: string }[] = [];
+  if (classCompileResult.parsed) {
+    const seen = new Set<string>();
+    for (const mod of classCompileResult.parsed.modules) {
+      for (const clk of mod.clocks ?? []) {
+        if (!seen.has(clk.name)) {
+          seen.add(clk.name);
+          clockDomains.push(clk);
+        }
+      }
+    }
+  }
+
   return {
     success: true,
     outPath: outputPath,
     lines: classCompileResult.systemverilog.split('\n').length,
+    clockDomains,
   };
 }
 

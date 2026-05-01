@@ -1,11 +1,18 @@
 // AST type definitions for the class-module compiler.
 // IEEE 1800-2017 SystemVerilog code generation types.
 
+export interface ClockDomainAST {
+    name: string;
+    freq?: number;
+    pin?: string;
+}
+
 export interface ClassModuleAST {
     name: string;
     base_class: string | null;
     decorators: DecoratorAST[];
     config: ModuleConfig;
+    clocks: ClockDomainAST[];
     enums: EnumAST[];
     properties: PropertyAST[];
     parameters: ModuleParameterAST[];
@@ -48,6 +55,7 @@ export interface MethodAST {
     name: string;
     type: 'sequential' | 'combinational';
     clock: string;
+    clock_domain?: string;
     is_async: boolean;
     body: MethodBodyAST;
     has_await: boolean;

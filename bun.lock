@@ -50,6 +50,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "^1.9.4",
+        "@ts2v/stdlib": "workspace:*",
       },
     },
     "packages/process": {
@@ -67,6 +68,17 @@
       "version": "2.0.0",
       "devDependencies": {
         "@biomejs/biome": "^1.9.4",
+      },
+    },
+    "packages/stdlib": {
+      "name": "@ts2v/stdlib",
+      "version": "2.0.0",
+      "devDependencies": {
+        "@biomejs/biome": "^1.9.4",
+        "@ts2v/runtime": "^2.0.0",
+      },
+      "peerDependencies": {
+        "@ts2v/runtime": "^2.0.0",
       },
     },
     "packages/toolchain": {
@@ -145,6 +157,8 @@
     "@ts2v/process": ["@ts2v/process@workspace:packages/process"],
 
     "@ts2v/runtime": ["@ts2v/runtime@workspace:packages/runtime"],
+
+    "@ts2v/stdlib": ["@ts2v/stdlib@workspace:packages/stdlib"],
 
     "@ts2v/toolchain": ["@ts2v/toolchain@workspace:packages/toolchain"],
 

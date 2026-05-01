@@ -42,6 +42,7 @@ export class CompileCommandHandler {
     boardConfigPath?: string;
     synthesizeAndFlash: boolean;
     diagnosticsFormat?: 'json';
+    clockConstraintsPath?: string;
   }): Promise<void> {
     const resolvedBoardId = options.boardConfigPath
       ? this.resolveBoardId(resolve(options.boardConfigPath))
@@ -52,6 +53,9 @@ export class CompileCommandHandler {
       outputDirectoryPath: resolve(options.outputDirectoryPath),
       boardConfigPath: options.boardConfigPath ? resolve(options.boardConfigPath) : undefined,
       resolvedBoardId,
+      clockConstraintsPath: options.clockConstraintsPath
+        ? resolve(options.clockConstraintsPath)
+        : undefined,
     };
 
     const compilationFacade = new Ts2vCompilationFacade();

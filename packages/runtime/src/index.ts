@@ -11,9 +11,12 @@ export type {
   Uint32,
   Uint64,
   LogicArray,
+  SignalBus,
+  Reg,
+  Edge,
 } from './types';
 
-export { Bits } from './types';
+export { Bits, rising, falling } from './types';
 
 export {
   Module,
@@ -25,6 +28,7 @@ export {
   Combinational,
   Assert,
   ModuleConfig,
+  Hardware,
 } from './decorators';
 
 export { HardwareModule } from './module';

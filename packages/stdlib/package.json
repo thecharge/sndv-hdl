@@ -1,0 +1,95 @@
+{
+  "name": "@ts2v/stdlib",
+  "version": "2.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cdc": {
+      "require": "./dist/cdc/index.js",
+      "import": "./dist/cdc/index.js",
+      "types": "./dist/cdc/index.d.ts"
+    },
+    "./i2c": {
+      "require": "./dist/i2c/index.js",
+      "import": "./dist/i2c/index.js",
+      "types": "./dist/i2c/index.d.ts"
+    },
+    "./i3c": {
+      "require": "./dist/i3c/index.js",
+      "import": "./dist/i3c/index.js",
+      "types": "./dist/i3c/index.d.ts"
+    },
+    "./spi": {
+      "require": "./dist/spi/index.js",
+      "import": "./dist/spi/index.js",
+      "types": "./dist/spi/index.d.ts"
+    },
+    "./uart": {
+      "require": "./dist/uart/index.js",
+      "import": "./dist/uart/index.js",
+      "types": "./dist/uart/index.d.ts"
+    },
+    "./usb": {
+      "require": "./dist/usb/index.js",
+      "import": "./dist/usb/index.js",
+      "types": "./dist/usb/index.d.ts"
+    },
+    "./can": {
+      "require": "./dist/can/index.js",
+      "import": "./dist/can/index.js",
+      "types": "./dist/can/index.d.ts"
+    },
+    "./pwm": {
+      "require": "./dist/pwm/index.js",
+      "import": "./dist/pwm/index.js",
+      "types": "./dist/pwm/index.d.ts"
+    },
+    "./onewire": {
+      "require": "./dist/onewire/index.js",
+      "import": "./dist/onewire/index.js",
+      "types": "./dist/onewire/index.d.ts"
+    },
+    "./ws2812": {
+      "require": "./dist/ws2812/index.js",
+      "import": "./dist/ws2812/index.js",
+      "types": "./dist/ws2812/index.d.ts"
+    },
+    "./vga": {
+      "require": "./dist/vga/index.js",
+      "import": "./dist/vga/index.js",
+      "types": "./dist/vga/index.d.ts"
+    },
+    "./hdmi": {
+      "require": "./dist/hdmi/index.js",
+      "import": "./dist/hdmi/index.js",
+      "types": "./dist/hdmi/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "lint": "bunx biome check src",
+    "test": "bun test --pass-with-no-tests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@ts2v/runtime": "^2.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@ts2v/runtime": "^2.0.0"
+  }
+}
