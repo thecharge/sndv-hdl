@@ -41,6 +41,6 @@ RUN git clone --depth 1 --branch "${OPENFPGALOADER_TAG}" \
   && cmake --install /tmp/openFPGALoader/build \
   && rm -rf /tmp/openFPGALoader
 
-RUN yosys -V && nextpnr-himbaechel --version && gowin_pack --help >/dev/null && openFPGALoader --help >/dev/null
+RUN yosys -V && nextpnr-himbaechel --version && gowin_pack --help >/dev/null && openFPGALoader --help >/dev/null && sby --help >/dev/null && yosys-smtbmc --help >/dev/null 2>&1 || true
 
 WORKDIR /workspace

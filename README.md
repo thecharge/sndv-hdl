@@ -202,6 +202,7 @@ See [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md) for the ful
 - [docs/guides/user-usb-debugger-onboarding.md](docs/guides/user-usb-debugger-onboarding.md): practical USB probe onboarding.
 - [docs/guides/uart-serial-debugging.md](docs/guides/uart-serial-debugging.md): **UART and serial port debugging** - find correct ttyUSB port, test hardware with Python, stty configuration, Bun serial I/O patterns, Tang Nano board references.
 - [docs/guides/stdlib-protocol-library.md](docs/guides/stdlib-protocol-library.md): **`@ts2v/stdlib` protocol modules** - I2C, SPI, UART, CAN, PWM, 1-Wire, WS2812, VGA, HDMI.
+- [docs/guides/formal-verification.md](docs/guides/formal-verification.md): **formal verification** - `@Assert`, `@Assume`, `.sby` auto-generation, `bun run verify`, SymbiYosys BMC.
 - [docs/guides/multiclock-domain.md](docs/guides/multiclock-domain.md): multiclock domain design - `@ClockDomain`, `ClockDomainCrossing`, `AsyncFifo`, clock constraints.
 - [docs/guides/ergonomics.md](docs/guides/ergonomics.md): ergonomics API - `SignalBus`, `Reg`, `Edge`, `rising`/`falling`, `@Hardware`.
 - [docs/guides/examples-matrix.md](docs/guides/examples-matrix.md): examples, intent, and expected hardware behavior.

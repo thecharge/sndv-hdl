@@ -16,8 +16,9 @@ export { ClassModuleEmitter } from './class-module-emitter';
 import { ClassModuleParser } from './class-module-parser';
 import { ClassModuleEmitter } from './class-module-emitter';
 import { ClassCompilationResult } from './class-module-ast';
+import { CompilerError } from '../errors/compiler-error';
 
-export function compileClassModule(source: string): ClassCompilationResult {
+export function compileClassModule(source: string, filePath?: string): ClassCompilationResult {
   try {
     const parser = new ClassModuleParser(source);
     const parsed = parser.parse();
@@ -25,6 +26,12 @@ export function compileClassModule(source: string): ClassCompilationResult {
     const systemverilog = emitter.emit(parsed);
     return { success: true, systemverilog, errors: [], parsed };
   } catch (error: any) {
+    if (filePath && error instanceof CompilerError && !error.location.file_path) {
+      // Re-construct with file path so the message includes file:line:col prefix.
+      const loc = { ...error.location, file_path: filePath };
+      const withPath = new CompilerError(error.raw_message, loc, error.error_code);
+      return { success: false, systemverilog: '', errors: [withPath.message], parsed: null };
+    }
     return { success: false, systemverilog: '', errors: [error.message], parsed: null };
   }
 }

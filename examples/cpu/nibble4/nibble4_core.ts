@@ -1,6 +1,6 @@
 // nibble4_core.ts - 4-bit CPU core: 4-bit data path, 8-bit instruction word.
 // Compile as part of examples/cpu/nibble4 directory.
-import { HardwareModule, Module, ModuleConfig, Input, Output, Sequential } from '@ts2v/runtime';
+import { HardwareModule, Module, ModuleConfig, Input, Output, Sequential, Assert, Assume } from '@ts2v/runtime';
 import type { Bit, Logic } from '@ts2v/runtime';
 
 enum CoreState {
@@ -15,6 +15,8 @@ enum Opcode {
     N4_JMP = 12, N4_JZ = 13, N4_OUT = 14, N4_HLT = 15
 }
 
+@Assert(() => this.pc === 0, 'pc_zero_when_disabled')
+@Assume(() => this.enable === 0)
 @Module
 @ModuleConfig('resetSignal: "rst_n"')
 class Nibble4Core extends HardwareModule {

@@ -1,11 +1,36 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import type { ClassModuleAST } from './class-compiler/class-module-ast';
 import { compileClassModule } from './class-compiler/class-module-compiler';
 import { VerilogEmitter } from './codegen/verilog-emitter';
 import { CompilerError } from './errors/compiler-error';
 import { Lexer } from './lexer/lexer';
 import { Parser } from './parser/parser';
 import { TypeChecker } from './typechecker/typechecker';
+
+function buildSbyConfig(svPath: string, topModuleName: string): string {
+    const svFile = basename(svPath);
+    return [
+        '[options]',
+        'mode bmc',
+        'depth 20',
+        '',
+        '[engines]',
+        'smtbmc',
+        '',
+        '[script]',
+        `read -formal ${svFile}`,
+        `prep -top ${topModuleName}`,
+        '',
+        '[files]',
+        svFile,
+        '',
+    ].join('\n');
+}
+
+function hasAssertions(modules: ClassModuleAST[]): boolean {
+    return modules.some(m => m.assertions.length > 0);
+}
 
 function detectMode(source: string): 'class' | 'function' {
   const hasClass = source.includes('class ');
@@ -24,6 +49,7 @@ export function buildFile(
   success: boolean;
   outPath: string;
   lines: number;
+  sbyPath?: string;
   compilerError?: CompilerError;
 } {
   const source = readFileSync(inputPath, 'utf-8');
@@ -31,17 +57,27 @@ export function buildFile(
   const mode = detectMode(source);
 
   if (mode === 'class') {
-    const classCompileResult = compileClassModule(source);
+    const classCompileResult = compileClassModule(source, inputPath);
     if (!classCompileResult.success) {
       return { success: false, outPath: '', lines: 0 };
     }
 
     const outputPath = join(outDir, `${baseName}.sv`);
     writeFileSync(outputPath, classCompileResult.systemverilog);
+
+    let sbyPath: string | undefined;
+    if (classCompileResult.parsed && hasAssertions(classCompileResult.parsed.modules)) {
+      const topName = classCompileResult.parsed.modules[classCompileResult.parsed.modules.length - 1].name;
+      const sbyContent = buildSbyConfig(outputPath, topName);
+      sbyPath = join(outDir, `${baseName}.sby`);
+      writeFileSync(sbyPath, sbyContent);
+    }
+
     return {
       success: true,
       outPath: outputPath,
       lines: classCompileResult.systemverilog.split('\n').length,
+      sbyPath,
     };
   }
 
@@ -71,6 +107,7 @@ export function buildClassSource(
   success: boolean;
   outPath: string;
   lines: number;
+  sbyPath?: string;
   clockDomains?: { name: string; freq?: number; pin?: string }[];
 } {
   const classCompileResult = compileClassModule(source);
@@ -82,6 +119,8 @@ export function buildClassSource(
 
   // Collect all unique clock domains from the parsed modules.
   const clockDomains: { name: string; freq?: number; pin?: string }[] = [];
+  let sbyPath: string | undefined;
+
   if (classCompileResult.parsed) {
     const seen = new Set<string>();
     for (const mod of classCompileResult.parsed.modules) {
@@ -92,12 +131,20 @@ export function buildClassSource(
         }
       }
     }
+
+    if (hasAssertions(classCompileResult.parsed.modules)) {
+      const topName = classCompileResult.parsed.modules[classCompileResult.parsed.modules.length - 1].name;
+      const sbyContent = buildSbyConfig(outputPath, topName);
+      sbyPath = join(outDir, `${outName}.sby`);
+      writeFileSync(sbyPath, sbyContent);
+    }
   }
 
   return {
     success: true,
     outPath: outputPath,
     lines: classCompileResult.systemverilog.split('\n').length,
+    sbyPath,
     clockDomains,
   };
 }

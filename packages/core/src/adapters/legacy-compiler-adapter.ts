@@ -49,6 +49,9 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
             lineCount: buildResult.lines,
             kind: 'systemverilog',
           });
+          if (buildResult.sbyPath) {
+            artifacts.push({ filePath: buildResult.sbyPath, lineCount: 0, kind: 'formal' });
+          }
           if (request.clockConstraintsPath && buildResult.clockDomains?.length) {
             generateClockConstraints(buildResult.clockDomains, request.clockConstraintsPath);
             artifacts.push({
@@ -83,6 +86,9 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
             lineCount: buildResult.lines,
             kind: 'systemverilog',
           });
+          if (buildResult.sbyPath) {
+            artifacts.push({ filePath: buildResult.sbyPath, lineCount: 0, kind: 'formal' });
+          }
         }
       }
     } else {
@@ -107,6 +113,9 @@ export class LegacyCompilerAdapter implements CompilerAdapter {
           lineCount: buildResult.lines,
           kind: 'systemverilog',
         });
+        if (buildResult.sbyPath) {
+          artifacts.push({ filePath: buildResult.sbyPath, lineCount: 0, kind: 'formal' });
+        }
       }
     }
 

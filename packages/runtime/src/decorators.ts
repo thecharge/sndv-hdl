@@ -120,16 +120,46 @@ export function Combinational(
 }
 
 /**
- * Inline assertion marker for synthesis output.
+ * Concurrent SVA assertion class decorator.
  *
  * Translates to an SVA `assert property` statement in the generated SV.
- * At runtime this is a no-op.
+ * The compiler extracts the condition expression from the arrow function body
+ * and emits it as a clocked `assert property (@(posedge clk) <condition>)`.
+ * At runtime this is a no-op class decorator.
  *
- * @param _condition - The boolean condition that must hold.
- * @param _message   - Optional human-readable failure message (emitted as a comment).
+ * @param _condition - Arrow function `() => <condition>`. Body is parsed by
+ *                     the ts2v compiler; it is never called at runtime.
+ * @param _message   - Optional human-readable failure label (emitted as SVA label).
+ *
+ * @example
+ *   \@Assert(() => this.pc === 0)
+ *   \@Assert(() => this.counter < 16, 'counter_in_range')
+ *   class MyModule extends HardwareModule { ... }
  */
-export function Assert(_condition: boolean, _message?: string): void {
-  // Parsed by ts2v compiler.
+export function Assert(_condition: () => boolean, _message?: string): ClassDecorator {
+  return (_target: object) => {
+    // No-op at runtime; parsed by ts2v compiler.
+  };
+}
+
+/**
+ * Concurrent SVA assumption class decorator (for formal verification).
+ *
+ * Translates to an SVA `assume property` statement in the generated SV.
+ * Assumptions constrain the formal verification search space. They are ignored
+ * by simulation. At runtime this is a no-op class decorator.
+ *
+ * @param _condition - Arrow function `() => <condition>`. Body extracted by compiler.
+ * @param _message   - Optional human-readable label.
+ *
+ * @example
+ *   \@Assume(() => this.input_valid === 1 || this.state === 0)
+ *   class MyModule extends HardwareModule { ... }
+ */
+export function Assume(_condition: () => boolean, _message?: string): ClassDecorator {
+  return (_target: object) => {
+    // No-op at runtime; parsed by ts2v compiler.
+  };
 }
 
 /**

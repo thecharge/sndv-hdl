@@ -9,13 +9,16 @@ export interface SourceLocation {
 export class CompilerError extends Error {
   readonly location: SourceLocation;
   readonly error_code: string;
+  readonly raw_message: string;
 
   constructor(message: string, location: SourceLocation, error_code: string) {
-    const prefix = `[${error_code}] `;
-    const suffix = ` (line ${location.line}, col ${location.column})`;
-    super(prefix + message + suffix);
+    const locPrefix = location.file_path
+      ? `${location.file_path}:${location.line}:${location.column}: `
+      : `(line ${location.line}, col ${location.column}) `;
+    super(`${locPrefix}[${error_code}] ${message}`);
     this.location = location;
     this.error_code = error_code;
+    this.raw_message = message;
     this.name = 'CompilerError';
   }
 }

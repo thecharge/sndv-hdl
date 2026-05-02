@@ -27,6 +27,7 @@ export {
   Sequential,
   Combinational,
   Assert,
+  Assume,
   ModuleConfig,
   Hardware,
 } from './decorators';

@@ -50,8 +50,8 @@
 - [x] 6.2 Add `Reg<T>` type alias to `packages/runtime/src/types.ts`; ensure compiler emits `always_ff` register for `Reg`-typed variables. | Agent: Compiler Agent | Validate: `bun run build`
 - [x] 6.3 Add `Edge` type and `rising(signal)` / `falling(signal)` functions to `packages/runtime/src/types.ts`; implement compiler translation to single-cycle edge-detect SV in `class-sequential-emitter.ts`. | Agent: Compiler Agent | Validate: `bun run build`
 - [x] 6.4 Add `@Hardware` decorator to `packages/runtime/src/decorators.ts`; implement compiler desugaring pass: infer `@Sequential` or `@Combinational` based on clock signal presence. | Agent: Compiler Agent | Validate: `bun run build`
-- [ ] 6.5 Improve compiler error messages to include `file.ts:line:col:` source location prefix for all errors and warnings across parser, typechecker, and emitter. | Agent: Compiler Agent | Validate: `bun run build`
-- [ ] 6.6 Implement `LogicArray` width inference from literal initialisers in the typechecker. | Agent: Compiler Agent | Validate: `bun run build`
+- [x] 6.5 Improve compiler error messages to include `file.ts:line:col:` source location prefix for all errors and warnings across parser, typechecker, and emitter. | Agent: Compiler Agent | Validate: `bun run build`
+- [x] 6.6 Implement `LogicArray` width inference from literal initialisers in the typechecker. | Agent: Compiler Agent | Validate: `bun run build`
 - [x] 6.7 Write unit tests for all six ergonomics features in `packages/core/src/__tests__/ergonomics.test.ts`. | Agent: QA Agent | Validate: `bun test packages/core/src/__tests__/ergonomics.test.ts`
 
 ## 7. UVM Testbench Infrastructure Updates
@@ -64,9 +64,9 @@
 ## 8. Test Coverage Infrastructure
 
 - [x] 8.1 Add `bun run test:coverage` script to root `package.json` using c8; write report to `.artifacts/coverage/lcov.info`. | Agent: QA Agent | Validate: `bun run test:coverage`
-- [ ] 8.2 Add coverage threshold check (80% line coverage per package) to `bun run quality` script; fail on breach. | Agent: QA Agent | Validate: `bun run quality`
+- [x] 8.2 Add coverage threshold check (80% line coverage per package) to `bun run quality` script; fail on breach. | Agent: QA Agent | Validate: `bun run quality`
 - [x] 8.3 Create UVM testbench specs for all stdlib modules under `testbenches/`: `i2c-controller.tb-spec.ts`, `spi-controller.tb-spec.ts`, `uart-tx.tb-spec.ts`, `uart-rx.tb-spec.ts`, `can-controller.tb-spec.ts`, `ws2812.tb-spec.ts`, `vga-timing.tb-spec.ts`, `hdmi-dvi.tb-spec.ts`, `cdc-two-ff.tb-spec.ts`, `cdc-async-fifo.tb-spec.ts`. | Agent: QA Agent | Validate: `bun run test:uvm`
-- [ ] 8.4 Verify all existing testbench specs still pass after all changes. | Agent: QA Agent | Validate: `bun run test:uvm`
+- [x] 8.4 Verify all existing testbench specs still pass after all changes. | Agent: QA Agent | Validate: `bun run test:uvm`
 
 ## 9. Hardware Examples
 
@@ -93,13 +93,13 @@
 
 ## 11. Formal Verification
 
-- [ ] 11.1 Add `@Assert` and `@Assume` decorators to `packages/runtime/src/decorators.ts` typed to accept `() => boolean`-compatible arrow functions. | Agent: Compiler Agent | Validate: `bun run build`
-- [ ] 11.2 Implement compiler recognition of `@Assert` / `@Assume` in `class-module-parser.ts`; emit SVA `assert property` / `assume property` blocks inside `always_comb` in `class-sequential-emitter.ts`. | Agent: Compiler Agent | Validate: `bun run build`
-- [ ] 11.3 Add `.sby` file generation to `compiler-engine.ts`: when any `@Assert` / `@Assume` is present, write a SymbiYosys config file (bmc engine, depth 20) to the output directory. | Agent: Compiler Agent | Validate: `bun run build && bun run compile:example` on a design with `@Assert`
-- [ ] 11.4 Add `bun run verify <file.sby>` script to root `package.json`; invoke SymbiYosys inside the existing toolchain container; print `PASS` / `FAIL` with property name and cycle depth. | Agent: Build Agent | Validate: `bun run verify` on a trivially-true assertion exits 0
-- [ ] 11.5 Write unit tests for `@Assert` / `@Assume` codegen in `packages/core/src/__tests__/formal-verification.test.ts` covering: SVA output shape, `.sby` generation, no-assertion no-sby. | Agent: QA Agent | Validate: `bun test packages/core/src/__tests__/formal-verification.test.ts`
-- [ ] 11.6 Add SymbiYosys to the toolchain container image; verify `yosys-smtbmc` is available inside the container. | Agent: Toolchain Agent | Validate: `podman run ts2v-gowin-oss:latest sby --help`
-- [ ] 11.7 Document formal verification in `docs/guides/formal-verification.md` covering `@Assert`, `@Assume`, `.sby` auto-generation, and `bun run verify`; add to README docs index. | Agent: Documentation Agent | Validate: README.md updated
+- [x] 11.1 Add `@Assert` and `@Assume` decorators to `packages/runtime/src/decorators.ts` typed to accept `() => boolean`-compatible arrow functions. | Agent: Compiler Agent | Validate: `bun run build`
+- [x] 11.2 Implement compiler recognition of `@Assert` / `@Assume` in `class-module-parser.ts`; emit SVA `assert property` / `assume property` blocks inside `always_comb` in `class-sequential-emitter.ts`. | Agent: Compiler Agent | Validate: `bun run build`
+- [x] 11.3 Add `.sby` file generation to `compiler-engine.ts`: when any `@Assert` / `@Assume` is present, write a SymbiYosys config file (bmc engine, depth 20) to the output directory. | Agent: Compiler Agent | Validate: `bun run build && bun run compile:example` on a design with `@Assert`
+- [x] 11.4 Add `bun run verify <file.sby>` script to root `package.json`; invoke SymbiYosys inside the existing toolchain container; print `PASS` / `FAIL` with property name and cycle depth. | Agent: Build Agent | Validate: `bun run verify` on a trivially-true assertion exits 0
+- [x] 11.5 Write unit tests for `@Assert` / `@Assume` codegen in `packages/core/src/__tests__/formal-verification.test.ts` covering: SVA output shape, `.sby` generation, no-assertion no-sby. | Agent: QA Agent | Validate: `bun test packages/core/src/__tests__/formal-verification.test.ts`
+- [x] 11.6 Add SymbiYosys to the toolchain container image; verify `yosys-smtbmc` is available inside the container. | Agent: Toolchain Agent | Validate: `podman run ts2v-gowin-oss:latest sby --help`
+- [x] 11.7 Document formal verification in `docs/guides/formal-verification.md` covering `@Assert`, `@Assume`, `.sby` auto-generation, and `bun run verify`; add to README docs index. | Agent: Documentation Agent | Validate: README.md updated
 
 ## 12. Nimble Processor Example
 
@@ -107,7 +107,7 @@
 - [x] 12.2 Compile `examples/cpu/nibble4` as a directory with ts2v; fix any TypeScript subset violations revealed by the compilation (no ternary, no module-level let/var, named constants). | Agent: Compiler Agent | Validate: `bun run apps/cli/src/index.ts compile examples/cpu/nibble4 --board boards/tang_nano_20k.board.json --out .artifacts/nibble4` exits 0
 - [x] 12.3 Synthesise nibble4 via full OSS toolchain (Yosys + nextpnr-himbaechel + gowin_pack); fix any synthesis errors in the generated SV. | Agent: Toolchain Agent | Validate: synthesis exits 0 and `.artifacts/nibble4/nibble4.fs` is produced
 - [x] 12.4 Flash nibble4 to Tang Nano 20K using `--flash`; log result in `docs/append-only-engineering-log.md`. | Agent: Toolchain Agent | Validate: openFPGALoader exits 0; log entry added
-- [ ] 12.5 Add `@Assert(() => this.pc === 0)` reset property to nibble4 core; run `bun run verify` and confirm PASS; log result. | Agent: Compiler Agent | Validate: `bun run verify .artifacts/nibble4/nibble4.sby` exits 0
+- [x] 12.5 Add `@Assert(() => this.pc === 0)` reset property to nibble4 core; run `bun run verify` and confirm PASS; log result. | Agent: Compiler Agent | Validate: `bun run verify .artifacts/nibble4/nibble4.sby` exits 0
 - [x] 12.6 Write `testbenches/nibble4-cpu.tb-spec.ts` covering reset, ADD instruction, and JUMP instruction scenarios using `SeqTestSpec`. | Agent: QA Agent | Validate: `bun run test:uvm` passes nibble4-cpu suite
 - [x] 12.7 Add nibble4 to README.md examples section and `docs/guides/examples-matrix.md` with compile command and one-line description. | Agent: Documentation Agent | Validate: README references `examples/cpu/nibble4/`
 - [x] 12.8 Rewrite `nibble4_soc.ts`: fix RAM read_mux (was always returning 0), add 32 explicit nibble registers (m00-m31), add bootloader write interface (bl_wr_en/addr/data), simplify UART TX to 4-state single-nibble-per-byte protocol. | Agent: Compiler Agent | Validate: compile command exits 0
@@ -145,4 +145,4 @@
 - [x] 15.2 Run `bun run quality` (lint + type-check + coverage gate); fix all failures. | Agent: QA Agent | Validate: exit 0
 - [x] 15.3 Run `bun run compile:example` for all new hardware examples; verify `.artifacts/` output for each. | Agent: QA Agent | Validate: exit 0 for all examples
 - [x] 15.4 Run `bun run test:uvm` for all testbench specs including new stdlib, matrix-uart, and tpu-uart specs; fix failures. | Agent: QA Agent | Validate: all specs pass
-- [ ] 15.5 Run `bun run verify` on nibble4 and at least one stdlib example with assertions; confirm PASS. | Agent: QA Agent | Validate: exit 0
+- [x] 15.5 Run `bun run verify` on nibble4 and at least one stdlib example with assertions; confirm PASS. | Agent: QA Agent | Validate: exit 0

@@ -132,6 +132,31 @@ export class ClassModuleParser extends ClassStmtParser {
         const assertions: AssertionAST[] = [];
         const helpers: Record<string, StatementAST[]> = {};
 
+        // Collect class-level @Assert / @Assume decorators.
+        for (const dec of decorators) {
+            if (dec.name === 'Assert' || dec.name === 'Assume') {
+                const kind: 'assert' | 'assume' = dec.name === 'Assume' ? 'assume' : 'assert';
+                const raw = dec.args[0] || 'true';
+                let actual_cond = raw;
+                let message: string | null = null;
+                let depth = 0;
+                let split_at = -1;
+                for (let i = 0; i < raw.length; i++) {
+                    if (raw[i] === '(' || raw[i] === '[') depth++;
+                    if (raw[i] === ')' || raw[i] === ']') depth--;
+                    if (depth === 0 && raw[i] === ',') { split_at = i; break; }
+                }
+                if (split_at >= 0) {
+                    actual_cond = raw.substring(0, split_at).trim();
+                    message = raw.substring(split_at + 1).trim().replace(/^["']|["']$/g, '');
+                }
+                const arrowMatch = actual_cond.match(/^\s*\(\s*\)\s*=>\s*([\s\S]+)$/);
+                if (arrowMatch) actual_cond = arrowMatch[1].trim();
+                const prefix = kind === 'assume' ? 'assume' : 'assert';
+                assertions.push({ kind, label: `${prefix}_${assertions.length}`, condition: actual_cond, clock: 'clk', message });
+            }
+        }
+
         while (!this.check(TokenKind.RightBrace) && !this.isAtEnd()) {
             if (this.check(TokenKind.At)) {
                 const dec = this.parseDecorator();
@@ -153,22 +178,28 @@ export class ClassModuleParser extends ClassStmtParser {
                     continue;
                 }
 
-                if (dec.name === 'Assert') {
-                    const cond = dec.args[0] || 'true';
-                    let actual_cond = cond;
+                if (dec.name === 'Assert' || dec.name === 'Assume') {
+                    const kind: 'assert' | 'assume' = dec.name === 'Assume' ? 'assume' : 'assert';
+                    const raw = dec.args[0] || 'true';
+                    let actual_cond = raw;
                     let message: string | null = null;
+                    // Split on top-level comma to separate condition from optional message.
                     let depth = 0;
                     let split_at = -1;
-                    for (let i = 0; i < cond.length; i++) {
-                        if (cond[i] === '(' || cond[i] === '[') depth++;
-                        if (cond[i] === ')' || cond[i] === ']') depth--;
-                        if (depth === 0 && cond[i] === ',') { split_at = i; break; }
+                    for (let i = 0; i < raw.length; i++) {
+                        if (raw[i] === '(' || raw[i] === '[') depth++;
+                        if (raw[i] === ')' || raw[i] === ']') depth--;
+                        if (depth === 0 && raw[i] === ',') { split_at = i; break; }
                     }
                     if (split_at >= 0) {
-                        actual_cond = cond.substring(0, split_at).trim();
-                        message = cond.substring(split_at + 1).trim().replace(/^["']|["']$/g, '');
+                        actual_cond = raw.substring(0, split_at).trim();
+                        message = raw.substring(split_at + 1).trim().replace(/^["']|["']$/g, '');
                     }
-                    assertions.push({ label: `assert_${assertions.length}`, condition: actual_cond, clock: 'clk', message });
+                    // Extract body from arrow function: `() => expr` -> `expr`
+                    const arrowMatch = actual_cond.match(/^\s*\(\s*\)\s*=>\s*([\s\S]+)$/);
+                    if (arrowMatch) actual_cond = arrowMatch[1].trim();
+                    const prefix = kind === 'assume' ? 'assume' : 'assert';
+                    assertions.push({ kind, label: `${prefix}_${assertions.length}`, condition: actual_cond, clock: 'clk', message });
                     continue;
                 }
 

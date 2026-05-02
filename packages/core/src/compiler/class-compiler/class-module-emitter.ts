@@ -295,11 +295,12 @@ export class ClassModuleEmitter extends SequentialEmitter {
             for (const a of mod.assertions) {
                 const cond = this.translateExpr(a.condition, all_enums, mod);
                 const label = a.label || `assert_${mod.assertions.indexOf(a)}`;
+                const kind = a.kind ?? 'assert';
                 if (a.message) {
-                    this.line(`    ${label}: assert property (@(posedge ${clk}) ${cond})`);
+                    this.line(`    ${label}: ${kind} property (@(posedge ${clk}) ${cond})`);
                     this.line(`        else $error("${a.message}");`);
                 } else {
-                    this.line(`    ${label}: assert property (@(posedge ${clk}) ${cond});`);
+                    this.line(`    ${label}: ${kind} property (@(posedge ${clk}) ${cond});`);
                 }
             }
             this.line('');

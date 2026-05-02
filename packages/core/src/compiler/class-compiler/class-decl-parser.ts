@@ -109,6 +109,26 @@ export class ClassDeclParser extends ParserBase {
             initial_value = this.collectUntilSemicolon();
         }
 
+        // Infer LogicArray size from an array literal initialiser when SIZE was omitted.
+        if (is_array && array_size === 0 && initial_value) {
+            const trimmed = initial_value.trim();
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                const inner = trimmed.slice(1, -1).trim();
+                if (inner.length === 0) {
+                    array_size = 0;
+                } else {
+                    let depth = 0;
+                    let count = 1;
+                    for (const ch of inner) {
+                        if (ch === '[' || ch === '(') depth++;
+                        else if (ch === ']' || ch === ')') depth--;
+                        else if (ch === ',' && depth === 0) count++;
+                    }
+                    array_size = count;
+                }
+            }
+        }
+
         if (this.check(TokenKind.Semicolon)) this.advance();
 
         return { name, direction, bit_width, initial_value, is_array, array_size, is_const };
@@ -129,15 +149,12 @@ export class ClassDeclParser extends ParserBase {
                 if (this.check(TokenKind.Comma)) {
                     this.advance();
                     array_size = this.parsePositiveInteger(this.advance(), 'array size (LogicArray second generic)');
-                } else {
-                    throw new Error(
-                        `LogicArray requires two generic arguments <W, SIZE> but only one was supplied at line ${w_token.line}, col ${w_token.column}`
-                    );
                 }
+                // If SIZE omitted, leave array_size=0 — parseProperty will infer from initialiser.
                 this.expect(TokenKind.GreaterThan);
             } else {
                 throw new Error(
-                    `LogicArray requires two generic arguments <W, SIZE> at line ${type_token.line}, col ${type_token.column}`
+                    `LogicArray requires at least one generic argument <W> or <W, SIZE> at line ${type_token.line}, col ${type_token.column}`
                 );
             }
             is_array = true;

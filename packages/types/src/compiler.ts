@@ -24,7 +24,7 @@ export interface CompileArtifact {
   /** Number of lines in the generated file. */
   readonly lineCount: number;
   /** Category of the artifact. */
-  readonly kind: 'systemverilog' | 'constraints' | 'manifest';
+  readonly kind: 'systemverilog' | 'constraints' | 'manifest' | 'formal';
 }
 
 /** A structured diagnostic message emitted during compilation. */

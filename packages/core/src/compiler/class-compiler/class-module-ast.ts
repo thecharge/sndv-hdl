@@ -79,6 +79,7 @@ export interface ParamOverrideEntry {
 }
 
 export interface AssertionAST {
+    kind: 'assert' | 'assume';
     label: string | null;
     condition: string;
     clock: string;
