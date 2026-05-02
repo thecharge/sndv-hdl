@@ -55,6 +55,36 @@ podman run --rm --device /dev/bus/usb ts2v-gowin-oss:latest openFPGALoader --sca
 
 ### 6. Compile And Flash Blinky (Persistent)
 
+The blinker uses the `@Hardware` ergonomics decorator - no need to choose
+between `@Sequential` and `@Combinational`; the compiler infers the right
+`always_ff` block from the presence of the clock signal.
+
+```typescript
+// blinker.ts - minimal example using @Hardware ergonomics API
+import { HardwareModule, Module, ModuleConfig, Input, Output, Hardware } from '@ts2v/runtime';
+import type { Bit, Logic } from '@ts2v/runtime';
+
+const HALF_PERIOD = 13_500_000;  // ~0.5 s at 27 MHz
+
+@Module
+@ModuleConfig('resetSignal: "no_rst"')
+class Blinker extends HardwareModule {
+    @Input  clk: Bit      = 0;
+    @Output led: Logic<6> = 0x3F;
+
+    private counter: Logic<25> = 0;
+
+    @Hardware('clk')  // inferred as always_ff @(posedge clk)
+    tick(): void {
+        this.counter = this.counter + 1;
+        if (this.counter === HALF_PERIOD) {
+            this.counter = 0;
+            this.led = this.led ^ 1;
+        }
+    }
+}
+```
+
 ```bash
 bun run apps/cli/src/index.ts compile \
   examples/hardware/tang_nano_20k/blinker/blinker.ts \

@@ -8,6 +8,8 @@ apps/
 packages/
   core/                       - Compiler facade, class compiler, legacy compiler
   runtime/                    - TypeScript decorators and hardware type definitions
+  stdlib/                     - Reusable hardware IP: UART, SPI, I2C, I3C, WS2812,
+  |                             CAN, PWM, 1-Wire, VGA, HDMI, CDC, async FIFO, USB FS
   toolchain/                  - Synthesis and flash adapters (Yosys, nextpnr, openFPGALoader)
   config/                     - Workspace and board configuration services
   process/                    - Process execution abstraction
@@ -15,8 +17,9 @@ packages/
 boards/                       - Board definition JSON files
 examples/
   hardware/<board>/<name>/    - Hardware examples (TypeScript source only)
+  cpu/nibble4/                - nibble4 4-bit CPU + bootloader + assembler + programs
   <name>/                     - Simulation examples
-testbenches/                  - TypeScript UVM-style testbench specs
+testbenches/                  - TypeScript UVM-style testbench specs (SeqTestSpec / CombTestSpec)
 tests/                        - Root regression test suite
 ```
 
@@ -34,15 +37,54 @@ flowchart TD
     Adapter -->|class mode| ClassCompiler["class-compiler/class-module-compiler.ts"]
     Adapter -->|function mode| FuncEngine["compiler/compiler-engine.ts"]
 
-    ClassCompiler --> Parser["class-module-parser.ts\nparses decorators, consts, modules"]
-    ClassCompiler --> Emitter["class-module-emitter.ts\nemits SV modules"]
+    ClassCompiler --> Parser["class-module-parser.ts\nparses decorators, consts, modules\n@ClockDomain / multi-clock"]
+    ClassCompiler --> Emitter["class-module-emitter.ts\nemits SV modules\none always_ff per clock domain"]
+    ClassCompiler --> CDCPass["CDC detection pass\nwarn on unguarded crossings\nClockDomainCrossing / AsyncFifo accepted"]
 
     FuncEngine --> Lexer["lexer/lexer.ts"]
     FuncEngine --> FuncParser["parser/parser.ts"]
     FuncEngine --> TypeChecker["typechecker/typechecker.ts"]
     FuncEngine --> VerilogEmitter["codegen/verilog-emitter.ts"]
 
-    Adapter --> ConstraintGen["constraints/board-constraint-gen.ts\ngenerates .cst or .xdc"]
+    Adapter --> ConstraintGen["constraints/board-constraint-gen.ts\ngenerates .cst or .xdc\ncreate_clock per @ClockDomain"]
+```
+
+## @ts2v/stdlib Package
+
+The stdlib provides synthesisable hardware IP as TypeScript classes that compile
+to clean SystemVerilog through the ts2v class compiler.
+
+```mermaid
+graph TD
+    stdlib["@ts2v/stdlib"] --> cdc["cdc/\nClockDomainCrossing\nAsyncFifo"]
+    stdlib --> uart["uart/\nUartTx  UartRx"]
+    stdlib --> spi["spi/\nSpiController  SpiPeripheral"]
+    stdlib --> i2c["i2c/\nI2cController  I2cPeripheral"]
+    stdlib --> i3c["i3c/\nI3cController"]
+    stdlib --> ws2812["ws2812/\nWs2812Serialiser"]
+    stdlib --> can["can/\nCanController"]
+    stdlib --> pwm["pwm/\nPwmGenerator"]
+    stdlib --> onewire["onewire/\nOneWireController"]
+    stdlib --> usb["usb/\nUsbFsDevice"]
+    stdlib --> vga["vga/\nVgaTimingGenerator"]
+    stdlib --> hdmi["hdmi/\nHdmiDviOutput"]
+```
+
+## Multi-Clock Domain Support
+
+`@ClockDomain` registers named clock domains on a module. The compiler emits
+one `always_ff` block per domain and wires named clock ports automatically.
+CDC crossings are detected: `ClockDomainCrossing<Logic>` (two-FF sync) and
+`AsyncFifo<T, Depth>` (gray-code dual-clock FIFO) are the approved primitives.
+
+```mermaid
+flowchart LR
+    TS["@ClockDomain('sys', {freq:27e6})\n@ClockDomain('fast', {freq:135e6})"]
+    TS --> Parser["class-module-parser\ncollects clock domains"]
+    Parser --> SeqEmitter["ClassSequentialEmitter\nemits always_ff per domain"]
+    SeqEmitter --> SV["always_ff @(posedge sys_clk)\nalways_ff @(posedge fast_clk)"]
+    TS --> ConstraintGen
+    ConstraintGen --> CST["create_clock -period 37.04 [get_nets sys_clk]\ncreate_clock -period 7.41  [get_nets fast_clk]"]
 ```
 
 ## Multi-File Directory Compilation
