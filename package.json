@@ -34,7 +34,7 @@
     "verify": "bash scripts/run-verify.sh"
   },
   "devDependencies": {
-    "@types/node": "25.5.0",
+    "@types/node": "25.6.0",
     "bun-types": "1.3.10",
     "husky": "^9.1.7",
     "turbo": "^2.1.3",
