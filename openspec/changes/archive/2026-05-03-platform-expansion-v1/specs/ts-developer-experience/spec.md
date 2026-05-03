@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: runtime package exports ergonomics helpers
 The `@ts2v/runtime` package SHALL export `SignalBus<T>`, `Reg<T>`, `Edge`, `rising`, `falling`, and `@Hardware` in addition to all existing exports. Existing exports MUST remain unchanged.

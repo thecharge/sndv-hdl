@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: UVM testbench infrastructure supports multiple clock stimuli
 The UVM-lite testbench generator SHALL accept a `clocks` array in the testbench spec (one entry per clock domain) and emit separate clock stimulus processes for each clock in the generated SV harness.

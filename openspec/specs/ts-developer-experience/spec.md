@@ -3,7 +3,6 @@
 ## Purpose
 TBD - created by archiving change ts-developer-experience. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: Getting started documentation shows npm install path
 
 Getting started with ts2v SHALL present `npm install @ts2v/runtime` (or `bun add @ts2v/runtime`) as the primary entry point, before the repository clone instructions. The guide SHALL explain when to use each option (npm for using the compiler; clone for contributing or full hardware toolchain).
@@ -68,4 +67,26 @@ Every exported symbol in `packages/runtime/src/types.ts`, `packages/runtime/src/
 #### Scenario: Decorator JSDoc appears in editor hover
 - **WHEN** a developer hovers over `@Sequential` in a TypeScript-aware IDE
 - **THEN** the hover tooltip shows the JSDoc description and the `clock` parameter documentation
+
+### Requirement: runtime package exports ergonomics helpers
+The `@ts2v/runtime` package SHALL export `SignalBus<T>`, `Reg<T>`, `Edge`, `rising`, `falling`, and `@Hardware` in addition to all existing exports. Existing exports MUST remain unchanged.
+
+#### Scenario: Ergonomics helpers importable from runtime
+- **WHEN** a TypeScript hardware module imports `{ Reg, rising, @Hardware }` from `@ts2v/runtime`
+- **THEN** TypeScript compilation succeeds and the ts2v compiler processes the decorators correctly
+
+#### Scenario: Existing decorator imports unaffected
+- **WHEN** an existing module imports `@Module`, `@Sequential`, `@Combinational` from `@ts2v/runtime`
+- **THEN** behavior is identical to before this change
+
+### Requirement: @Hardware decorator desugars to Sequential or Combinational
+The compiler SHALL treat `@Hardware` as a compile-time shorthand: methods that reference a clock signal desugar to `@Sequential`; methods that do not desugar to `@Combinational`.
+
+#### Scenario: @Hardware without clock becomes always_comb
+- **WHEN** a method decorated with `@Hardware` contains only combinational logic (no clock reference)
+- **THEN** the generated SV uses `always_comb`
+
+#### Scenario: @Hardware with clock becomes always_ff
+- **WHEN** a method decorated with `@Hardware` references a clock via `rising(this.clk)` or a declared clock port
+- **THEN** the generated SV uses `always_ff` with the correct sensitivity list
 

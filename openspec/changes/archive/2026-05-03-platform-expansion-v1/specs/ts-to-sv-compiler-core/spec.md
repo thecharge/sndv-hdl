@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Compiler recognises multiple named clock domains per module
 The class-module compiler SHALL accept multiple clock domains per module via the `@ClockDomain` decorator and track domain membership in the AST for all `@Sequential` blocks.

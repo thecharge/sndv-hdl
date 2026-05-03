@@ -39,15 +39,19 @@ The compiler SHALL include the TypeScript source file path, line number, and col
 - **WHEN** a port assignment has a type mismatch
 - **THEN** the error message includes `file.ts:line:col:` prefix and a human-readable description
 
-## MODIFIED Requirements
+## ADDED Requirements
 
-### Requirement: LogicArray width type inference
-The compiler SHALL infer `LogicArray` bit width from initialiser literals and arithmetic expressions where the width is statically determinable, removing the need for explicit width annotations in simple cases.
+### Requirement: LogicArray array-size inference from initialiser
+The compiler SHALL infer the `LogicArray` array size (second generic parameter) from an array literal initialiser when the SIZE argument is omitted from the type annotation. The bit width (first generic parameter) remains required.
 
-#### Scenario: Literal initialiser infers width
-- **WHEN** a variable is declared as `const x: LogicArray = 0b1010` (no explicit width)
-- **THEN** the compiler infers width 4 and emits `logic [3:0] x`
+#### Scenario: Array literal initialiser infers SIZE
+- **WHEN** a module field is declared as `private pixels: LogicArray<24> = [0, 0, 0, 0, 0, 0, 0, 0]`
+- **THEN** the compiler infers `SIZE = 8` from the 8-element literal and emits `logic [23:0] pixels [0:7]`
 
-#### Scenario: Explicit width still accepted
-- **WHEN** a variable is declared as `const x: LogicArray<8> = 0`
-- **THEN** the compiler uses the explicit width 8 and emits `logic [7:0] x`
+#### Scenario: Explicit SIZE still accepted
+- **WHEN** a field is declared as `private pixels: LogicArray<24, 8> = [0, 0, 0, 0, 0, 0, 0, 0]`
+- **THEN** the compiler uses the explicit SIZE 8 and emits `logic [23:0] pixels [0:7]`
+
+#### Scenario: LogicArray with bit width and SIZE explicitly specified compiles unchanged
+- **WHEN** a field is declared with both generic arguments present
+- **THEN** the compiler does not attempt inference and uses the explicitly provided values

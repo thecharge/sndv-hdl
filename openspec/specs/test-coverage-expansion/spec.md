@@ -1,5 +1,8 @@
-## ADDED Requirements
+# test-coverage-expansion Specification
 
+## Purpose
+TBD - created by archiving change platform-expansion-v1. Update Purpose after archive.
+## Requirements
 ### Requirement: Compiler pass unit tests
 Every new compiler pass (clock-domain analysis, CDC detection, ergonomics desugaring) SHALL have a dedicated unit test file under `packages/core/src/__tests__/` with at least three test cases covering the happy path, an error path, and a boundary condition.
 
@@ -40,11 +43,10 @@ The CI pipeline SHALL fail if any package under `packages/` falls below 80% line
 - **WHEN** `bun run quality` is executed and all packages meet 80% line coverage
 - **THEN** the coverage check exits 0
 
-## MODIFIED Requirements
-
 ### Requirement: UVM testbench infrastructure supports coverage reporting
-The UVM test runner SHALL accept a `--coverage` flag that activates Istanbul instrumentation and writes output to `.artifacts/coverage/`.
+The `bun run test:coverage` script SHALL invoke coverage tooling after the test suite completes and report line, function, and statement coverage to stdout and `.artifacts/coverage/`.
 
-#### Scenario: test:uvm with coverage flag
-- **WHEN** `bun run test:uvm -- --coverage` is executed
-- **THEN** `.artifacts/coverage/uvm-lcov.info` is produced alongside the test results
+#### Scenario: Coverage report generated after test run
+- **WHEN** `bun run test:coverage` is executed
+- **THEN** coverage output is produced (or a warning is emitted if V8 coverage data is unavailable in the current runtime)
+
