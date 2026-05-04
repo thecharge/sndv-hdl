@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@ts2v/types": "workspace:*",
-    "zod": "3.24.4"
+    "zod": "4.4.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4"
